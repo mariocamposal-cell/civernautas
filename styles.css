@@ -1023,7 +1023,7 @@ details.json pre {
 .seller-id { flex: 1; min-width: 0; }
 .seller-id b { display: block; font-size: 14px; }
 .seller-id small { font-size: 9.5px; color: var(--tx-3); }
-.seller-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 4px; }
+.seller-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 4px; }
 .seller-stats div { padding: 8px; border-radius: 9px; background: rgba(255,255,255,.04); border: 1px solid var(--line); }
 .seller-stats span { display: block; font-size: 8.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--tx-3); }
 .seller-stats b { font-size: 16px; letter-spacing: -.02em; }

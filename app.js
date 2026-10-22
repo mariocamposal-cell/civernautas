@@ -76,21 +76,21 @@ const CLUBS = [
 ];
 
 const LISTINGS = [
-  { id: "l1", event: "Noche Universitaria", venue: "Circus", date: "HOY · 23:00", iso: DEMO_TODAY, type: "General", price: 25, original: 28, seller: "Marta R.", sellerId: "marta", rating: 4.9, serial: "CIR-4471", hue: "#7c3aed", fraud: false },
-  { id: "l2", event: "Tech House Night", venue: "Way Club", date: "HOY · 23:30", iso: DEMO_TODAY, type: "VIP", price: 38, original: 35, seller: "Diego P.", sellerId: "diego", rating: 4.7, serial: "WAY-1180", hue: "#0ea5e9", fraud: false },
-  { id: "l3", event: "Urban Session", venue: "Blaster", date: "HOY · 01:00", iso: DEMO_TODAY, type: "General", price: 18, original: 22, seller: "Lucía G.", sellerId: "lucia", rating: 5.0, serial: "BLA-9932", hue: "#f43f5e", fraud: true },
-  { id: "l4", event: "Afterhours · REM", venue: "REM", date: "HOY · 03:00", iso: DEMO_TODAY, type: "Mesa", price: 60, original: 75, seller: "Andrés M.", sellerId: "andres", rating: 4.6, serial: "REM-2201", hue: "#22d3ee", fraud: false },
-  { id: "l5", event: "Nochevieja Universitaria", venue: "Circus", date: "31 DIC · 23:00", iso: "2026-12-31", type: "General", price: 28, original: 30, seller: "Nuria C.", sellerId: "nuria", rating: 4.8, serial: "CIR-8812", hue: "#f59e0b", fraud: false },
-  { id: "l6", event: "Indie Night", venue: "Momo", date: "VIE · 30 OCT", iso: "2026-10-30", type: "General", price: 15, original: 18, seller: "Pablo S.", sellerId: "pablo", rating: 4.5, serial: "MOM-2244", hue: "#84cc16", fraud: false }
+  { id: "l1", event: "Noche Universitaria", venue: "Circus", date: "HOY · 23:00", iso: DEMO_TODAY, type: "General", price: 25, original: 28, seller: "Marta R.", sellerId: "marta", serial: "CIR-4471", hue: "#7c3aed", fraud: false },
+  { id: "l2", event: "Tech House Night", venue: "Way Club", date: "HOY · 23:30", iso: DEMO_TODAY, type: "VIP", price: 38, original: 35, seller: "Diego P.", sellerId: "diego", serial: "WAY-1180", hue: "#0ea5e9", fraud: false },
+  { id: "l3", event: "Urban Session", venue: "Blaster", date: "HOY · 01:00", iso: DEMO_TODAY, type: "General", price: 18, original: 22, seller: "Lucía G.", sellerId: "lucia", serial: "BLA-9932", hue: "#f43f5e", fraud: true },
+  { id: "l4", event: "Afterhours · REM", venue: "REM", date: "HOY · 03:00", iso: DEMO_TODAY, type: "Mesa", price: 60, original: 75, seller: "Andrés M.", sellerId: "andres", serial: "REM-2201", hue: "#22d3ee", fraud: false },
+  { id: "l5", event: "Nochevieja Universitaria", venue: "Circus", date: "31 DIC · 23:00", iso: "2026-12-31", type: "General", price: 28, original: 30, seller: "Nuria C.", sellerId: "nuria", serial: "CIR-8812", hue: "#f59e0b", fraud: false },
+  { id: "l6", event: "Indie Night", venue: "Momo", date: "VIE · 30 OCT", iso: "2026-10-30", type: "General", price: 15, original: 18, seller: "Pablo S.", sellerId: "pablo", serial: "MOM-2244", hue: "#84cc16", fraud: false }
 ];
 
 const SELLERS = {
-  marta:  { name: "Marta R.",  rating: 4.9, sold: 18, bought: 6, since: "2024" },
-  diego:  { name: "Diego P.",  rating: 4.7, sold: 7,  bought: 3, since: "2025" },
-  lucia:  { name: "Lucía G.",  rating: 5.0, sold: 3,  bought: 9, since: "2025" },
-  andres: { name: "Andrés M.", rating: 4.6, sold: 12, bought: 4, since: "2023" },
-  nuria:  { name: "Nuria C.",  rating: 4.8, sold: 5,  bought: 2, since: "2025" },
-  pablo:  { name: "Pablo S.",  rating: 4.5, sold: 9,  bought: 1, since: "2024" }
+  marta:  { name: "Marta R.", sold: 18, bought: 6, since: "2024" },
+  diego:  { name: "Diego P.", sold: 7,  bought: 3, since: "2025" },
+  lucia:  { name: "Lucía G.", sold: 3,  bought: 9, since: "2025" },
+  andres: { name: "Andrés M.", sold: 12, bought: 4, since: "2023" },
+  nuria:  { name: "Nuria C.", sold: 5,  bought: 2, since: "2025" },
+  pablo:  { name: "Pablo S.", sold: 9,  bought: 1, since: "2024" }
 };
 
 const RIDES = [
@@ -198,7 +198,6 @@ function loadState() {
       const byName = { "Marta R.": "marta", "Diego P.": "diego", "Lucía G.": "lucia", "Andrés M.": "andres", "Nuria C.": "nuria", "Pablo S.": "pablo", "Tú": "me" };
       l.sellerId = byName[l.seller] || "marta";
     }
-    l.rating = isNum(l.rating) ? l.rating : 5;
     l.hue = typeof l.hue === "string" && /^#[0-9a-f]{3,8}$/i.test(l.hue) ? l.hue : "#a855f7";
     l.serial = typeof l.serial === "string" ? l.serial : "USR-0000";
     l.code = makeCode(l.event, l.serial, l.fraud ? "1999-01-01" : l.iso);
@@ -498,14 +497,12 @@ function redeemKarma(cost) {
 function sellerProfile(id) {
   if (id === "me") {
     return {
-      name: "Tú",
-      rating: 5,
-      sold: state.profile?.sold ?? 0,
+      name: "Tú", sold: state.profile?.sold ?? 0,
       bought: state.profile?.bought ?? 0,
       since: "2026"
     };
   }
-  return SELLERS[id] || { name: "Vendedor", rating: 5, sold: 0, bought: 0, since: "2025" };
+  return SELLERS[id] || { name: "Vendedor", sold: 0, bought: 0, since: "2025" };
 }
 
 function openSeller(id) {
@@ -521,12 +518,10 @@ function openSeller(id) {
     <div class="seller-hero">
       <div class="seller-avatar">${esc(p.name.charAt(0))}</div>
       <div class="seller-id"><b>${esc(p.name)}</b><small>Miembro desde ${esc(p.since)}</small></div>
-      <span class="badge media">★ ${esc(String(p.rating))}</span>
     </div>
     <div class="seller-stats">
       <div><span>Vendidas</span><b>${p.sold}</b></div>
       <div><span>Compradas</span><b>${p.bought}</b></div>
-      <div><span>Valoración</span><b>${esc(String(p.rating))}</b></div>
     </div>
     <div class="section-title" style="margin:12px 0 6px"><h3>Entradas activas</h3><span>${active.length}</span></div>
     <div class="seller-list">
@@ -535,7 +530,7 @@ function openSeller(id) {
         : `<p class="scan-empty">Sin entradas activas ahora mismo.</p>`}
     </div>
     <div class="note-box" style="margin-top:12px">
-      <span>✓</span><span>Historial guardado en su perfil. Solo se valora después de completar una entrada.</span>
+      <span>✓</span><span>Historial guardado en su perfil. Se actualiza con cada compra o venta.</span>
     </div>
   `);
 }
@@ -1121,7 +1116,7 @@ function renderTickets() {
               </div>
               <div class="meta" style="margin-top:5px">
                 <button class="seller-link" data-seller="${esc(l.sellerId || "marta")}">
-                  ${esc(l.seller)} · ★ ${esc(String(l.rating))} · ${sellerProfile(l.sellerId || "marta").sold} ventas
+                  ${esc(l.seller)} · ${sellerProfile(l.sellerId || "marta").sold} vendidas · ${sellerProfile(l.sellerId || "marta").bought} compradas
                 </button>
               </div>
             </div>
@@ -1322,7 +1317,7 @@ async function publishListing() {
     id: "l" + Date.now().toString(36),
     event, venue, date: "HOY · 04:00", iso, type,
     price, original: price,
-    seller: "Tú", sellerId: "me", rating: 5.0, serial, hue: "#a855f7",
+    seller: "Tú", sellerId: "me", serial, hue: "#a855f7",
     fraud: false, code: makeCode(event, serial, iso)
   };
   state.listings.unshift(l);
