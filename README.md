@@ -16,12 +16,31 @@ En el móvil, `http://IP_DE_TU_PORTATIL:8123` — ocupa toda la pantalla como PW
 
 ## Acceso
 
-Al abrir pide **email, contraseña y fecha de nacimiento**. Si no tienes 18 años
-no deja entrar. La sesión se guarda en `sessionStorage`: al cerrar la pestaña o
-la app se cierra sola. También hay botón de cerrar sesión en la cabecera.
+Al abrir pide **email, contraseña y fecha de nacimiento**. Puedes seleccionar
+cualquier fecha, también la de un menor, pero si no tienes 18 años no deja
+entrar. La sesión se guarda en `sessionStorage`: al cerrar la pestaña o la app
+se cierra sola. También hay botón de cerrar sesión en la cabecera.
 
 - Cuenta demo: botón **"Probar con cuenta demo"**.
 - No hay backend: es una validación de demo. La contraseña no se almacena.
+
+## Aforo híbrido
+
+El porcentaje que se muestra es una estimación ponderada:
+
+```
+aforo = 55% · (puerta + entradas usadas)
+      + 30% · reportes 1-tap de usuarios
+      + 15% · sensor de cola (espera)
+```
+
+- **Puerta + entradas:** contador exacto (`inside`) y cada QR validado suma +1.
+- **Reportes 1-tap:** 🟢 Fluido (40%) · 🟡 Pista llena (70%) · 🔴 Aforo máximo (95%).
+  Cada reporte pesa la mitad cada 30 minutos y caduca a los 90.
+- **Sensor de cola:** corrige la base según la espera estimada.
+- Cada check-in da **+10 Karma** para descuentos en reventa.
+
+El contador exacto sigue visible en Aforo; el % es la estimación híbrida.
 
 ## Locales (Santiago)
 
@@ -34,15 +53,13 @@ la app se cierra sola. También hay botón de cerrar sesión en la cabecera.
 | Tarasca | Rúa de Entremuros, 13 | Zona Vella |
 | Momo | Rúa da Virxe da Cerca, 23 | Zona Vella |
 
-Aforos, colas y coordenadas de la demo son simulados; direcciones reales.
+Aforos y colas de la demo son simulados; direcciones y coordenadas, reales.
 
-## Cómo se mide
+## Cómo se mide la cola
 
-- **Cola:** sensor Wi-Fi pasivo de 5 $ en la puerta. Detecta móviles en 25 m y
-  estima personas y minutos. No requiere app y **no usa fotos**.
-- **Aforo:** contador de puerta. Cada QR validado suma 1 dentro de forma
-  automática; las salidas las reporta el propio contador. El sensor nunca toca
-  el aforo.
+- **Sensor Wi-Fi pasivo de 5 $** en la puerta. Detecta móviles en 25 m y estima
+  personas y minutos. No requiere app y **no usa fotos**.
+- El aforo híbrido se calcula aparte (ver arriba).
 
 ## Módulos
 
@@ -54,11 +71,13 @@ Aforos, colas y coordenadas de la demo son simulados; direcciones reales.
 
 ## Demo (3:30)
 
-1. **Noche** — Circus 468/500, espera 12 min, 53 móviles. "Ver aforo y cola".
+1. **Noche** — Circus 94% estimado · 469/500 · espera 11 min · 47 móviles. "Ver aforo y cola".
 2. **Aforo** — contador de puerta, plazas libres y mapa con los 6 locales.
 3. **Entrada** — compra "Nochevieja Universitaria" → "Validar en la puerta" →
-   el aforo sube 1 y se libera el escrow. **Panel del local** muestra el acceso.
-   Repite con "Urban Session": QR manipulado → rechazo y reembolso.
+   el contador sube 1 y se libera el escrow. "Entrar al local" lanza el
+   **check-in 1-tap** (+10 Karma): el aforo estimado cambia y el **Panel del
+   local** muestra el desglose. Repite con "Urban Session": QR manipulado →
+   rechazo y reembolso.
 4. **Taxi** — únete a un squad o crea uno, comparte por WhatsApp.
 5. **Álbum** — 12 fotos bloqueadas. Panel izquierdo: **Timer 60 s** o **Revelar álbum**.
 

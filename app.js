@@ -89,6 +89,8 @@ const DEFAULT = {
   rides: RIDES.map(r => ({ ...r })),
   joinedRide: null,
   scans: [],
+  crowdReports: [],
+  karma: 120,
   vault: { revealAt: 0, revealed: false, demo: false, photos: [] },
   stats: { reports: 12, escrow: 63, squads: 3 }
 };
@@ -133,12 +135,15 @@ function loadState() {
   if (!s.vault.revealAt) s.vault.revealAt = next8amNight();
   s.listings.forEach(l => { if (!l.code) l.code = makeCode(l.event, l.serial, l.fraud ? "2026-01-01" : l.iso); });
   s.scans = Array.isArray(s.scans) ? s.scans : [];
+  s.crowdReports = Array.isArray(s.crowdReports) ? s.crowdReports : [];
+  s.karma = typeof s.karma === "number" ? s.karma : 120;
   if (!["noche", "aforo", "tickets", "taxi", "vault"].includes(s.view)) s.view = "noche";
   return s;
 }
 
 let state = loadState();
 let sensorPingAt = Date.now();
+state.clubs.forEach(c => { c.occ = computeOcc(c); });
 
 function save() {
   try { localStorage.setItem(STORE, JSON.stringify(state)); }
@@ -328,6 +333,47 @@ function clubByVenue(venue) {
 }
 
 /* ---------------- sensor pasivo + contador de puerta ---------------- */
+/* ---------------- aforo híbrido ---------------- */
+// Señal de reportes 1-tap, con decaimiento exponencial: pierde la mitad cada 30 min.
+function userSignal(c) {
+  const now = Date.now();
+  const reps = (state.crowdReports || []).filter(r => r.club === c.id && now - r.at < 90 * 60000);
+  if (!reps.length) return null;
+  let sum = 0, w = 0;
+  for (const r of reps) {
+    const k = Math.pow(0.5, (now - r.at) / (30 * 60000));
+    sum += r.level * k;
+    w += k;
+  }
+  return { value: sum / w, count: reps.length };
+}
+
+// Señal del sensor de cola: corrige la base de puerta según la espera.
+function queueSignal(c) {
+  const door = (c.inside / c.cap) * 100;
+  return clamp(door + (c.wait - 10) * 1.3, 8, 99);
+}
+
+// W1 reportes 30% · W2 sensor cola 15% · W3 puerta + entradas usadas 55%
+function computeOcc(c) {
+  const door = (c.inside / c.cap) * 100;
+  const q = queueSignal(c);
+  const u = userSignal(c);
+
+  let sum = 0.55 * door + 0.15 * q;
+  let weight = 0.70;
+
+  if (u) {
+    sum += 0.30 * u.value;
+    weight += 0.30;
+  }
+  return clamp(Math.round(sum / weight), 3, 99);
+}
+
+function recomputeOcc(c) {
+  c.occ = computeOcc(c);
+}
+
 function sensorDevices(c) {
   return Math.max(1, Math.round(c.queue / 1.35));
 }
@@ -359,8 +405,7 @@ function renderHome() {
 
   $("#homeName").textContent = c.name;
   $("#homeMeta").textContent = `${c.address || "Santiago de Compostela"} · ${c.zone || "Centro"}`;
-  $("#homeInside").textContent = c.inside;
-  $("#homeCap").textContent = c.cap;
+  $("#homeInside").textContent = c.occ;
   $("#homePct").innerHTML = `${c.occ}<span>%</span>`;
   $("#homeSat").className = "badge " + sat;
   $("#homeSat").textContent = satLabel[sat];
@@ -369,7 +414,9 @@ function renderHome() {
   }[sat];
   $("#homeFill").style.width = Math.min(100, c.occ) + "%";
   $("#homeFill").style.background = col;
+  $("#homeCount").textContent = `${c.inside}/${c.cap}`;
   $("#homeFree").textContent = Math.max(0, c.cap - c.inside);
+  $("#homeKarma").textContent = state.karma ?? 0;
   const ring = $("#homeRing");
   ring.setAttribute("stroke", col);
   ring.setAttribute("stroke-dasharray", `${(c.occ / 100) * circ} ${circ}`);
@@ -383,15 +430,24 @@ function openVenuePanel(clubId) {
   const c = clubById(clubId || state.selectedClub);
   const col = satColor[satFromOcc(c.occ)];
   const scans = (state.scans || []).slice(0, 5);
+  const u = userSignal(c);
+  const q = queueSignal(c);
+  const doorPct = Math.round((c.inside / c.cap) * 100);
 
   openSheet(`
     <div class="sheet-head">
       <div><h3>Panel del local</h3><p>${c.name} · puerta principal</p></div>
       <button class="x-btn" data-close>✕</button>
     </div>
-    <div class="panel-big"><b>${c.inside}</b><span>/ ${c.cap} · ${c.occ}%</span></div>
-    <div class="door-bar" style="margin-bottom:12px"><i style="width:${Math.min(100, c.occ)}%;background:${col}"></i></div>
-    <div class="stat-row" style="grid-template-columns:repeat(4,1fr)">
+    <div class="mini-label">Aforo estimado</div>
+    <div class="panel-big"><b>${c.occ}%</b><span>contador ${c.inside}/${c.cap}</span></div>
+    <div class="door-bar" style="margin-bottom:10px"><i style="width:${Math.min(100, c.occ)}%;background:${col}"></i></div>
+    <div class="occ-src">
+      <div><span>Puerta + entradas</span><i>peso 55%</i><b>${doorPct}%</b></div>
+      <div><span>Reportes 1-tap</span><i>peso 30%</i><b>${u ? Math.round(u.value) + "%" : "—"}</b></div>
+      <div><span>Sensor de cola</span><i>peso 15%</i><b>${Math.round(q)}%</b></div>
+    </div>
+    <div class="stat-row" style="grid-template-columns:repeat(4,1fr);margin-top:10px">
       <div class="stat"><span>En cola</span><b>${c.queue}</b></div>
       <div class="stat"><span>Espera</span><b>${c.wait}m</b></div>
       <div class="stat"><span>Entradas</span><b>${c.entries}</b></div>
@@ -405,9 +461,58 @@ function openVenuePanel(clubId) {
     </div>
     <div class="note-box" style="margin-top:12px">
       <span style="color:#22d3ee">◉</span>
-      <span>El aforo lo mueve el contador de puerta. El sensor Wi-Fi solo mide la cola de la calle.</span>
+      <span>Fórmula: 55% puerta + entradas · 30% reportes · 15% sensor de cola. Los reportes caducan a los 30 min.</span>
     </div>
   `);
+}
+
+const CROWD_LEVELS = { 1: 40, 2: 70, 3: 95 };
+const CROWD_LABEL = { 1: "Fluido", 2: "Pista llena", 3: "Aforo máximo" };
+
+function openCrowdCheck(clubId) {
+  const c = clubById(clubId || state.selectedClub);
+  openSheet(`
+    <div class="sheet-head">
+      <div><h3>¿Cómo está la sala?</h3><p>${c.name} · 1 tap, 10 de karma</p></div>
+      <button class="x-btn" data-close>✕</button>
+    </div>
+    <p class="check-intro">Tu respuesta se pondera con la puerta y el sensor. Ganas karma para descuentos en reventa.</p>
+    <div class="check-opts">
+      <button data-crowd="1" data-crowd-club="${c.id}">
+        <span>🟢</span><div><b>Fluido</b><small>30–50% · se está bien</small></div>
+      </button>
+      <button data-crowd="2" data-crowd-club="${c.id}">
+        <span>🟡</span><div><b>Pista llena</b><small>60–80% · hay ambiente</small></div>
+      </button>
+      <button data-crowd="3" data-crowd-club="${c.id}">
+        <span>🔴</span><div><b>Aforo máximo</b><small>90–100% · agobiante</small></div>
+      </button>
+    </div>
+    <p class="check-note">Cada reporte pierde la mitad de su peso cada 30 minutos.</p>
+  `);
+}
+
+function submitCrowd(clubId, level) {
+  const c = clubById(clubId);
+  const value = CROWD_LEVELS[level];
+  if (!value) return;
+
+  state.crowdReports.push({ club: c.id, level: value, at: Date.now() });
+  state.crowdReports = state.crowdReports.slice(-80);
+  state.karma = (state.karma || 0) + 10;
+
+  recomputeOcc(c);
+  c.trend = [...c.trend.slice(-7), c.occ];
+  save();
+
+  closeSheet();
+  updateMapPins();
+  renderClubs();
+  renderDoor();
+  renderHome();
+
+  toast(`+10 Karma · ${c.name} ${c.occ}% estimado`, "good");
+  log(`Check-in en <b>${c.name}</b> · ${CROWD_LABEL[level]} · +10 Karma`);
 }
 
 function renderDoor() {
@@ -436,7 +541,7 @@ function doorMove(clubId, delta, announce) {
   const real = c.inside - before;
   if (real > 0) c.entries += real;
   if (real < 0) c.exits += -real;
-  c.occ = Math.round((c.inside / c.cap) * 100);
+  recomputeOcc(c);
   c.trend = [...c.trend.slice(-7), c.occ];
   save();
   updateMapPins();
@@ -521,6 +626,10 @@ function updateMapPins() {
     const col = satColor[satFromOcc(c.occ)];
     g.querySelector(".core").setAttribute("fill", col);
     g.querySelector(".halo").setAttribute("r", 26 + c.occ * .34);
+    const grad = document.querySelector(`#halo-${c.id}`);
+    if (grad) {
+      grad.querySelectorAll("stop").forEach(s => s.setAttribute("stop-color", col));
+    }
   });
 }
 
@@ -609,6 +718,7 @@ function openClub(id) {
       <div><span>Salidas</span><b>${c.exits}</b></div>
     </div>
     <p class="sheet-door-note">El aforo sube solo al validar un QR en la puerta. No hay botón de +1.</p>
+    <button class="btn ghost small" style="width:100%;margin-bottom:6px" data-checkin="${c.id}">Check-in rápido · +10 Karma</button>
     <button class="btn primary" data-venue-panel="${c.id}">Abrir panel del local</button>
   `);
 }
@@ -951,11 +1061,18 @@ function openScanner(purchaseId) {
         <pre style="margin:0;padding:10px;border-radius:9px;background:#070511;border:1px solid rgba(255,255,255,.08);font-family:var(--mono);font-size:9px;line-height:1.55;color:#9fdfc8;white-space:pre-wrap">${JSON.stringify(resultado, null, 2)}</pre>
         <div style="height:12px"></div>
         ${v.ok ? `<button class="btn ghost small" style="width:100%;margin-bottom:8px" data-scan-aforo="${club.id}">Ver aforo en vivo</button>` : ""}
-        <button class="btn ${v.ok ? "primary" : "ghost"}" data-scan-close>${v.ok ? "Entrar al local" : "Cerrar y ver reembolso"}</button>
+        <button class="btn ${v.ok ? "primary" : "ghost"}" ${v.ok ? `data-scan-enter="${club.id}"` : "data-scan-close"}>${v.ok ? "Entrar al local" : "Cerrar y ver reembolso"}</button>
       </div>`;
   }, 1700);
 
   el.onclick = (e) => {
+    const enter = e.target.closest("[data-scan-enter]");
+    if (enter) {
+      el.className = "scanner";
+      el.innerHTML = "";
+      openCrowdCheck(enter.dataset.scanEnter);
+      return;
+    }
     const a = e.target.closest("[data-scan-aforo]");
     if (a) {
       state.selectedClub = a.dataset.scanAforo;
@@ -1329,6 +1446,16 @@ function initMisc() {
   });
 
   document.addEventListener("click", (e) => {
+    const ck = e.target.closest("[data-checkin]");
+    if (ck) {
+      openCrowdCheck(ck.dataset.checkin);
+      return;
+    }
+    const crowd = e.target.closest("[data-crowd]");
+    if (crowd) {
+      submitCrowd(crowd.dataset.crowdClub, Number(crowd.dataset.crowd));
+      return;
+    }
     const vp = e.target.closest("[data-venue-panel]");
     if (vp) {
       closeSheet();
@@ -1362,10 +1489,12 @@ function initMisc() {
     state.clubs.forEach(c => {
       c.queue = clamp(c.queue + Math.round(Math.random() * 8 - 4), 0, 180);
       c.wait = Math.max(1, Math.round(c.queue / 6));
+      recomputeOcc(c);
     });
     sensorPingAt = Date.now();
     save();
-    if (state.view === "noche") renderSensor();
+    if (state.view === "noche") renderHome();
+    if (state.view === "aforo") renderClubs();
   }, 8000);
 
   // contador de puerta: entradas y salidas reales cada 20 s
@@ -1381,7 +1510,7 @@ function initMisc() {
       const real = c.inside - before;
       if (real > 0) c.entries += real;
       else if (real < 0) c.exits += -real;
-      c.occ = Math.round((c.inside / c.cap) * 100);
+      recomputeOcc(c);
       c.trend = [...c.trend.slice(-7), c.occ];
     });
     save();
@@ -1393,9 +1522,7 @@ function initMisc() {
 
 function initAuth() {
   const dob = $("#authDob");
-  const max = new Date();
-  max.setFullYear(max.getFullYear() - 18);
-  dob.max = max.toISOString().slice(0, 10);
+  dob.max = new Date().toISOString().slice(0, 10);
   dob.min = "1900-01-01";
 
   $("#authForm").addEventListener("submit", (e) => {
