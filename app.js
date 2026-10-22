@@ -56,7 +56,12 @@ function isoOf(ts) {
 }
 function todayIso() { return isoOf(Date.now()); }
 const DEMO_TODAY = todayIso();
-const NIGHT_KEY = DEMO_TODAY;
+// A "noite" dura até as 08:00: un reporte ás 02:00 conta para o día anterior.
+function nightKey(ts = Date.now()) {
+  const d = new Date(ts);
+  if (d.getHours() < 8) d.setDate(d.getDate() - 1);
+  return isoOf(d);
+}
 const nowBase = Date.now();
 const nightStart = 3 * 60 + 12;
 
@@ -123,15 +128,8 @@ const DEFAULT = {
   wallet: 50,
   profile: { sold: 0, bought: 0 },
   vault: { revealAt: 0, revealed: false, demo: false, photos: [] },
-  stats: { reports: 0, escrow: 0, squads: 0 }
+  stats: { escrow: 0 }
 };
-
-function next8am() {
-  const d = new Date(), t = new Date(d);
-  t.setHours(8, 0, 0, 0);
-  if (t.getTime() <= d.getTime()) t.setDate(t.getDate() + 1);
-  return t.getTime();
-}
 
 // 08:00 según el reloj nocturno de la demo (03:12), no la hora real
 function next8amNight() {
@@ -229,8 +227,8 @@ function loadState() {
   });
 
   s.profile = { sold: 0, bought: 0, ...(isObj(src.profile) ? src.profile : {}) };
-  ["sold", "bought"].forEach(k => { if (!isNum(s.profile[k])) s.profile[k] = 0; });
-  s.profile.bought = Math.max(s.profile.bought, s.purchases.filter(p => p.status !== "refunded").length);
+  s.profile.sold = 0; // no hay flujo de venta real en el prototipo
+  s.profile.bought = s.purchases.filter(p => p.status !== "refunded").length;
 
   s.rides = (Array.isArray(src.rides) ? src.rides : structuredClone(RIDES)).filter(isObj);
   s.rides.forEach(r => {
@@ -257,11 +255,11 @@ function loadState() {
   if (!isNum(s.vault.revealAt) || s.vault.revealAt <= 0) s.vault.revealAt = next8amNight();
 
   s.stats = { ...base.stats, ...(isObj(src.stats) ? src.stats : {}) };
-  ["reports", "escrow", "squads"].forEach(k => { if (!isNum(s.stats[k])) s.stats[k] = base.stats[k]; });
+  if (!isNum(s.stats.escrow)) s.stats.escrow = 0;
 
   s.crowdReports = (Array.isArray(src.crowdReports) ? src.crowdReports : [])
     .filter(r => isObj(r) && typeof r.club === "string" && isNum(r.level) && isNum(r.at))
-    .map(r => ({ ...r, night: typeof r.night === "string" && r.night ? r.night : isoOf(r.at) }))
+    .map(r => ({ ...r, night: typeof r.night === "string" && r.night ? r.night : nightKey(r.at) }))
     .slice(-80);
   s.karma = isNum(s.karma) ? s.karma : 120;
   s.wallet = isNum(s.wallet) ? Math.round(clamp(s.wallet, 0, 100000) * 100) / 100 : 50;
@@ -329,6 +327,7 @@ function showAuth(show) {
   const a = $("#auth");
   if (!a) return;
   a.classList.toggle("hidden", !show);
+  a.setAttribute("aria-hidden", show ? "false" : "true");
   if (show) setTimeout(() => $("#authEmail").focus(), 120);
 }
 
@@ -397,6 +396,7 @@ function renderWallet() {
 }
 
 function topUp(amount, silent) {
+  refreshFromStorage();
   state.wallet = Math.round(((state.wallet || 0) + amount) * 100) / 100;
   save();
   renderWallet();
@@ -480,6 +480,7 @@ const KARMA_TIERS = [
 ];
 
 function redeemKarma(cost) {
+  refreshFromStorage();
   const tier = KARMA_TIERS.find(t => t.karma === cost);
   if (!tier) return;
   if (state.karma < tier.karma) return toast("Te falta karma para ese canje", "bad");
@@ -779,7 +780,7 @@ function openVenuePanel(clubId) {
 const CROWD_LEVELS = { 1: 40, 2: 70, 3: 95 };
 const CROWD_LABEL = { 1: "Fluido", 2: "Pista llena", 3: "Aforo máximo" };
 const reportedTonight = (clubId) => (state.crowdReports || [])
-  .some(r => r.club === clubId && r.night === NIGHT_KEY);
+  .some(r => r.club === clubId && r.night === nightKey());
 
 function openCrowdCheck(clubId) {
   const c = clubById(clubId || state.selectedClub);
@@ -817,7 +818,7 @@ function submitCrowd(clubId, level) {
     return toast(`Ya reportaste ${c.name} esta noche`, "bad");
   }
 
-  state.crowdReports.push({ club: c.id, level: value, at: Date.now(), night: NIGHT_KEY });
+  state.crowdReports.push({ club: c.id, level: value, at: Date.now(), night: nightKey() });
   state.crowdReports = state.crowdReports.slice(-80);
   state.karma = (state.karma || 0) + 10;
 
@@ -907,7 +908,7 @@ function buildMap() {
 
   const pins = state.clubs.map(c => {
     const col = satColor[satFromOcc(c.occ)];
-    return `<g class="pin" data-club="${c.id}" transform="translate(${c.x},${c.y})">
+    return `<g class="pin" data-club="${c.id}" tabindex="0" role="button" aria-label="Abrir ${esc(c.name)}" transform="translate(${c.x},${c.y})">
       <circle class="halo" r="${26 + c.occ * .34}" fill="url(#halo-${c.id})"/>
       <circle r="11" fill="${col}" opacity=".16"/>
       <circle class="core" r="5" fill="${col}" stroke="#0b0816" stroke-width="1.6"/>
@@ -933,9 +934,16 @@ function buildMap() {
       fill="rgba(255,255,255,.32)">SANTIAGO · CENTRO</text>
     ${pins}`;
 
-  svg.addEventListener("click", (e) => {
+  const pickPin = (e) => {
     const g = e.target.closest(".pin");
     if (g) openClub(g.dataset.club);
+  };
+  svg.addEventListener("click", pickPin);
+  svg.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      pickPin(e);
+    }
   });
 }
 
@@ -1280,6 +1288,18 @@ function openBuySheet(id) {
     $("#buyAction").innerHTML = `<div class="btn ghost" style="justify-content:center">Autorizando pago…</div>`;
     await sleep(900);
 
+    // Recheck despois do await: outra pestana puido cambiar o estado
+    refreshFromStorage();
+    if (hasActivePurchase(l.id)) {
+      closeSheet();
+      renderTickets();
+      return toast("Ya tienes esa entrada en tu cartera", "bad");
+    }
+    if (state.wallet < total) {
+      toast("Saldo insuficiente · recarga el monedero", "bad");
+      return openBuySheet(l.id);
+    }
+
     state.wallet = Math.round((state.wallet - total) * 100) / 100;
     const p = makePurchase(l);
     state.purchases.unshift(p);
@@ -1449,6 +1469,7 @@ function validateTicket(purchaseId) {
     toast(`Entrada válida · +10 karma · aforo ${club.name} ${club.occ}%`, "good");
   } else {
     p.status = "refunded";
+    state.profile.bought = Math.max(0, (state.profile.bought || 0) - 1);
     const back = isNum(p.total) ? p.total : p.price;
     state.wallet = Math.round((state.wallet + back) * 100) / 100;
     renderWallet();
@@ -1858,7 +1879,24 @@ function initMisc() {
     if (e.target.id === "sheet") closeSheet();
   });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeSheet();
+    if (e.key === "Escape") { closeSheet(); return; }
+    if (e.key !== "Tab") return;
+
+    const auth = $("#auth");
+    const sheet = $("#sheet");
+    const authOpen = auth && !auth.classList.contains("hidden");
+    const modal = authOpen
+      ? auth.querySelector(".auth-box")
+      : (sheet.classList.contains("open") ? sheet.querySelector(".sheet-card") : null);
+    if (!modal) return;
+
+    const focusables = Array.from(modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+      .filter(el => !el.disabled && el.offsetParent !== null);
+    if (!focusables.length) return;
+    const first = focusables[0], last = focusables[focusables.length - 1];
+    if (!modal.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   });
 
   // sincroniza o estado se outra pestana modifica localStorage

@@ -19,7 +19,7 @@ instalar como PWA (service worker + iconos 192/512).
 Al abrir pide **email, contraseña y fecha de nacimiento**. Puedes seleccionar
 cualquier fecha, también la de un menor, pero si no tienes 18 años no deja
 entrar. La sesión se guarda en `sessionStorage`: al cerrar la pestaña o la app
-se cierra sola. También hay botón de cerrar sesión en la cabecera.
+se cierra sola. El botón de cerrar sesión está en **Tu cuenta** (icono del monedero).
 
 - Cuenta demo: botón **"Probar con cuenta demo"**.
 - No hay backend: es una validación de demo. La contraseña no se almacena.
@@ -56,7 +56,7 @@ aforo = 55% · (puerta + entradas usadas)
 - **Cola estimada:** personas en la cola según el sensor Wi-Fi (móviles × 1,35).
   Se normaliza por capacidad: una cola del **20% de la capacidad** equivale al
   100% de presión; el valor se limita a 0-99. No modifica el contador exacto.
-- Cada **reporte de aforo** da **+10 karma** (máximo uno por local y noche) y
+- Cada **reporte de aforo** da **+10 karma** (máximo uno por local y noche; la noche corta a las 08:00) y
   validar una entrada da otros **+10**. El karma se canjea por saldo del monedero
   en **Tu cuenta** (100 → 1 € · 250 → 3 € · 500 → 7 €).
 

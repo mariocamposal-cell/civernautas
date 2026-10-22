@@ -234,7 +234,7 @@
               </div>
               <div class="taxi-hour" id="taxiHour">03:12</div>
             </div>
-            <div class="taxi-code">Código de grupo <b>NOCHE-247</b><button id="btnCopyCode" title="Copiar">⧉</button></div>
+            <div class="taxi-code">Código de grupo <b>NOCHE-247</b><button id="btnCopyCode" title="Copiar" aria-label="Copiar código de grupo">⧉</button></div>
 
             <label class="field-label">Tu destino</label>
             <div class="chips" id="destChips"></div>
@@ -297,10 +297,10 @@
         <div class="sheet" id="sheet" aria-hidden="true"></div>
         <div class="burst" id="burst"></div>
 
-        <div class="auth" id="auth">
+        <div class="auth" id="auth" role="dialog" aria-modal="true" aria-labelledby="authTitle">
           <div class="auth-box">
             <div class="auth-brand">NIGHT<span>PULSE</span></div>
-            <h2>Entra en la noche</h2>
+            <h2 id="authTitle">Entra en la noche</h2>
             <p class="auth-sub">Verificamos tu edad antes de mostrarte locales y entradas.</p>
             <form id="authForm" class="auth-form" novalidate>
               <label class="field"><span>Email</span>

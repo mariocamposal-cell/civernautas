@@ -454,6 +454,8 @@ details.json pre {
 
 /* map pins */
 .pin { cursor: pointer; }
+.pin:focus { outline: none; }
+.pin:focus .core { stroke: #fff; stroke-width: 2.8; }
 .pin .halo { animation: haloPulse 3.4s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
 @keyframes haloPulse { 0%,100% { opacity: .55; } 50% { opacity: .9; } }
 .pin text { font-size: 8.5px; fill: rgba(255,255,255,.62); font-family: var(--font); }
@@ -1203,4 +1205,15 @@ details.json pre {
   .appbar { padding-top: calc(14px + env(safe-area-inset-top)); }
   .tabbar { padding-bottom: calc(12px + env(safe-area-inset-bottom)); height: calc(70px + env(safe-area-inset-bottom)); }
   .toast { bottom: 90px; }
+}
+
+
+/* accesibilidade: reduce animacións se o usuario o pide */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
