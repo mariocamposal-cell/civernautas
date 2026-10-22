@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NIGHTPULSE — ClubCheck</title>
+<meta name="description" content="Radar de cola, aforo en vivo, reventa con escrow, taxi compartido y carrete desechable.">
+<meta name="theme-color" content="#07060d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="bg-glow"></div>
+
+<div class="stage">
+
+  <!-- ================= PANEL IZQUIERDO (PITCH) ================= -->
+  <aside class="pitch">
+    <header class="pitch-head">
+      <div class="logo">NIGHT<span>PULSE</span><em>MVP</em></div>
+      <h1>La noche,<br><span>sin fricción.</span></h1>
+      <p class="lede">La cola se mide sola con un sensor Wi-Fi de 5&nbsp;$ en la puerta. Sin app para quien espera. Cinco módulos, una noche.</p>
+      <div class="hw">
+        <span class="hw-icon"></span>
+        <div class="hw-txt"><b>Sensor de puerta</b><small>Wi-Fi 2,4 GHz · radio 25 m · pasivo</small></div>
+        <span class="hw-on"><i></i>ONLINE</span>
+      </div>
+    </header>
+
+    <nav id="moduleNav" class="module-nav" aria-label="Módulos"></nav>
+
+    <section class="panel">
+      <div class="panel-head"><h3>Actividad en vivo</h3><span class="pulse-dot"></span></div>
+      <ul id="logList" class="log"></ul>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h3>Controles de demo</h3></div>
+      <div class="demo-controls">
+        <button id="btnRevealNow" class="mini">Revelar álbum</button>
+        <button id="btnResetTimer" class="mini">Timer 60 s</button>
+        <button id="btnReset" class="mini danger">Reset</button>
+      </div>
+    </section>
+
+    <div class="kpis" id="kpis"></div>
+
+    <p class="footnote">Prototipo funcional · 100% local · sin API keys</p>
+  </aside>
+
+  <!-- ================= MÓVIL ================= -->
+  <main class="device-wrap">
+    <div class="device">
+      <div class="notch"></div>
+      <div class="screen" id="screen">
+
+        <header class="appbar">
+          <div class="appbar-brand"><span class="brand-dot"></span><span id="appTitle">Radar</span></div>
+          <div class="appbar-right">
+            <span class="live-pill"><i></i>EN VIVO</span>
+            <span id="clock">03:12</span>
+          </div>
+        </header>
+
+        <div class="views">
+
+          <!-- ---------- 1. RADAR ---------- -->
+          <section class="view active" id="view-radar">
+            <div class="view-head">
+              <span class="eyebrow">Sensor pasivo · 1 tap</span>
+              <h2>Radar de cola</h2>
+              <p>El sensor de la puerta cuenta los móviles de la fila. Tú solo miras.</p>
+            </div>
+
+            <div class="club-picker">
+              <label for="clubSelect">Local</label>
+              <select id="clubSelect"></select>
+            </div>
+
+            <div class="sensor-card">
+              <div class="sensor-head">
+                <span class="sensor-live"><i></i>SENSOR DE PUERTA</span>
+                <span class="sensor-net">Wi-Fi · 2,4 GHz</span>
+              </div>
+              <div class="sensor-body">
+                <div class="sensor-radar">
+                  <span class="blip b1"></span>
+                  <span class="blip b2"></span>
+                  <span class="blip b3"></span>
+                </div>
+                <div class="sensor-stats">
+                  <div><span>Móviles</span><b id="sensorDevices">62</b></div>
+                  <div><span>En cola</span><b id="sensorQueue">84</b></div>
+                  <div><span>Espera</span><b id="sensorWait">14<small>min</small></b></div>
+                </div>
+              </div>
+              <div class="sensor-foot">Radio 25 m · sin app instalada · RSSI <b id="sensorRssi">-54</b> dBm · ping <b id="sensorAge">2</b> s</div>
+            </div>
+
+            <div class="section-title"><h3>Verificar con foto</h3><span>IA · 1 tap</span></div>
+
+            <div class="shooter" id="shooter">
+              <img id="shotImg" alt="Foto de la entrada">
+              <div class="shooter-empty" id="shooterEmpty">
+                <div class="reticle"><span></span></div>
+                <b>Apunta a la entrada</b>
+                <small>La foto no sale de tu móvil</small>
+              </div>
+              <div class="scanline" id="scanline"></div>
+              <div class="scan-badge" id="scanBadge">IA</div>
+            </div>
+
+            <button class="btn primary" id="btnShoot">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.4"/></svg>
+              Medir cola
+            </button>
+            <input type="file" id="fileInput" accept="image/*" capture="environment" hidden>
+
+            <div class="demo-scenes">
+              <span>o prueba una escena</span>
+              <div id="demoScenes"></div>
+            </div>
+
+            <div id="queueResult"></div>
+          </section>
+
+          <!-- ---------- 2. AFORO ---------- -->
+          <section class="view" id="view-aforo">
+            <div class="view-head">
+              <span class="eyebrow">Contador de puerta</span>
+              <h2>Aforo y tensión</h2>
+              <p>El aforo sale del molinete, no del radar. El sensor solo mide la cola de fuera.</p>
+            </div>
+
+            <div class="door-strip">
+              <div class="door-head">
+                <span class="door-label"><i></i>AFORO DE PUERTA</span>
+                <select id="doorClub" class="door-club" aria-label="Local"></select>
+              </div>
+              <div class="door-main">
+                <div class="door-num"><b id="doorInside">403</b><span>/ <i id="doorCap">420</i> dentro</span></div>
+                <div class="door-pct"><b id="doorPct">96%</b><span>ocupación</span></div>
+              </div>
+              <div class="door-bar"><i id="doorFill"></i></div>
+              <div class="door-foot">
+                <div class="door-counts"><span>▲ <b id="doorIn">512</b></span><span>▼ <b id="doorOut">109</b></span></div>
+                <button class="door-scan" id="doorScan">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8V5a1 1 0 011-1h3M20 8V5a1 1 0 00-1-1h-3M4 16v3a1 1 0 001 1h3M20 16v3a1 1 0 01-1 1h-3"/><path d="M4 12h16"/></svg>
+                  Escanear QR
+                </button>
+              </div>
+            </div>
+            <p class="door-note">El aforo sube solo al validar una entrada en la puerta. Sin botones, sin contar a mano.</p>
+
+            <div class="map-card">
+              <svg id="map" viewBox="0 0 390 410" aria-label="Mapa de locales"></svg>
+              <div class="map-live"><i></i> actualizado hace <b id="mapAge">4</b> s</div>
+            </div>
+
+            <div class="legend">
+              <span><i class="dot baja"></i>Baja</span>
+              <span><i class="dot media"></i>Media</span>
+              <span><i class="dot alta"></i>Alta</span>
+              <span><i class="dot critica"></i>Crítica</span>
+            </div>
+
+            <div class="section-title"><h3>Locales cerca</h3><span id="aforoSummary"></span></div>
+            <div id="clubList" class="club-list"></div>
+          </section>
+
+          <!-- ---------- 3. TICKETS ---------- -->
+          <section class="view" id="view-tickets">
+            <div class="view-head">
+              <span class="eyebrow">Escrow protegido</span>
+              <h2>Ticket marketplace</h2>
+              <p>La IA valida el QR. El dinero no se libera hasta que entras.</p>
+            </div>
+
+            <div class="segmented" id="ticketSeg">
+              <button data-tab="buy" class="active">Comprar</button>
+              <button data-tab="sell">Vender</button>
+              <button data-tab="mine">Mis entradas</button>
+            </div>
+
+            <div id="ticketsBody"></div>
+          </section>
+
+          <!-- ---------- 4. TAXI ---------- -->
+          <section class="view" id="view-taxi">
+            <div class="view-head">
+              <span class="eyebrow">Vuelta segura</span>
+              <h2>Taxi share</h2>
+              <p>Comparte VTC con gente del mismo local. Vuelve acompañado.</p>
+            </div>
+
+            <div class="taxi-now">
+              <div>
+                <small>Estás en</small>
+                <b id="taxiClub">Sala Aurora</b>
+              </div>
+              <div class="taxi-hour" id="taxiHour">03:12</div>
+            </div>
+
+            <label class="field-label">Tu destino</label>
+            <div class="chips" id="destChips"></div>
+
+            <button class="btn primary" id="btnCreateRide">Crear squad</button>
+            <div id="squadBox"></div>
+
+            <div class="section-title"><h3>Squads abiertos</h3><span>misma salida</span></div>
+            <div id="rideList"></div>
+
+            <div class="safety">
+              <div class="safety-head">Sober Squad</div>
+              <p>Check-in automático a tu contacto de confianza cuando llegues.</p>
+              <button class="btn ghost small" id="btnSober">Avisar a mi contacto</button>
+            </div>
+          </section>
+
+          <!-- ---------- 5. VAULT ---------- -->
+          <section class="view" id="view-vault">
+            <div class="view-head">
+              <span class="eyebrow">Carrete desechable</span>
+              <h2>Party Vault</h2>
+              <p>Todo lo que subes esta noche queda bloqueado hasta las 08:00.</p>
+            </div>
+
+            <div class="vault-card" id="vaultCard">
+              <div class="vault-cover"></div>
+              <div class="vault-top">
+                <span class="vault-chip" id="vaultChip">🔒 Bloqueado</span>
+                <span class="vault-members" id="vaultMembers"></span>
+              </div>
+              <div class="vault-info">
+                <h3 id="vaultTitle">Aurora · Carrete desechable</h3>
+                <p id="vaultSub">Se revela a las 08:00</p>
+              </div>
+              <div class="countdown" id="vaultCountdown">
+                <div><b id="cdH">--</b><span>h</span></div>
+                <div><b id="cdM">--</b><span>m</span></div>
+                <div><b id="cdS">--</b><span>s</span></div>
+              </div>
+            </div>
+
+            <div class="vault-actions">
+              <button class="btn primary small" id="btnVaultUpload">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V5m0 0l-4 4m4-4l4 4"/><path d="M5 16v3h14v-3"/></svg>
+                Añadir foto
+              </button>
+              <span id="vaultCount" class="vault-count">0 fotos</span>
+            </div>
+            <input type="file" id="vaultInput" accept="image/*" multiple hidden>
+
+            <div id="vaultGrid" class="vault-grid"></div>
+            <p class="vault-note" id="vaultNote">Nadie puede verlas todavía. Ni tú.</p>
+          </section>
+
+        </div>
+
+        <nav class="tabbar" id="tabbar"></nav>
+
+        <div class="sheet" id="sheet"></div>
+        <div class="scanner" id="scanner"></div>
+        <div class="burst" id="burst"></div>
+
+      </div>
+    </div>
+    <div class="device-hint">Prototipo interactivo · toca la pantalla</div>
+  </main>
+
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
