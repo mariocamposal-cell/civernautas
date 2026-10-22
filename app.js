@@ -435,7 +435,7 @@ function openAccount() {
     </div>
     <div class="karma-card">
       <div class="karma-head"><span>Karma</span><b>★ ${state.karma}</b></div>
-      <p>10 puntos por cada check-in. Canjéalos por saldo del monedero.</p>
+      <p>+10 por reporte de aforo y +10 al validar una entrada. Canjéalos por saldo.</p>
       <div class="karma-tiers">
         ${KARMA_TIERS.map(t => `<button data-redeem="${t.karma}" ${state.karma < t.karma ? "disabled" : ""}>${t.karma} → ${eur(t.eur)}</button>`).join("")}
       </div>
@@ -658,16 +658,19 @@ function userSignal(c) {
   return { value: sum / w, count: reps.length };
 }
 
-// Señal del sensor de cola: corrige la base de puerta según la espera.
-function queueSignal(c) {
-  const door = (c.inside / c.cap) * 100;
-  return clamp(door + (c.wait - 10) * 1.3, 8, 99);
+// Cola estimada: personas en la cola (sensor) y presión normalizada por capacidad.
+function queueEstimate(c) {
+  return Math.max(0, Math.round(c.queue));
+}
+function queuePressure(c) {
+  const ref = Math.max(20, Math.round(c.cap * 0.2)); // 20% de la capacidad = 100% de presión
+  return clamp(Math.round((queueEstimate(c) / ref) * 100), 0, 99);
 }
 
-// W1 reportes 30% · W2 sensor cola 15% · W3 puerta + entradas usadas 55%
+// W1 puerta + entradas 55% · W2 reportes 30% · W3 cola estimada 15%
 function computeOcc(c) {
   const door = (c.inside / c.cap) * 100;
-  const q = queueSignal(c);
+  const q = queuePressure(c);
   const u = userSignal(c);
 
   let sum = 0.55 * door + 0.15 * q;
@@ -692,6 +695,7 @@ function renderSensor() {
   const c = clubById(state.selectedClub);
   if (!$("#sensorDevices")) return;
   $("#sensorDevices").textContent = sensorDevices(c);
+  if ($("#sensorQueue")) $("#sensorQueue").textContent = queueEstimate(c);
   $("#sensorRssi").textContent = c.rssi;
   $("#sensorAge").textContent = Math.max(0, Math.floor((Date.now() - sensorPingAt) / 1000));
   if ($("#homeWait")) {
@@ -741,7 +745,8 @@ function openVenuePanel(clubId) {
   const col = satColor[satFromOcc(c.occ)];
   const scans = (state.scans || []).filter(s => s.club === c.id).slice(0, 5);
   const u = userSignal(c);
-  const q = queueSignal(c);
+  const q = queuePressure(c);
+  const qPeople = queueEstimate(c);
   const doorPct = Math.round((c.inside / c.cap) * 100);
 
   openSheet(`
@@ -755,10 +760,10 @@ function openVenuePanel(clubId) {
     <div class="occ-src">
       <div><span>Puerta + entradas</span><i>peso 55%</i><b>${doorPct}%</b></div>
       <div><span>Reportes 1-tap</span><i>peso 30%</i><b>${u ? Math.round(u.value) + "%" : "—"}</b></div>
-      <div><span>Sensor de cola</span><i>peso 15%</i><b>${Math.round(q)}%</b></div>
+      <div><span>Cola estimada</span><i>${qPeople} personas · peso 15%</i><b>${Math.round(q)}%</b></div>
     </div>
     <div class="stat-row" style="grid-template-columns:repeat(4,1fr);margin-top:10px">
-      <div class="stat"><span>En cola</span><b>${c.queue}</b></div>
+      <div class="stat"><span>En cola</span><b>${qPeople}</b></div>
       <div class="stat"><span>Espera</span><b>${c.wait}m</b></div>
       <div class="stat"><span>Entradas</span><b>${c.entries}</b></div>
       <div class="stat"><span>Salidas</span><b>${c.exits}</b></div>
@@ -771,7 +776,7 @@ function openVenuePanel(clubId) {
     </div>
     <div class="note-box" style="margin-top:12px">
       <span style="color:#22d3ee">◉</span>
-      <span>Fórmula: 55% puerta + entradas · 30% reportes · 15% sensor de cola. Los reportes caducan a los 30 min.</span>
+      <span>Fórmula: 55% puerta + entradas · 30% reportes · 15% cola estimada (personas en cola, normalizadas por capacidad). Los reportes caducan a los 30 min.</span>
     </div>
   `);
 }
