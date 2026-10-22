@@ -28,9 +28,9 @@
 
 ### Slide 3 · Solución — `0:40 – 1:00`
 
-**Visual:** un móvil en el centro; seis iconos alrededor: aforo, cola, QR, barra, radar, álbum.
+**Visual:** un móvil en el centro; ocho iconos alrededor: login, aforo, cola, QR, mercado, taxi, radar y álbum.
 
-> «Noche es la primera app que une toda la noche. Aforo en tiempo real, cola virtual por geofencing, reventa segura con tope del 110 %, QR que cambia cada 10 segundos, comandas sin fila, radar social y un álbum que se revela a las 10 de la mañana. Todo en una app.»
+> «Noche es la primera app que une toda la noche. Login sin fricción, aforo en tiempo real, cola virtual por geofencing, reventa segura con tope del 110 %, QR que cambia cada 10 segundos, taxi compartido, radar social y un álbum que se revela a las 10 de la mañana. Todo en una app.»
 
 ---
 
@@ -66,18 +66,17 @@
 
 ### Slide 7 · Modelo de negocio — `2:18 – 2:42`
 
-**Visual:** tabla de 5 líneas + una cifra grande: **~800 €/noche/local**.
+**Visual:** tabla de 4 líneas + una cifra grande: **~593 €/noche/local**.
 
-> «¿Cómo ganamos? Cinco líneas: 8 % de la reventa, Fast-Pass, 3 % de la barra, comisión de taxi y SaaS de aforo para locales a 199 € al mes. Con 1.000 asistentes por evento son unos 800 € por noche. Veinte locales, cuatro noches al mes: 65.000 € de ingresos recurrentes. El local vende más y hace menos cola; nosotros cobramos por transacción.»
+> «¿Cómo ganamos? Cuatro líneas: 8 % de la reventa, Fast-Pass, comisión de taxi y SaaS de aforo para locales a 199 € al mes. Con 1.000 asistentes por evento son unos 593 € por noche. Veinte locales, cuatro noches al mes: 47.000 € de ingresos recurrentes. El local vende más y hace menos cola; nosotros cobramos por transacción.»
 
 | Línea | Supuesto | Ingreso/evento |
 |---|---|---|
 | Reventa | 50 entradas × 25 € × 8 % | 100 € |
 | Fast-Pass | 80 × 4 € × 50 % para el local | 160 € |
-| Barra | 400 pedidos × 18 € × 3 % | 216 € |
 | Taxi | 120 viajes × 14 € × 8 % | 134 € |
 | SaaS local | plan Pro | 199 € |
-| **Total** | 1.000 asistentes | **~809 €** |
+| **Total** | 1.000 asistentes | **~593 €** |
 
 > **Nota:** son supuestos de modelado, no tracción. En el escenario, di «nuestro modelo» y no «nuestros datos» si aún no tienes pilotos.
 
@@ -107,7 +106,7 @@
 | 0:20 | Móvil Lucía | Tap "Unirme a la cola" | Posición 39, ETA 12–18 min | Cola pregrabada |
 | 0:35 | Móvil portero | Escanear QR de Lucía | `OK` + aforo 412→413 | Escaneo simulado por botón |
 | 0:50 | Móvil Lucía | Screenshot del QR | El código cambia; el escaneo falla | Clip de 8 s |
-| 1:10 | Móvil Lucía | Pedir 2 copas, pickup 3 min | Comanda + código de recogida | Pedido precargado |
+| 1:10 | Móvil Lucía | Entradas → Comprar reventa | Entrada en “Mis entradas” + aforo en vivo | Compra precargada |
 | 1:25 | Pantalla grande | Countdown 09:59:59 → 10:00 | Reveal del álbum + confeti | Álbum ya desbloqueado |
 | 1:40 | Pantalla grande | Recap vertical | 15 s de vídeo con música | MP4 local |
 
@@ -141,7 +140,7 @@ Sustituye los `[ ]` del guion por esos datos **solo si los tienes**. Si no, mant
 Al contrario: la ley europea y española presiona contra el fraude y la especulación. Ponemos un tope del 110 %, identidad verificada, escrow y una entrada reemitida. El usuario puede revender si no puede ir; el especulador no puede hacer negocio.
 
 **2. ¿Cómo arrancáis en frío?**
-El wedge es B2B: el panel de aforo y cola se vende al local aunque no haya usuarios. El local lo adopta porque reduce cola y aumenta ventas de barra. Después, el álbum hace de motor viral: cada recap expone la app a decenas de amigos. Empezamos con 3 locales y 1.000 usuarios, no con 100 locales vacíos.
+El wedge es B2B: el panel de aforo y cola se vende al local aunque no haya usuarios. El local lo adopta porque reduce cola y mejora la liquidez de entradas. Después, el álbum hace de motor viral: cada recap expone la app a decenas de amigos. Empezamos con 3 locales y 1.000 usuarios, no con 100 locales vacíos.
 
 **3. ¿Qué os impide que Fourvenues o Dice lo copien?**
 Pueden copiar una pantalla, no la red. Nuestro dato de aforo en vivo y el grafo social de grupos se refuerzan con cada local y cada noche. Además, ellos son POS/booking; el post-evento y la capa social no están en su ADN. Nuestra velocidad de iteración es la ventaja de los primeros 18 meses.

@@ -22,10 +22,10 @@ El modelo se organiza en 6 dominios que comparten `profiles` y `events` como eje
                                  └────┬────┘        │  PostGIS    │
                                       │             └─────────────┘
                      ┌────────────────┼────────────────┐
-                ┌────▼─────┐    ┌─────▼──────┐   ┌─────▼──────┐
-                │venue_live│    │ scan_events│   │ bar_orders │
-                │ aforo    │    │  append    │   │  comanda   │
-                └──────────┘    └────────────┘   └────────────┘
+                ┌────▼─────┐    ┌─────▼──────┐   ┌─────▼──────────┐
+                │venue_live│    │ scan_events│   │ticket_listings │
+                │ aforo    │    │  append    │   │    reventa     │
+                └──────────┘    └────────────┘   └────────────────┘
 ```
 
 ## 2. Catálogo de tablas
@@ -63,9 +63,6 @@ El modelo se organiza en 6 dominios que comparten `profiles` y `events` como eje
 
 | Tabla | Propósito | Campos clave |
 |---|---|---|
-| `bar_items` | Carta | `name`, `price_cents`, `stock`, `category` |
-| `bar_orders` | Comanda express | `pickup_code`, `status`, `total_cents`, `qr_table` |
-| `bar_order_items` | Líneas | `item_id`, `qty`, `unit_price_cents` |
 | `social_optins` | Radar opt-in | `geohash7`, `vibe`, `expires_at`, `visible` |
 | `social_matches` | Match recíproco | `user_a`, `user_b`, `event_id`, `expires_at` |
 

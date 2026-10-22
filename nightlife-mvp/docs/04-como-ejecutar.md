@@ -39,6 +39,9 @@ Abre <http://localhost:8080>. En el móvil, usa la IP del portátil en la misma 
 > **No lo abras con doble clic (`file://`).** La cámara y la sincronización entre
 > pestañas necesitan un origen `http://localhost`.
 
+Login de demo: `lucia@noche.app` / `noche123`, o pulsa **Entrar como Lucía · demo**.
+También puedes crear una cuenta nueva desde la pestaña **Crear cuenta**.
+
 ### Recorrido de 90 segundos
 
 1. **Aforo + escaneo** — Escáner → “Escanear el ticket de Lucía”. La pestaña
@@ -50,9 +53,9 @@ Abre <http://localhost:8080>. En el móvil, usa la IP del portátil en la misma 
    **Comprar** hay reventas disponibles y en **Mis entradas** gestionas las tuyas.
    La misma pestaña muestra el **aforo en vivo** con las plazas restantes.
 4. **Álbum** — Álbum → “Modo demo · revelar ahora” → “Ver recap”.
-5. **Panel del local** — icono de barras (arriba a la derecha). Abre
+5. **Panel del local** — icono del panel (arriba a la derecha). Abre
    `?mode=venue` en otra pestaña y se sincroniza por `BroadcastChannel`.
-6. **Taxi de vuelta** — pestaña **Taxi** de la barra inferior (o Home → Taxi de
+6. **Taxi de vuelta** — pestaña **Taxi** de la navegación inferior (o Home → Taxi de
    vuelta). Crea un grupo con paradas a casa o únete con el código `NOCHE-247`,
    reserva y sigue el viaje con PIN y matrícula.
 
@@ -89,7 +92,7 @@ Debe imprimir:
 npm run demo:totp
 ```
 
-Verás un QR en ASCII, una barra de cuenta atrás y el `counter` actual. Cuando llega a 0:
+Verás un QR en ASCII, un indicador de cuenta atrás y el `counter` actual. Cuando llega a 0:
 
 - el payload cambia (`NLV1|ticket|nuevo_counter|nuevo_code`),
 - el QR anterior deja de ser válido,

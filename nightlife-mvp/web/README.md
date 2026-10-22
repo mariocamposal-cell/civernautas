@@ -1,8 +1,8 @@
 # NOCHE · demo HTML
 
 Demo autocontenido y navegable del MVP. **No necesita backend ni build.**
-Incluye aforo en vivo, QR TOTP rotando, escáner, reventa con tope, comanda,
-radar social, taxi compartido y álbum con recap.
+Incluye login de usuarios, aforo en vivo, QR TOTP rotando, escáner, mercado de
+entradas, radar social, taxi compartido y álbum con recap.
 
 ## Abrirlo
 
@@ -18,6 +18,17 @@ del portátil en la misma red (`http://192.168.x.x:8080`).
 > necesitan un origen `http://localhost`. Si no tienes Python:
 > `npx serve . -l 8080`.
 
+## Login de demo
+
+Al abrir la app aparece la pantalla de acceso. Puedes usar:
+
+- Email: `lucia@noche.app`
+- Contraseña: `noche123`
+- O pulsar **Entrar como Lucía · demo**.
+
+También puedes crear una cuenta nueva; la sesión y las cuentas se guardan en
+`localStorage`. En producción, este módulo se sustituye por Supabase Auth.
+
 ## Guion de 90 segundos
 
 | Paso | Acción | Qué demuestra |
@@ -27,8 +38,8 @@ del portátil en la misma red (`http://192.168.x.x:8080`).
 | 3 | **Entradas → Mercado → Vender** | El slider no supera el **110 %** del nominal; al publicar, el escáner bloquea esa entrada |
 | 4 | **Entradas → Comprar / Mis entradas** | Compra una reventa, aparece en “Mis entradas” y puedes volver a venderla |
 | 5 | **Álbum → “Modo demo · revelar ahora” → “Ver recap”** | Revelado a las 10:00 y vídeo vertical generado con IA |
-| 6 | **Icono de barras (arriba dcha.)** | Abre el panel del local en otra pestaña; se sincroniza por `BroadcastChannel` |
-| 7 | **Pestaña Taxi (barra inferior) o Home → Taxi de vuelta** | Crear grupo con paradas a casa o unirse con `NOCHE-247`; reservar, ver PIN/matrícula y seguir el viaje |
+| 6 | **Icono del panel (arriba dcha.)** | Abre el panel del local en otra pestaña; se sincroniza por `BroadcastChannel` |
+| 7 | **Pestaña Taxi (navegación inferior) o Home → Taxi de vuelta** | Crear grupo con paradas a casa o unirse con `NOCHE-247`; reservar, ver PIN/matrícula y seguir el viaje |
 
 La pestaña **Entradas** incluye además el **aforo en vivo** con plazas restantes.
 

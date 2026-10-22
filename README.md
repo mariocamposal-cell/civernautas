@@ -32,6 +32,15 @@ Y abre `http://localhost:8081` en el navegador.
 > **Importante:** no abras `index.html` con doble clic (`file://`). La cámara y
 > `BroadcastChannel` necesitan `http://localhost`.
 
+## Login de demo
+
+- Email: `lucia@noche.app`
+- Contraseña: `noche123`
+- O pulsa **Entrar como Lucía · demo**.
+
+También puedes crear una cuenta nueva. La sesión se guarda en `localStorage`; en
+producción se sustituye por Supabase Auth.
+
 ## Qué puedes probar
 
 - **Noche**: aforo en directo, cola virtual y accesos rápidos.
@@ -41,7 +50,7 @@ Y abre `http://localhost:8081` en el navegador.
 - **Aforo**: ocupación, plazas libres, cola y espera estimada.
 - **Álbum**: revelado de recuerdos y recap vertical.
 
-El panel del local se abre con el icono de barras de la cabecera y se sincroniza
+El panel del local se abre con el icono del panel de la cabecera y se sincroniza
 por `BroadcastChannel`.
 
 ## Tests

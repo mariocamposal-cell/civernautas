@@ -2,7 +2,7 @@
 --  NOCHE · Seed de demo (36 h)
 --  Ejecutar DESPUÉS de schema.sql.
 --
---  Crea 3 locales de Madrid, 2 eventos, tiers y carta de barra.
+--  Crea 3 locales de Madrid, 2 eventos y tiers.
 --  Los usuarios NO se crean aquí (van por auth.users / Auth API).
 --  Para el demo:
 --    · crear usuarios lucia@noche.app / mario@noche.app / portero@noche.app
@@ -54,19 +54,6 @@ values
   ('c0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001', 'VIP', 'Acceso prioritario + zona VIP', 4500, 600, 2),
   ('c0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000002', 'General', null, 1800, 1500, 4),
   ('c0000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000002', 'Fast-Pass', 'Entra sin cola antes de la 1:00', 2800, 300, 2)
-on conflict (id) do nothing;
-
--- ---------------------------------------------------------------------------
--- Carta de barra (precios de ejemplo)
--- ---------------------------------------------------------------------------
-insert into public.bar_items (id, event_id, name, category, price_cents, stock)
-values
-  ('d0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'Copa nacional', 'drink', 1200, null),
-  ('d0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001', 'Copa premium', 'drink', 1500, null),
-  ('d0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000001', 'Cerveza', 'beer', 600, 800),
-  ('d0000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000001', 'Agua', 'soft', 300, 600),
-  ('d0000000-0000-0000-0000-000000000005', 'b0000000-0000-0000-0000-000000000001', 'Refresco', 'soft', 400, 500),
-  ('d0000000-0000-0000-0000-000000000006', 'b0000000-0000-0000-0000-000000000001', 'Shots x3', 'shot', 900, null)
 on conflict (id) do nothing;
 
 -- ---------------------------------------------------------------------------

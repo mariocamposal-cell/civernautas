@@ -11,10 +11,10 @@
 | [`docs/02-modelo-de-datos.md`](docs/02-modelo-de-datos.md) | ERD, catálogo de tablas, invariantes, RLS y flujos transaccionales |
 | [`docs/03-pitch-deck-3min.md`](docs/03-pitch-deck-3min.md) | Guion slide a slide, coreografía del demo, economics y Q&A |
 | [`docs/04-como-ejecutar.md`](docs/04-como-ejecutar.md) | Cómo correr los tests, el demo TOTP y el esquema en Supabase |
-| [`web/index.html`](web/index.html) | **Demo navegable completo** (aforo, QR, escáner, mercado de entradas, barra, radar, taxi de vuelta en grupo, álbum y recap) |
+| [`web/index.html`](web/index.html) | **Demo navegable completo** (login, aforo, QR, escáner, mercado de entradas, radar, taxi de vuelta en grupo, álbum y recap) |
 | [`web/README.md`](web/README.md) | Cómo abrir el demo HTML y guion de 90 segundos |
 | [`db/schema.sql`](db/schema.sql) | Esquema PostgreSQL/Supabase completo (PostGIS, RLS, RPCs) |
-| [`db/seed.sql`](db/seed.sql) | Datos de demo: local, evento, tiers, carta de barra, álbum |
+| [`db/seed.sql`](db/seed.sql) | Datos de demo: local, evento, tiers y aforo de arranque |
 | [`lib/totp.ts`](lib/totp.ts) | TOTP de 10 s + payload QR + verificación anti-replay |
 
 ## Demo rápido
@@ -33,9 +33,10 @@ python3 -m http.server 8081
 
 Y abre <http://localhost:8081> en el navegador. **No abras `index.html` con doble
 clic** (`file://`): la cámara y el `BroadcastChannel` necesitan `http://localhost`.
-No necesita Supabase ni build: el aforo, el QR TOTP, el escáner, la reventa, el
-taxi y el álbum funcionan en local. El panel del local se abre con el icono de
-barras (arriba a la derecha) y se sincroniza por `BroadcastChannel`.
+No necesita Supabase ni build: el login local, el aforo, el QR TOTP, el escáner,
+el mercado de entradas, el taxi y el álbum funcionan en local. El panel del local
+se abre con el icono del panel (arriba a la derecha) y se sincroniza por
+`BroadcastChannel`.
 
 ## Las 5 decisiones que definen el MVP
 
@@ -51,7 +52,7 @@ barras (arriba a la derecha) y se sincroniza por `BroadcastChannel`.
 |---|---|---|---|
 | 0–4 h | Design system, navegación, contratos de API | Proyecto Supabase, esquema, RLS, seed | Guion del demo, 8 assets del álbum |
 | 4–14 h | Home/aforo, ticket TOTP, cola + geofence | RPCs de cola/escaneo, Realtime, Storage | Flujo end-to-end, copy, pantallas del panel |
-| 14–22 h | Escáner portero, comanda, radar, taxi | P2P atómico, TOTP, álbum + unlock | Micro-interacciones, vídeo recap (Shotstack) |
+| 14–22 h | Escáner portero, login, radar, taxi | P2P atómico, TOTP, álbum + unlock | Micro-interacciones, vídeo recap (Shotstack) |
 | 22–28 h | Integración, push, estados de error | Idempotencia, rate limit, observabilidad | Ensayo 1, métricas en pantalla |
 | 28–34 h | **Feature freeze**, pulido, modo offline | Carga, backups, feature flags | Ensayo 2 y 3, plan B grabado |
 | 34–36 h | Buffer | Buffer | Buffer |

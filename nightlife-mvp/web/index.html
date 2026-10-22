@@ -380,42 +380,6 @@
   .scan-result.bad .big{color:var(--bad)}
   .scan-result small{color:var(--mute);font-size:11px;line-height:1.4;display:block}
 
-  /* ---------------- bar ---------------- */
-  .menu{display:grid;gap:8px;margin-top:14px}
-  .menu-item{
-    display:flex;align-items:center;gap:12px;padding:12px;
-    border-radius:17px;background:rgba(255,255,255,.035);border:1px solid var(--line);
-  }
-  .menu-item .em{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:19px;background:rgba(255,255,255,.05);flex:0 0 auto}
-  .menu-item .info{flex:1;min-width:0}
-  .menu-item b{display:block;font-size:12.5px}
-  .menu-item small{display:block;color:var(--dim);font-size:10px;margin-top:1px}
-  .menu-item .price{font-weight:800;font-size:12px;margin-left:2px}
-  .qty{display:flex;align-items:center;gap:4px}
-  .qty button{width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.07);border:1px solid var(--line);font-size:15px;line-height:1;display:grid;place-items:center}
-  .qty button:active{transform:scale(.94)}
-  .qty span{width:18px;text-align:center;font-size:12px;font-weight:800}
-  .cart{
-    position:absolute;left:18px;right:18px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:26;padding:13px 14px;
-    border-radius:18px;background:rgba(18,18,29,.94);border:1px solid var(--line2);
-    backdrop-filter:blur(18px);display:flex;align-items:center;gap:12px;
-  }
-  .cart .total{flex:1}
-  .cart .total small{display:block;color:var(--dim);font-size:9px;letter-spacing:.12em;font-weight:800}
-  .cart .total strong{font-size:19px;letter-spacing:-.03em}
-  .cart .btn{width:auto;min-height:44px;padding:0 18px}
-  .screen[data-screen="bar"]{padding-bottom:190px}
-  .order-card{
-    margin-top:14px;padding:16px;border-radius:20px;
-    background:radial-gradient(400px 150px at 50% 0%,rgba(200,255,61,.12),transparent 70%),linear-gradient(180deg,#14141f,#0e0e16);
-    border:1px solid rgba(200,255,61,.22);text-align:center;
-  }
-  .order-card .code{font-size:38px;font-weight:900;letter-spacing:.06em;color:var(--lime);margin:6px 0 2px}
-  .order-card .status{font-size:11px;color:var(--mute)}
-  .order-progress{display:flex;gap:5px;margin-top:12px}
-  .order-progress i{height:4px;flex:1;border-radius:99px;background:rgba(255,255,255,.1)}
-  .order-progress i.done{background:var(--lime)}
-
   /* ---------------- album ---------------- */
   .album-head{text-align:left;margin:2px 0 14px}
   .album-head h2{margin:4px 0 3px;font-size:27px;letter-spacing:-.05em}
@@ -504,6 +468,41 @@
   body.venue-mode .stage{display:flex;align-items:center;max-width:920px;padding:28px;min-height:100dvh}
   body.venue-mode .venue-panel{display:block;width:100%}
   body.venue-mode .back-link{display:block}
+
+  /* ---------------- auth ---------------- */
+  .auth-gate{
+    position:fixed;inset:0;z-index:400;display:grid;place-items:center;padding:24px;
+    background:radial-gradient(600px 400px at 50% 0%,rgba(200,255,61,.08),transparent 70%),#050508;
+    overflow-y:auto;
+  }
+  .auth-gate.hidden{display:none}
+  .auth-card{
+    width:min(390px,100%);padding:26px 22px;border-radius:26px;
+    background:linear-gradient(180deg,#171724,#0c0c14);border:1px solid var(--line2);
+    box-shadow:0 30px 90px rgba(0,0,0,.5);
+  }
+  .auth-brand{font-size:28px;font-weight:900;letter-spacing:-.055em}
+  .auth-brand span{color:var(--lime)}
+  .auth-card h1{margin:18px 0 3px;font-size:23px;letter-spacing:-.045em}
+  .auth-card>p{margin:0;color:var(--mute);font-size:12px}
+  .auth-card .seg{margin-top:18px}
+  .auth-form{display:grid;gap:10px;margin-top:14px}
+  .auth-form label{display:grid;gap:5px;font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--dim);text-transform:uppercase}
+  .auth-input{
+    width:100%;min-height:44px;background:rgba(255,255,255,.05);border:1px solid var(--line);
+    border-radius:12px;padding:0 12px;font-size:13px;letter-spacing:0;text-transform:none;
+    color:var(--text);outline:none;
+  }
+  .auth-input:focus{border-color:rgba(200,255,61,.45)}
+  .auth-form .btn{margin-top:4px}
+  .auth-error{font-size:10.5px;color:#ffb3bc;background:rgba(255,92,108,.08);border:1px solid rgba(255,92,108,.25);border-radius:10px;padding:8px 10px;line-height:1.4}
+  .auth-demo{margin-top:8px}
+  .auth-legal{font-size:9.5px;color:var(--dim);line-height:1.5;margin:14px 0 0;text-align:center}
+  .account-card{display:flex;align-items:center;gap:12px;padding:14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+  .account-card .avatar{width:48px;height:48px}
+  .account-card b{display:block;font-size:14px}
+  .account-card small{display:block;color:var(--dim);font-size:10.5px;margin-top:2px}
+  body.venue-mode .auth-gate{display:none}
 
   /* ---------------- modal ---------------- */
   .overlay{
@@ -722,6 +721,47 @@
 </style>
 </head>
 <body>
+<div class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <div class="auth-brand">NOCHE<span>.</span></div>
+    <h1 id="authTitle">Vuelve a entrar</h1>
+    <p id="authSub">La noche, sin fricción.</p>
+
+    <div class="seg" id="authTabs" role="tablist" aria-label="Entrar o crear cuenta">
+      <button class="seg-btn active" data-auth-tab="login" type="button">Entrar</button>
+      <button class="seg-btn" data-auth-tab="signup" type="button">Crear cuenta</button>
+    </div>
+
+    <form class="auth-form" id="loginForm" novalidate>
+      <label>Email
+        <input class="auth-input" id="loginEmail" type="email" autocomplete="email" placeholder="tucorreo@noche.app" required>
+      </label>
+      <label>Contraseña
+        <input class="auth-input" id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••" required>
+      </label>
+      <div class="auth-error hidden" id="loginError" role="alert"></div>
+      <button class="btn primary" type="submit">Entrar</button>
+    </form>
+
+    <form class="auth-form hidden" id="signupForm" novalidate>
+      <label>Nombre
+        <input class="auth-input" id="signupName" type="text" autocomplete="name" placeholder="Tu nombre" required>
+      </label>
+      <label>Email
+        <input class="auth-input" id="signupEmail" type="email" autocomplete="email" placeholder="tucorreo@noche.app" required>
+      </label>
+      <label>Contraseña
+        <input class="auth-input" id="signupPassword" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres" required>
+      </label>
+      <div class="auth-error hidden" id="signupError" role="alert"></div>
+      <button class="btn primary" type="submit">Crear cuenta</button>
+    </form>
+
+    <button class="btn ghost auth-demo" id="btnDemoLogin" type="button">Entrar como Lucía · demo</button>
+    <p class="auth-legal">Sesión local de demo. En producción la gestiona Supabase Auth.</p>
+  </div>
+</div>
+
 <div class="stage">
   <div class="phone-shell">
     <div class="phone">
@@ -729,6 +769,9 @@
       <header class="topbar">
         <div class="brand">NOCHE<span>.</span></div>
         <div class="top-actions">
+          <button class="icon-btn" id="btnAccount" data-modal="account" title="Mi cuenta" aria-label="Mi cuenta">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+          </button>
           <a class="icon-btn" href="security.html" title="DevTrust · Security Lab" aria-label="Security Lab">
             <svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>
           </a>
@@ -790,15 +833,15 @@
             <button class="queue-link hidden" id="btnLeaveQueue">Salir de la cola</button>
           </div>
 
-          <div class="quick-title"><span>Esta noche</span><small>5 módulos activos</small></div>
+          <div class="quick-title"><span>Esta noche</span><small>4 módulos activos</small></div>
           <div class="quick-grid">
             <button class="quick" data-go="taxi">
               <span class="ico"><svg viewBox="0 0 24 24"><path d="M5 17h14M6 17l-1-5 2-5h10l2 5-1 5M7 17v2M17 17v2"/><circle cx="7.5" cy="14.5" r="1"/><circle cx="16.5" cy="14.5" r="1"/></svg></span>
               <b>Taxi de vuelta</b><small id="taxiHint">~14 € entre 3</small>
             </button>
-            <button class="quick" data-go="bar">
-              <span class="ico"><svg viewBox="0 0 24 24"><path d="M8 22h8M12 11v11M5 3h14l-7 8-7-8Z"/></svg></span>
-              <b>Comanda express</b><small>Sin fila en la barra</small>
+            <button class="quick" data-modal="account">
+              <span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
+              <b>Mi cuenta</b><small id="accountHint">Lucía · sesión activa</small>
             </button>
             <button class="quick" data-modal="radar">
               <span class="ico"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8Z"/></svg></span>
@@ -1014,26 +1057,6 @@
           <p class="notice"><b>Cómo se calcula:</b> cada escaneo de entrada suma 1 y cada salida resta 1. El contador se actualiza en tiempo real y bloquea nuevos accesos al alcanzar el aforo legal.</p>
         </section>
 
-        <!-- ================= BAR ================= -->
-        <section class="screen" data-screen="bar">
-          <div class="screen-head">
-            <span class="label">Dentro del local</span>
-            <h2>Comanda express</h2>
-            <p>Pide desde aquí. Recoges en barra sin hacer fila.</p>
-          </div>
-
-          <div class="order-card hidden" id="barOrderCard">
-            <span class="label">Tu pedido</span>
-            <div class="code" id="barOrderCode">N-000</div>
-            <div class="status" id="barOrderStatus">Preparando…</div>
-            <div class="order-progress" id="barOrderProgress"><i></i><i></i><i></i></div>
-            <div style="font-size:10px;color:var(--dim);margin-top:9px">Enseña este código en la barra · <span id="barOrderTotal">0,00 €</span></div>
-          </div>
-
-          <div class="menu" id="menuList"></div>
-
-        </section>
-
         <!-- ================= ALBUM ================= -->
         <section class="screen" data-screen="album">
           <div class="album-head">
@@ -1146,14 +1169,6 @@
         </section>
       </main>
 
-      <div class="cart hidden" id="cartBar">
-        <div class="total">
-          <small>TOTAL</small>
-          <strong id="cartTotal">0,00 €</strong>
-        </div>
-        <button class="btn primary" id="btnOrder">Pedir</button>
-      </div>
-
       <nav class="tabbar" aria-label="Navegación principal">
         <button class="tab active" data-go="home">
           <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Noche
@@ -1199,7 +1214,7 @@
       <div class="panel-stat"><small>EN COLA</small><b id="panelQueue">38</b></div>
       <div class="panel-stat"><small>ESPERA</small><b id="panelWait">14 min</b></div>
       <div class="panel-stat"><small>ENTRADAS</small><b id="panelScans">0</b></div>
-      <div class="panel-stat"><small>BARRA</small><b id="panelRevenue">216 €</b></div>
+      <div class="panel-stat"><small>LIBRES</small><b id="panelFree">63</b></div>
     </div>
 
     <div class="panel-section">
@@ -1264,7 +1279,7 @@
       </div>
       <div class="profile">
         <div class="avatar">N</div>
-        <div class="info"><b>Noa · 25</b><small>a 65 m · barra</small><div class="tags"><i>pop</i><i>fotos</i><i>taxi</i></div></div>
+        <div class="info"><b>Noa · 25</b><small>a 65 m · sala 2</small><div class="tags"><i>pop</i><i>fotos</i><i>taxi</i></div></div>
         <button class="like-btn" data-like="noa" aria-label="Me gusta Noa"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8Z"/></svg></button>
       </div>
       <div class="profile">
@@ -1282,6 +1297,26 @@
       <button class="btn primary" data-go="taxi">Compartir taxi con Álex</button>
     </div>
     <p class="notice">El radar no muestra ubicación exacta ni permite capturas. Los matches caducan en 24 h.</p>
+  </div>
+
+  <!-- account -->
+  <div class="sheet" data-sheet="account">
+    <div class="sheet-head">
+      <div><h3>Mi cuenta</h3><p>Sesión de usuario de NOCHE.</p></div>
+      <button class="close-x" data-close aria-label="Cerrar">✕</button>
+    </div>
+    <div class="account-card">
+      <div class="avatar" id="accountAvatar">L</div>
+      <div><b id="accountName">Lucía</b><small id="accountEmail">lucia@noche.app</small></div>
+    </div>
+    <div class="metric-row"><span>Tipo de sesión</span><b>Demo local</b></div>
+    <div class="metric-row"><span>Miembro desde</span><b id="accountSince">Hoy</b></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn primary" data-go="ticket" type="button">Mis entradas</button>
+      <button class="btn ghost" data-go="aforo" type="button">Ver aforo</button>
+    </div>
+    <button class="btn ghost danger" id="btnLogout" type="button">Cerrar sesión</button>
+    <p class="notice">En producción esta sesión la gestiona Supabase Auth con email/contraseña o magic link.</p>
   </div>
 
   <!-- recap -->
@@ -1329,7 +1364,7 @@
     <div class="help-step"><div class="n">2</div><div><b>Captura antigua</b><small>Entrada → “Simular captura” → “Escanear esta captura”. El servidor la rechaza.</small></div></div>
     <div class="help-step"><div class="n">3</div><div><b>Mercado de entradas</b><small>Entradas → Comprar / Vender / Mis entradas. El precio no pasa del 110 % y el aforo se ve en vivo.</small></div></div>
     <div class="help-step"><div class="n">4</div><div><b>Night recap</b><small>Álbum → “Modo demo · revelar ahora” → “Ver recap”.</small></div></div>
-    <div class="help-step"><div class="n">5</div><div><b>Panel del local</b><small>Icono de barras arriba a la derecha: abre el panel en otra pestaña y sincroniza por BroadcastChannel.</small></div></div>
+    <div class="help-step"><div class="n">5</div><div><b>Panel del local</b><small>Icono del panel arriba a la derecha: ábrelo en otra pestaña y se sincroniza por BroadcastChannel.</small></div></div>
     <div class="help-step"><div class="n">6</div><div><b>Taxi de vuelta</b><small>Pestaña Taxi → crea el grupo (o únete con NOCHE-247) → reserva → comparte viaje con PIN y matrícula.</small></div></div>
     <p class="notice" style="margin-top:16px">Atajos: <span class="kbd">1</span>–<span class="kbd">6</span> pestañas · <span class="kbd">T</span> taxi · <span class="kbd">S</span> escanear · <span class="kbd">X</span> captura vieja · <span class="kbd">R</span> revelar · <span class="kbd">?</span> ayuda</p>
     <p class="notice"><b>DevTrust Security Lab:</b> auditoría del módulo Taxi de NightApp, exploit SQLi y parche en 1 clic. <a href="security.html" style="color:var(--lime)">Abrir caso →</a></p>
@@ -1466,8 +1501,6 @@
     marketTab: 'buy',
     sellTicketId: 'lucia',
     albumUnlocked: false,
-    barOrder: null,
-    revenue: 216,
     match: false,
     taxiGroup: null,
     ride: null
@@ -1556,16 +1589,11 @@
   const panelQueue = $('#panelQueue');
   const panelWait = $('#panelWait');
   const panelScans = $('#panelScans');
-  const panelRevenue = $('#panelRevenue');
+  const panelFree = $('#panelFree');
   const panelCap = $('#panelCap');
   const albumLocked = $('#albumLocked');
   const albumOpen = $('#albumOpen');
   const albumCountdown = $('#albumCountdown');
-  const barOrderCard = $('#barOrderCard');
-  const barOrderCode = $('#barOrderCode');
-  const barOrderStatus = $('#barOrderStatus');
-  const barOrderTotal = $('#barOrderTotal');
-  const barOrderProgress = $('#barOrderProgress');
   let lastOcc = null;
 
   /* ---------- update UI ---------- */
@@ -1631,7 +1659,7 @@
     panelQueue.textContent = state.waiting;
     panelWait.textContent = state.wait + ' min';
     panelScans.textContent = state.scans.filter(s => s.result === 'ok').length;
-    panelRevenue.textContent = state.revenue + ' €';
+    panelFree.textContent = Math.max(0, state.capacity - state.occupancy);
 
     if (lastOcc !== null && state.occupancy > lastOcc) pulseOccupancy();
     lastOcc = state.occupancy;
@@ -1660,18 +1688,6 @@
     }
 
     renderScanLog();
-
-    if (state.barOrder) {
-      barOrderCard.classList.remove('hidden');
-      barOrderCode.textContent = state.barOrder.code;
-      barOrderTotal.textContent = eur(state.barOrder.total);
-      const ready = state.barOrder.status === 'ready';
-      barOrderStatus.textContent = ready ? 'Listo para recoger en barra' : 'Preparando…';
-      const prog = $$('i', barOrderProgress);
-      prog.forEach((el, i) => el.classList.toggle('done', ready || i === 0));
-    } else {
-      barOrderCard.classList.add('hidden');
-    }
 
     if (state.albumUnlocked) {
       albumLocked.classList.add('hidden');
@@ -1738,8 +1754,6 @@
     if (name !== 'scan') stopCamera();
     if (name === 'album') updateCountdown();
     if (name === 'taxi') renderTaxi();
-    const cartBar = $('#cartBar');
-    if (cartBar) cartBar.classList.toggle('hidden', name !== 'bar');
   }
 
   document.addEventListener('click', (e) => {
@@ -1754,6 +1768,7 @@
 
   document.addEventListener('keydown', (e) => {
     if (e.target.matches('input, textarea')) return;
+    if (!currentSession && !isVenue) return;
     if (e.key >= '1' && e.key <= '6') {
       showScreen(['home', 'ticket', 'taxi', 'scan', 'aforo', 'album'][Number(e.key) - 1]);
     } else if (e.key.toLowerCase() === 's') { scanCurrent(); }
@@ -2201,89 +2216,10 @@
     await processPayload(shotPayload, 'screenshot');
   });
 
-  /* ---------- barra ---------- */
-  const MENU = [
-    { id: 'copa', name: 'Copa nacional', desc: 'Ginebra, ron o vodka', price: 1200, emoji: '🥃' },
-    { id: 'premium', name: 'Copa premium', desc: 'Tanqueray / Jack Daniel’s', price: 1500, emoji: '🍸' },
-    { id: 'cerveza', name: 'Cerveza', desc: 'Estrella Galicia', price: 600, emoji: '🍺' },
-    { id: 'agua', name: 'Agua', desc: '50 cl', price: 300, emoji: '💧' },
-    { id: 'shots', name: 'Shots x3', desc: 'Para el grupo', price: 900, emoji: '🥂' }
-  ];
-  let cart = {};
-
-  function renderMenu() {
-    $('#menuList').innerHTML = MENU.map(item => `
-      <div class="menu-item">
-        <div class="em">${item.emoji}</div>
-        <div class="info"><b>${item.name}</b><small>${item.desc}</small></div>
-        <span class="price">${eur(item.price)}</span>
-        <div class="qty">
-          <button data-sub="${item.id}" aria-label="Quitar ${item.name}">−</button>
-          <span id="qty-${item.id}">0</span>
-          <button data-add="${item.id}" aria-label="Añadir ${item.name}">+</button>
-        </div>
-      </div>`).join('');
-  }
-
-  function cartTotal() {
-    return Object.entries(cart).reduce((sum, [id, qty]) => {
-      const item = MENU.find(m => m.id === id);
-      return sum + (item ? item.price * qty : 0);
-    }, 0);
-  }
-
-  function renderCart() {
-    MENU.forEach(m => {
-      const el = $('#qty-' + m.id);
-      if (el) el.textContent = cart[m.id] || 0;
-    });
-    $('#cartTotal').textContent = eur(cartTotal());
-    $('#btnOrder').disabled = cartTotal() === 0;
-  }
-
-  $('#menuList').addEventListener('click', (e) => {
-    const add = e.target.closest('[data-add]');
-    const sub = e.target.closest('[data-sub]');
-    if (add) { cart[add.dataset.add] = (cart[add.dataset.add] || 0) + 1; renderCart(); }
-    if (sub) {
-      const id = sub.dataset.sub;
-      cart[id] = Math.max(0, (cart[id] || 0) - 1);
-      if (!cart[id]) delete cart[id];
-      renderCart();
-    }
-  });
-
-  $('#btnOrder').addEventListener('click', () => {
-    const total = cartTotal();
-    if (!total) return;
-    const code = 'N-' + String(Math.floor(100 + Math.random() * 900));
-    state.barOrder = { code, total, status: 'preparing', at: Date.now() };
-    state.revenue += Math.round(total / 100);
-    cart = {};
-    renderCart();
-    persist();
-    toast('Pedido enviado a barra · ' + code);
-    setTimeout(() => {
-      if (state.barOrder && state.barOrder.code === code) {
-        state.barOrder.status = 'ready';
-        persist();
-        toast('Pedido listo · recógelo en barra');
-      }
-    }, 6000);
-  });
-
-  function syncBarOrder() {
-    if (state.barOrder && state.barOrder.status !== 'ready' && Date.now() - state.barOrder.at > 6000) {
-      state.barOrder.status = 'ready';
-      persist();
-    }
-  }
-  setInterval(syncBarOrder, 1000);
-
   /* ---------- álbum ---------- */
   const PHOTOS = [
     { src: 'assets/photo-1.jpg', time: '03:47', title: 'Llegamos', sub: 'La noche empieza' },
-    { src: 'assets/photo-2.jpg', time: '04:02', title: 'Primera ronda', sub: 'La barra estaba a tope' },
+    { src: 'assets/photo-2.jpg', time: '04:02', title: 'Primera ronda', sub: 'La sala estaba a tope' },
     { src: 'assets/photo-3.jpg', time: '04:18', title: 'Sala principal', sub: 'El drop que lo cambió todo' },
     { src: 'assets/photo-4.jpg', time: '04:41', title: 'Detrás del booth', sub: 'El DJ nos dejó pasar' },
     { src: 'assets/photo-5.jpg', time: '05:03', title: 'Una más', sub: 'Cocktail de despedida' },
@@ -2834,6 +2770,175 @@
     }
   });
 
+  /* ---------- autenticación ---------- */
+  const SESSION_KEY = 'noche-session-v1';
+  const USERS_KEY = 'noche-users-v1';
+  const DEMO_USER = { name: 'Lucía', email: 'lucia@noche.app', password: 'noche123' };
+  let currentSession = null;
+
+  function readStored(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function writeStored(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+  }
+
+  async function hashPassword(password) {
+    if (window.crypto?.subtle) {
+      const data = new TextEncoder().encode(password);
+      const digest = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    let hash = 0;
+    for (const char of password) hash = (hash * 31 + char.charCodeAt(0)) | 0;
+    return 'fallback-' + Math.abs(hash);
+  }
+
+  const getUsers = () => readStored(USERS_KEY, []);
+  const saveUsers = (users) => writeStored(USERS_KEY, users);
+
+  async function ensureDemoUser() {
+    const users = getUsers();
+    if (users.some(u => u.email === DEMO_USER.email)) return;
+    users.push({
+      name: DEMO_USER.name,
+      email: DEMO_USER.email,
+      passwordHash: await hashPassword(DEMO_USER.password),
+      at: Date.now()
+    });
+    saveUsers(users);
+  }
+
+  function updateAccountUI() {
+    const user = currentSession || { name: 'Invitado', email: 'Sin sesión' };
+    const initial = (user.name || '?').trim().charAt(0).toUpperCase();
+    const set = (selector, text) => {
+      const el = $(selector);
+      if (el) el.textContent = text;
+    };
+    set('#accountAvatar', initial);
+    set('#accountName', user.name);
+    set('#accountEmail', user.email);
+    set('#accountHint', currentSession ? `${user.name} · sesión activa` : 'Entrar en NOCHE');
+    set('#accountSince', currentSession
+      ? new Date(currentSession.at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
+      : '—');
+  }
+
+  function setAuthTab(tab) {
+    $$('#authTabs .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.authTab === tab));
+    $('#loginForm').classList.toggle('hidden', tab !== 'login');
+    $('#signupForm').classList.toggle('hidden', tab !== 'signup');
+    $('#authTitle').textContent = tab === 'login' ? 'Vuelve a entrar' : 'Crea tu cuenta';
+    $('#authSub').textContent = tab === 'login' ? 'La noche, sin fricción.' : 'Una cuenta para toda la noche.';
+    $('#loginError').classList.add('hidden');
+    $('#signupError').classList.add('hidden');
+  }
+
+  function showAuthGate(tab = 'login') {
+    setAuthTab(tab);
+    $('#authGate').classList.remove('hidden');
+    setTimeout(() => (tab === 'login' ? $('#loginEmail') : $('#signupName'))?.focus(), 60);
+  }
+
+  function hideAuthGate() {
+    $('#authGate').classList.add('hidden');
+  }
+
+  function showAuthError(selector, message) {
+    const el = $(selector);
+    el.textContent = message;
+    el.classList.remove('hidden');
+  }
+
+  function startSession(user) {
+    currentSession = { name: user.name, email: user.email, at: Date.now() };
+    writeStored(SESSION_KEY, currentSession);
+    updateAccountUI();
+    hideAuthGate();
+  }
+
+  async function signIn(email, password) {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized) throw new Error('Escribe tu email.');
+    if (!password) throw new Error('Escribe tu contraseña.');
+    const user = getUsers().find(u => u.email.toLowerCase() === normalized);
+    if (!user) throw new Error('No existe una cuenta con ese email.');
+    const passwordHash = await hashPassword(password);
+    if (passwordHash !== user.passwordHash) throw new Error('Contraseña incorrecta.');
+    startSession(user);
+    toast('Bienvenida, ' + user.name);
+    confetti();
+  }
+
+  async function signUp(name, email, password) {
+    const cleanName = name.trim();
+    const normalized = email.trim().toLowerCase();
+    if (cleanName.length < 2) throw new Error('Escribe tu nombre.');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(normalized)) throw new Error('El email no es válido.');
+    if (password.length < 6) throw new Error('La contraseña necesita al menos 6 caracteres.');
+    const users = getUsers();
+    if (users.some(u => u.email.toLowerCase() === normalized)) throw new Error('Ese email ya tiene una cuenta.');
+    const user = {
+      name: cleanName,
+      email: normalized,
+      passwordHash: await hashPassword(password),
+      at: Date.now()
+    };
+    users.push(user);
+    saveUsers(users);
+    startSession(user);
+    toast('Cuenta creada · bienvenido, ' + user.name);
+    confetti();
+  }
+
+  $('#authTabs').addEventListener('click', (e) => {
+    const tab = e.target.closest('[data-auth-tab]');
+    if (tab) setAuthTab(tab.dataset.authTab);
+  });
+
+  $('#loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      await signIn($('#loginEmail').value, $('#loginPassword').value);
+    } catch (error) {
+      showAuthError('#loginError', error.message);
+    }
+  });
+
+  $('#signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      await signUp($('#signupName').value, $('#signupEmail').value, $('#signupPassword').value);
+    } catch (error) {
+      showAuthError('#signupError', error.message);
+    }
+  });
+
+  $('#btnDemoLogin').addEventListener('click', async () => {
+    await ensureDemoUser();
+    try {
+      await signIn(DEMO_USER.email, DEMO_USER.password);
+    } catch (error) {
+      showAuthError('#loginError', error.message);
+    }
+  });
+
+  $('#btnLogout').addEventListener('click', () => {
+    currentSession = null;
+    try { localStorage.removeItem(SESSION_KEY); } catch {}
+    updateAccountUI();
+    closeModal();
+    showAuthGate('login');
+    toast('Sesión cerrada');
+  });
+
   /* ---------- modal ---------- */
   const modalRoot = $('#modalRoot');
 
@@ -2877,14 +2982,12 @@
   /* ---------- reset ---------- */
   function resetDemo() {
     state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-    cart = {};
-    taxiDraft = { time: '04:30', dest: 'Malasaña', members: ['lucia', 'mario', 'noa'] };
+    taxiDraft = { time: '04:30', members: ['lucia', 'mario', 'noa'] };
     albumRendered = false;
     $('#albumGrid').innerHTML = '';
     const grid = $('#blurGrid');
     if (grid) { grid.dataset.done = ''; grid.innerHTML = ''; }
     renderBlurGrid();
-    renderCart();
     scanResult.className = 'scan-result';
     scanResult.innerHTML = '';
     closeModal();
@@ -2925,9 +3028,14 @@
   const isVenue = new URLSearchParams(location.search).get('mode') === 'venue';
   if (isVenue) document.body.classList.add('venue-mode');
 
+  /* ---------- sesión ---------- */
+  currentSession = readStored(SESSION_KEY, null);
+  updateAccountUI();
+  if (isVenue || currentSession) hideAuthGate();
+  else showAuthGate('login');
+  ensureDemoUser();
+
   /* ---------- init ---------- */
-  renderMenu();
-  renderCart();
   renderBlurGrid();
   updateUI();
   updateCountdown();

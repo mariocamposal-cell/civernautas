@@ -26,7 +26,6 @@ create type public.scan_direction   as enum ('in','out');
 create type public.scan_result      as enum ('ok','duplicate','invalid','expired','wrong_event','capacity_full','revoked','not_found');
 create type public.queue_status     as enum ('waiting','called','entered','expired','cancelled');
 create type public.fastpass_status  as enum ('purchased','used','expired','refunded');
-create type public.bar_status       as enum ('pending','preparing','ready','delivered','cancelled');
 create type public.media_kind       as enum ('photo','video');
 create type public.moderation_status as enum ('pending','approved','rejected');
 create type public.album_status     as enum ('collecting','sealed','revealed','archived');
@@ -34,7 +33,7 @@ create type public.recap_status     as enum ('queued','rendering','ready','faile
 create type public.ride_status      as enum ('draft','scheduled','searching','assigned','arriving','in_progress','completed','cancelled');
 create type public.split_mode       as enum ('organizer','equal');
 create type public.ride_pay_status  as enum ('pending','paid','waived');
-create type public.payment_kind     as enum ('ticket','resale','fast_pass','bar','ride');
+create type public.payment_kind     as enum ('ticket','resale','fast_pass','ride');
 create type public.payment_status   as enum ('requires_capture','captured','refunded','failed','cancelled');
 create type public.account_type     as enum ('user','platform','escrow');
 
@@ -422,44 +421,7 @@ create table public.group_members (
 );
 
 -- ---------------------------------------------------------------------------
--- 10. Barra
--- ---------------------------------------------------------------------------
-create table public.bar_items (
-  id          uuid primary key default gen_random_uuid(),
-  event_id    uuid not null references public.events(id) on delete cascade,
-  name        text not null,
-  category    text not null default 'drink',
-  price_cents int not null check (price_cents >= 0),
-  stock       int check (stock is null or stock >= 0),
-  active      boolean not null default true
-);
-
-create table public.bar_orders (
-  id          uuid primary key default gen_random_uuid(),
-  event_id    uuid not null references public.events(id) on delete cascade,
-  user_id     uuid not null references public.profiles(id) on delete restrict,
-  group_id    uuid references public.groups(id) on delete set null,
-  status      public.bar_status not null default 'pending',
-  pickup_code text not null,
-  qr_table    text,
-  total_cents int not null default 0,
-  created_at  timestamptz not null default now(),
-  ready_at    timestamptz,
-  delivered_at timestamptz
-);
-create index on public.bar_orders (event_id, status, created_at);
-
-create table public.bar_order_items (
-  id               uuid primary key default gen_random_uuid(),
-  order_id         uuid not null references public.bar_orders(id) on delete cascade,
-  item_id          uuid not null references public.bar_items(id) on delete restrict,
-  name_snapshot    text not null,
-  qty              int not null check (qty > 0),
-  unit_price_cents int not null check (unit_price_cents >= 0)
-);
-
--- ---------------------------------------------------------------------------
--- 11. Radar social efímero
+-- 10. Radar social efímero
 -- ---------------------------------------------------------------------------
 create table public.social_optins (
   event_id   uuid not null references public.events(id) on delete cascade,
@@ -1339,7 +1301,7 @@ begin
     'app_settings','profiles','venues','events','venue_live','ticket_tiers',
     'orders','tickets','ticket_listings','payments','ledger_entries',
     'scan_events','queue_entries','fast_passes','groups','group_members',
-    'bar_items','bar_orders','bar_order_items','social_optins','social_matches',
+    'social_optins','social_matches',
     'albums','album_members','media_assets','recaps','ride_bookings',
     'ride_participants','notifications','audit_log'
   ] loop
@@ -1352,7 +1314,6 @@ create policy venues_read on public.venues for select to anon, authenticated usi
 create policy events_read on public.events for select to anon, authenticated using (true);
 create policy tiers_read  on public.ticket_tiers for select to anon, authenticated using (true);
 create policy live_read   on public.venue_live for select to anon, authenticated using (true);
-create policy bar_items_read on public.bar_items for select to authenticated using (active);
 
 -- Perfil: visible para usuarios autenticados (sin datos de pago)
 revoke select (stripe_account_id) on public.profiles from anon, authenticated;
@@ -1398,12 +1359,6 @@ create policy group_members_read on public.group_members for select to authentic
   using (user_id = auth.uid() or public.is_group_member(group_id));
 create policy group_members_insert_self on public.group_members for insert to authenticated
   with check (user_id = auth.uid());
-
--- Barra
-create policy bar_orders_read_own on public.bar_orders for select to authenticated
-  using (user_id = auth.uid());
-create policy bar_items_read_own on public.bar_order_items for select to authenticated
-  using (exists (select 1 from public.bar_orders o where o.id = order_id and o.user_id = auth.uid()));
 
 -- Radar
 create policy social_optin_own on public.social_optins for select to authenticated

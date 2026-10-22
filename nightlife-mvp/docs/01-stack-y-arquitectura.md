@@ -8,7 +8,7 @@
 |---|---|---|
 | Framework | **Expo SDK (React Native) + TypeScript** | Un código iOS/Android, OTA updates, desarrollo en Expo Go sin builds nativas |
 | Navegación | **Expo Router** | Rutas por ficheros, deep links (`noche://evento/:id`) gratis |
-| Estado servidor | **TanStack Query** | Cache, retries, optimistic updates para cola y comanda |
+| Estado servidor | **TanStack Query** | Cache, retries, optimistic updates para cola y mercado |
 | Estado local | **Zustand + MMKV** | Persistencia síncrona del ticket y del modo offline |
 | UI | **NativeWind + design tokens propios** | Iterar pantallas en minutos; dark mode "neón" consistente |
 | QR propio | `react-native-qrcode-svg` | Render local, sin dependencias nativas |
@@ -68,7 +68,7 @@
 │  App invitado (Expo) │        │  App portero (Expo)  │
 │  · aforo / cola      │        │  · cámara QR         │
 │  · ticket TOTP       │        │  · +1 / -1 aforo     │
-│  · comanda / radar   │        │  · modo offline      │
+│  · mercado / radar   │        │  · modo offline      │
 │  · álbum / recap     │        └──────────┬───────────┘
 └──────────┬───────────┘                   │
            │ HTTPS / WSS                   │
@@ -273,7 +273,7 @@ H0 ─── esquema + seed + contratos TS ─── H4
         ├── auth + home + aforo ───────── H12
         ├── ticket TOTP + escáner ─────── H16
         ├── cola + geofence ───────────── H20
-        ├── P2P + comanda + radar ─────── H26
+        ├── P2P + mercado + radar ─────── H26
         ├── álbum + unlock + recap ────── H30
         └── ensayo + plan B ───────────── H34
 ```
@@ -287,7 +287,7 @@ H0 ─── esquema + seed + contratos TS ─── H4
 | P2P | Transacción real | Pago con Stripe test |
 | Cola | Posición real | Bots de otros asistentes |
 | Geofence | PostGIS real | Override para el móvil del demo |
-| Comanda | Pedido real en DB | Pago en barra |
+| Login | Sesión y cuentas locales | Supabase Auth en producción |
 | Radar | Presence real | Usuarios sembrados |
 | Recap | Render real de 8 clips | Gemini precalculado si falla la API |
 | Taxi | Reserva en DB | Deep link / proveedor |
@@ -309,6 +309,6 @@ H0 ─── esquema + seed + contratos TS ─── H4
 | % de cola virtual vs presencial | Adopción del flujo |
 | Aforo medio vs capacidad | Revenue por noche y seguridad |
 | Reventa: % tickets, precio medio, fraude | Salud del marketplace |
-| Órdenes de barra por asistente | Ticket medio dentro del local |
+| Entradas compradas o revendidas por asistente | Liquidez del mercado P2P |
 | Recap: % asistentes que suben, % que comparten | Viralidad (K-factor) |
 | NPS del local y del asistente | Retención |
