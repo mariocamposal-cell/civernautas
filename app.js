@@ -109,6 +109,7 @@ const DEFAULT = {
   scans: [],
   crowdReports: [],
   karma: 120,
+  wallet: 50,
   vault: { revealAt: 0, revealed: false, demo: false, photos: [] },
   stats: { reports: 12, escrow: 63, squads: 3 }
 };
@@ -243,6 +244,7 @@ function loadState() {
     .filter(r => isObj(r) && typeof r.club === "string" && isNum(r.level) && isNum(r.at))
     .slice(-80);
   s.karma = isNum(s.karma) ? s.karma : 120;
+  s.wallet = isNum(s.wallet) ? Math.round(clamp(s.wallet, 0, 100000) * 100) / 100 : 50;
 
   s.scans = (Array.isArray(src.scans) ? src.scans : [])
     .filter(x => isObj(x) && typeof x.club === "string").slice(0, 8);
@@ -366,6 +368,73 @@ function renderKpis() {
     <div class="kpi"><b>${sensorDevices(clubById(state.selectedClub))}</b><span>Móviles</span></div>
     <div class="kpi"><b>${eur(escrow)}</b><span>En escrow</span></div>
     <div class="kpi"><b>${state.rides.filter(r => r.taken < r.seats).length}</b><span>Squads</span></div>`;
+}
+
+/* ---------------- monedero + cuenta ---------------- */
+function renderWallet() {
+  const el = $("#walletChip");
+  if (el) el.textContent = eur(state.wallet ?? 0);
+}
+
+function topUp(amount, silent) {
+  state.wallet = Math.round(((state.wallet || 0) + amount) * 100) / 100;
+  save();
+  renderWallet();
+  if (!silent) {
+    toast(`+${eur(amount)} al monedero`, "good");
+    log(`Recarga demo · +${eur(amount)} · saldo ${eur(state.wallet)}`);
+  }
+}
+
+function openAccount() {
+  const s = readSession();
+  const email = (s && s.email) || "demo@civernautas.app";
+  const age = s ? ageFrom(s.dob) : null;
+  const mine = state.purchases.filter(p => p.status !== "refunded").length;
+
+  openSheet(`
+    <div class="sheet-head">
+      <div><h3>Tu cuenta</h3><p>Monedero, karma y sesión</p></div>
+      <button class="x-btn" data-close aria-label="Cerrar">✕</button>
+    </div>
+    <div class="acc-top">
+      <div class="acc-avatar">${esc(email.charAt(0).toUpperCase())}</div>
+      <div><b>${esc(email)}</b><small>${age ? age + " años · +18 verificado" : "Sesión demo"}</small></div>
+    </div>
+    <div class="wallet-card">
+      <span>Monedero</span>
+      <b>${eur(state.wallet)}</b>
+      <small>Saldo disponible para entradas y reservas</small>
+      <div class="topup-row">
+        <button data-topup="10">+10 €</button>
+        <button data-topup="20">+20 €</button>
+        <button data-topup="50">+50 €</button>
+      </div>
+    </div>
+    <div class="acc-rows">
+      <div><span>Karma</span><b>★ ${state.karma}</b></div>
+      <div><span>Entradas</span><b>${mine}</b></div>
+      <div><span>Ciudad</span><b>Santiago de Compostela</b></div>
+    </div>
+    <div class="acc-actions">
+      <button class="btn ghost" id="btnAccountTickets">Ver mis entradas</button>
+      <button class="btn ghost" id="btnLogout">Cerrar sesión</button>
+    </div>
+    <p class="auth-legal" style="margin-top:12px">Recargas y pagos simulados. La sesión se cierra al cerrar la app.</p>
+  `);
+
+  $$("#sheet [data-topup]").forEach(b => b.addEventListener("click", () => {
+    topUp(Number(b.dataset.topup));
+    openAccount();
+  }));
+
+  $("#btnAccountTickets").addEventListener("click", () => {
+    closeSheet();
+    setTicketTab("mine");
+    setView("tickets");
+  });
+
+  $("#btnLogout").addEventListener("click", logout);
 }
 
 /* ---------------- navegación ---------------- */
@@ -1032,6 +1101,7 @@ function openBuySheet(id) {
   if (!l) return;
   const fee = Math.round(l.price * 0.1 * 100) / 100;
   const total = Math.round((l.price + fee) * 100) / 100;
+  const enough = state.wallet >= total;
 
   openSheet(`
     <div class="sheet-head">
@@ -1042,6 +1112,7 @@ function openBuySheet(id) {
       <div class="pay-row"><span>Entrada ${esc(l.type)}</span><b>${eur(l.price)}</b></div>
       <div class="pay-row"><span>Protección escrow (10%)</span><b>${eur(fee)}</b></div>
       <div class="pay-row"><span>Vendedor recibe</span><b>${eur(l.price)}</b></div>
+      <div class="pay-row"><span>Monedero disponible</span><b class="${enough ? "" : "bad"}">${eur(state.wallet)}</b></div>
       <div class="pay-row total"><span>Total a autorizar</span><b>${eur(total)}</b></div>
     </div>
     <div class="escrow-track">
@@ -1051,30 +1122,54 @@ function openBuySheet(id) {
       <div class="esc-step" id="esc3"><div class="bullet">4</div><div class="txt"><b>Pago liberado</b><small>Solo si entras</small></div></div>
     </div>
     <div id="buyAction">
-      <button class="btn primary" id="btnPay">Pagar y retener en escrow</button>
-      <p style="font-size:9px;color:var(--tx-3);text-align:center;margin-top:8px">Demo: no se realiza ningún cargo real.</p>
+      ${enough ? `
+        <button class="btn primary" id="btnPay">Pagar con monedero · ${eur(total)}</button>
+        <p style="font-size:9px;color:var(--tx-3);text-align:center;margin-top:8px">Se descuenta del saldo. Demo sin cargo real.</p>
+      ` : `
+        <div class="pay-warn"><span>⚠️</span><span>Te faltan ${eur(total - state.wallet)} para esta entrada.</span></div>
+        <button class="btn primary" id="btnTopupBuy">Añadir 20 € y continuar</button>
+      `}
     </div>
   `);
 
-  $("#btnPay").addEventListener("click", async () => {
+  const tb = $("#btnTopupBuy");
+  if (tb) tb.addEventListener("click", () => {
+    topUp(20, true);
+    toast("Saldo añadido · elige pagar", "good");
+    openBuySheet(l.id);
+  });
+
+  const pay = $("#btnPay");
+  if (!pay) return;
+
+  pay.addEventListener("click", async () => {
     refreshFromStorage();
     if (hasActivePurchase(l.id)) {
       closeSheet();
       renderTickets();
       return toast("Ya tienes esa entrada en tu cartera", "bad");
     }
+    if (state.wallet < total) {
+      toast("Saldo insuficiente · recarga el monedero", "bad");
+      return openBuySheet(l.id);
+    }
+
     $("#buyAction").innerHTML = `<div class="btn ghost" style="justify-content:center">Autorizando pago…</div>`;
-    await sleep(1100);
+    await sleep(900);
+
+    state.wallet = Math.round((state.wallet - total) * 100) / 100;
     const p = makePurchase(l);
     state.purchases.unshift(p);
     save();
+    renderWallet();
+
     $("#esc0").classList.remove("active");
     ["esc0", "esc1"].forEach(id => $("#" + id).classList.add("done"));
     $("#esc2").classList.add("active");
     $("#buyAction").innerHTML = `
       <div class="scan-verdict ok" style="margin-bottom:11px">
         <span class="icon">🛡️</span>
-        <div><b>${eur(total)} retenidos en escrow</b><small>El vendedor cobrará cuando entres.</small></div>
+        <div><b>${eur(total)} retenidos en escrow</b><small>Saldo restante ${eur(state.wallet)} · el vendedor cobrará cuando entres.</small></div>
       </div>
       <button class="btn primary" id="btnSeeTicket">Ver mi entrada</button>`;
     $("#btnSeeTicket").addEventListener("click", () => {
@@ -1083,8 +1178,8 @@ function openBuySheet(id) {
       setView("tickets");
     });
     renderKpis();
-    log(`Compra protegida · ${l.event} · ${eur(l.price)} en escrow`);
-    toast("Pago retenido en escrow", "good");
+    log(`Compra protegida · ${l.event} · ${eur(total)} · saldo ${eur(state.wallet)}`);
+    toast(`Pagado · saldo ${eur(state.wallet)}`, "good");
   });
 }
 
@@ -1224,8 +1319,11 @@ function validateTicket(purchaseId) {
     toast(`Entrada válida · aforo ${club.name} ${club.occ}%`, "good");
   } else {
     p.status = "refunded";
-    log(`Entrada rechazada · ${p.event} · reembolso automático`);
-    toast("Entrada rechazada · reembolso emitido", "bad");
+    const back = isNum(p.total) ? p.total : p.price;
+    state.wallet = Math.round((state.wallet + back) * 100) / 100;
+    renderWallet();
+    log(`Entrada rechazada · ${p.event} · ${eur(back)} devueltos al monedero`);
+    toast(`Entrada rechazada · ${eur(back)} devueltos al monedero`, "bad");
   }
   save();
   renderKpis();
@@ -1725,12 +1823,13 @@ function initAuth() {
     $("#authForm").requestSubmit();
   });
 
-  $("#btnLogout").addEventListener("click", logout);
+  $("#btnWallet").addEventListener("click", openAccount);
 
   showAuth(!readSession());
 }
 
 function logout() {
+  closeSheet();
   clearSession();
   showAuth(true);
   setView("noche");
@@ -1757,6 +1856,7 @@ function init() {
   initMisc();
   renderLog();
   renderKpis();
+  renderWallet();
   renderSensor();
   renderDoor();
   renderHome();

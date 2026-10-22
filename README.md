@@ -24,6 +24,20 @@ se cierra sola. También hay botón de cerrar sesión en la cabecera.
 - Cuenta demo: botón **"Probar con cuenta demo"**.
 - No hay backend: es una validación de demo. La contraseña no se almacena.
 
+## Monedero y cuenta
+
+Arriba a la derecha del móvil hay un chip con el **saldo** (empieza en 50,00 €).
+Al pulsarlo se abre **Tu cuenta**:
+
+- Email y edad (+18) de la sesión.
+- Saldo, con recargas demo de +10 / +20 / +50 €.
+- Karma, entradas y ciudad.
+- Acceso a “Mis entradas” y **Cerrar sesión**.
+
+Al comprar se comprueba el saldo: si no llega, el botón de pago se sustituye por
+“Añadir 20 € y continuar”. El importe total (entrada + 10%) se descuenta del
+monedero y, si la entrada se rechaza en la puerta, se devuelve íntegro.
+
 ## Aforo híbrido
 
 El porcentaje que se muestra es una estimación ponderada:
@@ -76,11 +90,10 @@ Aforos y colas de la demo son simulados; direcciones y coordenadas, reales.
 
 1. **Noche** — Circus 94% estimado · 469/500 · espera 11 min · 47 móviles. "Ver aforo y cola".
 2. **Aforo** — contador de puerta, plazas libres y mapa con los 6 locales.
-3. **Entrada** — compra "Noche Universitaria" → "Validar en la puerta" →
-   validación instantánea: el contador sube 1 y se libera el escrow. "Entrar al
-   local" lanza el **check-in 1-tap** (+10 Karma): el aforo estimado cambia y el
-   **Panel del local** muestra el desglose. Repite con "Urban Session": QR
-   manipulado → rechazo y reembolso.
+3. **Entrada** — compra "Noche Universitaria" con el monedero: si no hay saldo,
+   recarga. "Validar en la puerta" → el contador sube 1 y se libera el escrow.
+   "Entrar al local" lanza el **check-in 1-tap** (+10 Karma). Repite con "Urban
+   Session": QR manipulado → rechazo y **devolución al monedero**.
 4. **Taxi** — únete a un squad o crea uno, comparte por WhatsApp.
 5. **Álbum** — 12 fotos bloqueadas. Panel izquierdo: **Timer 60 s** o **Revelar álbum**.
 
