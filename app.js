@@ -121,7 +121,7 @@ const DEFAULT = {
   crowdReports: [],
   karma: 120,
   wallet: 50,
-  profile: { sold: 3, bought: 0 },
+  profile: { sold: 0, bought: 0 },
   vault: { revealAt: 0, revealed: false, demo: false, photos: [] },
   stats: { reports: 0, escrow: 0, squads: 0 }
 };
@@ -228,8 +228,8 @@ function loadState() {
     if (p.status === "funded" && !p.code) p.status = "refunded";
   });
 
-  s.profile = { sold: 3, bought: 0, ...(isObj(src.profile) ? src.profile : {}) };
-  ["sold", "bought"].forEach(k => { if (!isNum(s.profile[k])) s.profile[k] = k === "sold" ? 3 : 0; });
+  s.profile = { sold: 0, bought: 0, ...(isObj(src.profile) ? src.profile : {}) };
+  ["sold", "bought"].forEach(k => { if (!isNum(s.profile[k])) s.profile[k] = 0; });
   s.profile.bought = Math.max(s.profile.bought, s.purchases.filter(p => p.status !== "refunded").length);
 
   s.rides = (Array.isArray(src.rides) ? src.rides : structuredClone(RIDES)).filter(isObj);
