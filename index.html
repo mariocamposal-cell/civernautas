@@ -6,6 +6,10 @@
 <title>NIGHTPULSE — ClubCheck</title>
 <meta name="description" content="Radar de cola, aforo en vivo, reventa con escrow, taxi compartido y carrete desechable.">
 <meta name="theme-color" content="#07060d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NIGHTPULSE">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -175,11 +179,11 @@
                 <div class="door-counts"><span>▲ <b id="doorIn">512</b></span><span>▼ <b id="doorOut">109</b></span></div>
                 <button class="door-scan" id="doorScan">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8V5a1 1 0 011-1h3M20 8V5a1 1 0 00-1-1h-3M4 16v3a1 1 0 001 1h3M20 16v3a1 1 0 01-1 1h-3"/><path d="M4 12h16"/></svg>
-                  Validar QR
+                  Validar entrada
                 </button>
               </div>
             </div>
-            <p class="door-note"><b id="doorFree">17</b> plazas libres · el aforo sube solo al validar una entrada en la puerta.</p>
+            <p class="door-note"><b id="doorFree">17</b> plazas libres · contador de puerta (simulado) · cada QR validado suma 1.</p>
 
             <div class="map-card">
               <svg id="map" viewBox="0 0 390 410" aria-label="Mapa de locales"></svg>
@@ -289,8 +293,7 @@
 
         <nav class="tabbar" id="tabbar"></nav>
 
-        <div class="sheet" id="sheet"></div>
-        <div class="scanner" id="scanner"></div>
+        <div class="sheet" id="sheet" aria-hidden="true"></div>
         <div class="burst" id="burst"></div>
 
         <div class="auth" id="auth">
@@ -323,7 +326,7 @@
 
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="app.js"></script>
 </body>
 </html>

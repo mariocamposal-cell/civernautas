@@ -1018,45 +1018,7 @@ details.json pre {
 .esc-step .txt b { display: block; font-size: 11px; }
 .esc-step .txt small { font-size: 9px; color: var(--tx-3); }
 
-/* scanner */
-.scanner {
-  position: absolute; inset: 0; z-index: 60;
-  background: #05040a;
-  display: none; flex-direction: column;
-  padding: 34px 20px 24px;
-}
-.scanner.open { display: flex; animation: fadeIn .2s both; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-.scanner-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-.scanner-head b { font-size: 13px; letter-spacing: .04em; }
-.scan-frame {
-  position: relative; flex: 1; border-radius: 20px; overflow: hidden;
-  background:
-    radial-gradient(220px 200px at 50% 45%, rgba(34,211,238,.12), transparent 70%),
-    repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 1px, transparent 1px 4px),
-    #0a0714;
-  border: 1px solid rgba(34,211,238,.25);
-  display: grid; place-items: center;
-}
-.scan-corners::before, .scan-corners::after,
-.scan-corners span::before, .scan-corners span::after {
-  content: ""; position: absolute; width: 30px; height: 30px; border-color: var(--cyan); border-style: solid;
-}
-.scan-corners::before { top: 22px; left: 22px; border-width: 2px 0 0 2px; }
-.scan-corners::after { top: 22px; right: 22px; border-width: 2px 2px 0 0; }
-.scan-corners span::before { bottom: 22px; left: 22px; border-width: 0 0 2px 2px; }
-.scan-corners span::after { bottom: 22px; right: 22px; border-width: 0 2px 2px 0; }
-.scan-qr { width: 128px; height: 128px; opacity: .5; }
-.scan-line {
-  position: absolute; left: 22px; right: 22px; height: 2px;
-  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
-  box-shadow: 0 0 16px 2px rgba(34,211,238,.8);
-  animation: scanY 2s ease-in-out infinite;
-}
-.scanner-foot { text-align: center; padding-top: 16px; }
-.scanner-foot b { font-size: 12px; display: block; }
-.scanner-foot small { font-size: 9.5px; color: var(--tx-3); }
-.scan-result { animation: resultIn .3s both; }
+/* resultado de validación */
 .scan-verdict {
   display: flex; align-items: center; gap: 10px;
   padding: 13px; border-radius: 13px; margin-bottom: 12px;

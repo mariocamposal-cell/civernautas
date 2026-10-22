@@ -12,6 +12,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const eur = (n) => n.toFixed(2).replace(".", ",") + " €";
 const pad = (n) => String(n).padStart(2, "0");
+const esc = (s) => String(s).replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
 
 const b64 = (s) => {
   const bytes = new TextEncoder().encode(s);
@@ -29,24 +30,31 @@ const fnv = (str) => {
 };
 
 const makeCode = (event, serial, iso) => {
-  const raw = `${event}|${serial}|${iso}`;
-  return `NP1.${b64(raw)}.${fnv(raw)}`;
+  const raw = JSON.stringify({ event, serial, iso });
+  return `NP2.${b64(raw)}.${fnv(raw)}`;
 };
 const verifyCode = (code, expected) => {
   try {
     const [v, body, sig] = String(code).split(".");
-    if (v !== "NP1" || !body || !sig) return { ok: false, reason: "Formato de QR no reconocido" };
+    if (v !== "NP2" || !body || !sig) return { ok: false, reason: "Formato de QR no reconocido" };
     const raw = unb64(body);
     if (fnv(raw) !== sig) return { ok: false, reason: "Firma digital inválida · posible captura manipulada" };
-    const [event, serial, iso] = raw.split("|");
+    const { event, serial, iso } = JSON.parse(raw);
     if (expected && event !== expected.event) return { ok: false, reason: "El evento del QR no coincide" };
     if (expected && iso !== expected.iso) return { ok: false, reason: "La fecha del QR no coincide con la entrada" };
+    if (expected && expected.today && iso !== expected.today) return { ok: false, reason: "La entrada no es para hoy" };
     return { ok: true, data: { event, serial, iso } };
   } catch { return { ok: false, reason: "QR ilegible" }; }
 };
 
 /* ---------------- estado ---------------- */
 const STORE = "nightpulse.state.v2";
+const LEGACY_STORE = "nightpulse.state.v1";
+function todayIso() {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+const DEMO_TODAY = todayIso();
 const nowBase = Date.now();
 const nightStart = 3 * 60 + 12;
 
@@ -66,16 +74,24 @@ const CLUBS = [
 ];
 
 const LISTINGS = [
-  { id: "l1", event: "Nochevieja Universitaria", venue: "Circus", date: "31 DIC · 23:00", iso: "2026-12-31", type: "General", price: 25, original: 28, seller: "Marta R.", rating: 4.9, serial: "CIR-4471", hue: "#7c3aed", fraud: false },
-  { id: "l2", event: "Tech House Night", venue: "Way Club", date: "HOY · 23:30", iso: "2026-10-22", type: "VIP", price: 38, original: 35, seller: "Diego P.", rating: 4.7, serial: "WAY-1180", hue: "#0ea5e9", fraud: false },
-  { id: "l3", event: "Urban Session", venue: "Blaster", date: "HOY · 01:00", iso: "2026-10-22", type: "General", price: 18, original: 22, seller: "Lucía G.", rating: 5.0, serial: "BLA-9932", hue: "#f43f5e", fraud: true },
-  { id: "l4", event: "Afterhours · REM", venue: "REM", date: "HOY · 03:00", iso: "2026-10-22", type: "Mesa", price: 60, original: 75, seller: "Andrés M.", rating: 4.6, serial: "REM-2201", hue: "#22d3ee", fraud: false }
+  { id: "l1", event: "Noche Universitaria", venue: "Circus", date: "HOY · 23:00", iso: DEMO_TODAY, type: "General", price: 25, original: 28, seller: "Marta R.", rating: 4.9, serial: "CIR-4471", hue: "#7c3aed", fraud: false },
+  { id: "l2", event: "Tech House Night", venue: "Way Club", date: "HOY · 23:30", iso: DEMO_TODAY, type: "VIP", price: 38, original: 35, seller: "Diego P.", rating: 4.7, serial: "WAY-1180", hue: "#0ea5e9", fraud: false },
+  { id: "l3", event: "Urban Session", venue: "Blaster", date: "HOY · 01:00", iso: DEMO_TODAY, type: "General", price: 18, original: 22, seller: "Lucía G.", rating: 5.0, serial: "BLA-9932", hue: "#f43f5e", fraud: true },
+  { id: "l4", event: "Afterhours · REM", venue: "REM", date: "HOY · 03:00", iso: DEMO_TODAY, type: "Mesa", price: 60, original: 75, seller: "Andrés M.", rating: 4.6, serial: "REM-2201", hue: "#22d3ee", fraud: false }
 ];
 
 const RIDES = [
   { id: "r1", dest: "Centro", club: "Circus", depart: "03:25", seats: 4, taken: 2, price: 9,  members: ["MR", "DP"] },
   { id: "r2", dest: "Fontiñas", club: "Circus", depart: "03:40", seats: 3, taken: 1, price: 16, members: ["LG"] },
   { id: "r3", dest: "San Lázaro", club: "Circus", depart: "03:15", seats: 4, taken: 3, price: 18, members: ["AM", "JC", "SR"] }
+];
+
+const DESTS = [
+  { name: "Centro", eta: 8, price: 9 },
+  { name: "Ensanche", eta: 10, price: 11 },
+  { name: "Vista Alegre", eta: 14, price: 14 },
+  { name: "Fontiñas", eta: 16, price: 16 },
+  { name: "San Lázaro", eta: 18, price: 18 }
 ];
 
 const DEFAULT = {
@@ -110,44 +126,139 @@ function next8amNight() {
   return Date.now() + diff * 60000;
 }
 
+const isNum = (n) => typeof n === "number" && Number.isFinite(n);
+const isObj = (o) => o !== null && typeof o === "object" && !Array.isArray(o);
+
 function loadState() {
+  try { localStorage.removeItem(LEGACY_STORE); } catch {}
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem(STORE) || "null"); } catch {}
-  const s = { ...structuredClone(DEFAULT), ...(saved || {}) };
-  s.clubs = (saved && saved.clubs) ? saved.clubs : structuredClone(CLUBS);
+  // estado doutra versión (locais Aurora/Neón...): descártase enteiro
+  if (isObj(saved) && Array.isArray(saved.clubs) && saved.clubs.length &&
+      !saved.clubs.some(c => isObj(c) && CLUBS.some(x => x.id === c.id))) {
+    saved = null;
+  }
+  const base = structuredClone(DEFAULT);
+  const src = isObj(saved) ? saved : {};
+  const s = { ...base, ...src };
+
+  s.clubs = (Array.isArray(src.clubs) ? src.clubs : structuredClone(CLUBS))
+    .filter(c => isObj(c) && CLUBS.some(x => x.id === c.id));
+  if (!s.clubs.length) s.clubs = structuredClone(CLUBS);
   s.clubs.forEach(c => {
-    if (typeof c.inside !== "number") c.inside = Math.round(c.cap * (c.occ ?? 50) / 100);
-    if (typeof c.entries !== "number") c.entries = c.inside + 120;
-    if (typeof c.exits !== "number") c.exits = 120;
-    if (typeof c.rssi !== "number") c.rssi = -58;
-    if (typeof c.baseOcc !== "number") {
-      const def = CLUBS.find(x => x.id === c.id);
-      c.baseOcc = def ? def.baseOcc : 70;
-    }
+    const def = CLUBS.find(x => x.id === c.id) || CLUBS[0];
+    c.name = typeof c.name === "string" ? c.name : def.name;
+    c.short = typeof c.short === "string" ? c.short : def.short;
+    c.cap = isNum(c.cap) && c.cap > 0 ? Math.round(c.cap) : def.cap;
+    c.inside = isNum(c.inside) ? Math.round(c.inside) : Math.round(c.cap * (def.baseOcc ?? 50) / 100);
+    c.inside = clamp(c.inside, 0, c.cap);
+    c.entries = isNum(c.entries) ? Math.max(0, Math.round(c.entries)) : c.inside + 120;
+    c.exits = isNum(c.exits) ? Math.max(0, Math.round(c.exits)) : 120;
+    c.rssi = isNum(c.rssi) ? c.rssi : def.rssi;
+    c.baseOcc = isNum(c.baseOcc) ? clamp(c.baseOcc, 0, 100) : def.baseOcc;
+    c.queue = isNum(c.queue) ? clamp(Math.round(c.queue), 0, 200) : def.queue;
+    c.wait = isNum(c.wait) ? Math.max(1, Math.round(c.wait)) : def.wait;
+    c.x = isNum(c.x) ? c.x : def.x;
+    c.y = isNum(c.y) ? c.y : def.y;
+    c.address = typeof c.address === "string" ? c.address : (def.address || "");
+    c.zone = typeof c.zone === "string" ? c.zone : (def.zone || "Centro");
+    c.music = typeof c.music === "string" ? c.music : (def.music || "");
     c.occ = Math.round((c.inside / c.cap) * 100);
+    c.trend = Array.isArray(c.trend) ? c.trend.filter(isNum).slice(-8) : [];
+    if (!c.trend.length) c.trend = [c.occ];
   });
-  s.listings = (saved && saved.listings) ? saved.listings : structuredClone(LISTINGS);
-  s.rides = (saved && saved.rides) ? saved.rides : structuredClone(RIDES);
-  s.vault = { ...structuredClone(DEFAULT.vault), ...(saved && saved.vault ? saved.vault : {}) };
-  if (!s.vault.photos || !s.vault.photos.length) {
+
+  s.listings = (Array.isArray(src.listings) ? src.listings : structuredClone(LISTINGS))
+    .filter(l => isObj(l) && typeof l.id === "string" && typeof l.event === "string");
+  s.listings.forEach(l => {
+    l.venue = typeof l.venue === "string" ? l.venue : "Sala Aurora";
+    l.date = typeof l.date === "string" ? l.date : "HOY";
+    l.iso = typeof l.iso === "string" ? l.iso : DEMO_TODAY;
+    if (l.date.startsWith("HOY")) l.iso = DEMO_TODAY;
+    l.type = ["General", "VIP", "Mesa"].includes(l.type) ? l.type : "General";
+    l.price = isNum(l.price) ? l.price : 25;
+    l.original = isNum(l.original) ? l.original : l.price;
+    l.seller = typeof l.seller === "string" ? l.seller : "Tú";
+    l.rating = isNum(l.rating) ? l.rating : 5;
+    l.hue = typeof l.hue === "string" && /^#[0-9a-f]{3,8}$/i.test(l.hue) ? l.hue : "#a855f7";
+    l.serial = typeof l.serial === "string" ? l.serial : "USR-0000";
+    l.code = makeCode(l.event, l.serial, l.fraud ? "1999-01-01" : l.iso);
+  });
+
+  s.purchases = (Array.isArray(src.purchases) ? src.purchases : [])
+    .filter(p => isObj(p) && typeof p.id === "string" && typeof p.listingId === "string");
+  s.purchases.forEach(p => {
+    p.event = typeof p.event === "string" ? p.event : "Evento";
+    p.venue = typeof p.venue === "string" ? p.venue : "Sala Aurora";
+    p.date = typeof p.date === "string" ? p.date : "HOY";
+    p.iso = typeof p.iso === "string" ? p.iso : DEMO_TODAY;
+    p.type = typeof p.type === "string" ? p.type : "General";
+    p.price = isNum(p.price) ? p.price : 0;
+    p.fee = isNum(p.fee) ? p.fee : Math.round(p.price * 10) / 100;
+    p.total = isNum(p.total) ? p.total : Math.round((p.price + p.fee) * 100) / 100;
+    if (!["funded", "redeemed", "refunded"].includes(p.status)) p.status = "funded";
+    p.code = typeof p.code === "string" ? p.code : "";
+    if (p.status === "funded" && !p.code) p.status = "refunded";
+  });
+
+  s.rides = (Array.isArray(src.rides) ? src.rides : structuredClone(RIDES)).filter(isObj);
+  s.rides.forEach(r => {
+    r.dest = typeof r.dest === "string" ? r.dest : "Moncloa";
+    r.club = typeof r.club === "string" ? r.club : "Sala Aurora";
+    r.depart = typeof r.depart === "string" ? r.depart : "03:30";
+    r.seats = isNum(r.seats) ? clamp(Math.round(r.seats), 1, 8) : 4;
+    r.taken = isNum(r.taken) ? clamp(Math.round(r.taken), 0, r.seats) : 1;
+    r.price = isNum(r.price) ? r.price : 14;
+    r.members = Array.isArray(r.members) ? r.members.filter(m => typeof m === "string").slice(0, r.seats) : [];
+  });
+  if (!s.rides.length) s.rides = structuredClone(RIDES);
+
+  s.vault = { ...base.vault, ...(isObj(src.vault) ? src.vault : {}) };
+  s.vault.revealed = !!s.vault.revealed;
+  s.vault.demo = !!s.vault.demo;
+  s.vault.photos = (Array.isArray(s.vault.photos) ? s.vault.photos : []).filter(p =>
+    isObj(p) && (p.kind === "upload"
+      ? typeof p.dataUrl === "string" && p.dataUrl.startsWith("data:image/")
+      : isNum(p.seed)));
+  if (!s.vault.photos.length) {
     s.vault.photos = Array.from({ length: 12 }, (_, i) => ({ id: "p" + i, kind: "gen", seed: 1000 + i * 37 }));
   }
-  if (!s.vault.revealAt) s.vault.revealAt = next8amNight();
-  s.listings.forEach(l => { if (!l.code) l.code = makeCode(l.event, l.serial, l.fraud ? "2026-01-01" : l.iso); });
-  s.scans = Array.isArray(s.scans) ? s.scans : [];
-  s.crowdReports = Array.isArray(s.crowdReports) ? s.crowdReports : [];
-  s.karma = typeof s.karma === "number" ? s.karma : 120;
+  if (!isNum(s.vault.revealAt) || s.vault.revealAt <= 0) s.vault.revealAt = next8amNight();
+
+  s.stats = { ...base.stats, ...(isObj(src.stats) ? src.stats : {}) };
+  ["reports", "escrow", "squads"].forEach(k => { if (!isNum(s.stats[k])) s.stats[k] = base.stats[k]; });
+
+  s.crowdReports = (Array.isArray(src.crowdReports) ? src.crowdReports : [])
+    .filter(r => isObj(r) && typeof r.club === "string" && isNum(r.level) && isNum(r.at))
+    .slice(-80);
+  s.karma = isNum(s.karma) ? s.karma : 120;
+
+  s.scans = (Array.isArray(src.scans) ? src.scans : [])
+    .filter(x => isObj(x) && typeof x.club === "string").slice(0, 8);
+  s._log = (Array.isArray(src._log) ? src._log : [])
+    .filter(x => isObj(x) && typeof x.t === "string" && typeof x.msg === "string").slice(0, 6);
   if (!["noche", "aforo", "tickets", "taxi", "vault"].includes(s.view)) s.view = "noche";
+  if (!["buy", "sell", "mine"].includes(s.ticketTab)) s.ticketTab = "buy";
+  if (!s.clubs.some(c => c.id === s.selectedClub)) s.selectedClub = s.clubs[0].id;
+  if (!DESTS.some(d => d.name === s.destination)) s.destination = "Centro";
+  if (!s.rides.some(r => r.id === s.joinedRide)) s.joinedRide = null;
   return s;
 }
 
 let state = loadState();
 let sensorPingAt = Date.now();
-state.clubs.forEach(c => { c.occ = computeOcc(c); });
+let quotaWarned = false;
+state.clubs.forEach(c => { recomputeOcc(c); });
 
 function save() {
-  try { localStorage.setItem(STORE, JSON.stringify(state)); }
-  catch { /* quota */ }
+  try { localStorage.setItem(STORE, JSON.stringify(state)); return true; }
+  catch {
+    if (!quotaWarned) {
+      quotaWarned = true;
+      toast("Almacenamiento local lleno: los últimos cambios no se guardarán", "bad");
+    }
+    return false;
+  }
 }
 
 /* ---------------- sesión + edad ---------------- */
@@ -188,6 +299,11 @@ function showAuth(show) {
   if (show) setTimeout(() => $("#authEmail").focus(), 120);
 }
 
+function refreshFromStorage() {
+  state = loadState();
+  state.clubs.forEach(c => recomputeOcc(c));
+}
+
 /* ---------------- reloj nocturno ---------------- */
 function nightNow() {
   const mins = nightStart + Math.floor((Date.now() - nowBase) / 60000);
@@ -207,6 +323,7 @@ function toast(msg, kind = "") {
 }
 
 function log(msg) {
+  msg = String(msg).replace(/<[^>]*>/g, "");
   state._log = state._log || [];
   state._log.unshift({ t: nowStr(), msg });
   state._log = state._log.slice(0, 6);
@@ -214,19 +331,29 @@ function log(msg) {
 }
 function renderLog() {
   const items = state._log && state._log.length ? state._log : [
-    { t: "03:04", msg: "<b>Circus</b> · el sensor detecta 53 móviles en la puerta" },
-    { t: "03:07", msg: "Escrow <b>#A21</b> liberado · 25,00 € al vendedor" },
-    { t: "03:09", msg: "Puerta <b>Blaster</b> · 609/700 dentro" }
+    { t: "03:04", msg: "Circus · el sensor detecta 53 móviles en la puerta" },
+    { t: "03:07", msg: "Escrow #A21 liberado · 25,00 € al vendedor" },
+    { t: "03:09", msg: "Puerta Blaster · 609/700 dentro" }
   ];
-  $("#logList").innerHTML = items.map(i => `<li><span class="t">${i.t}</span><span>${i.msg}</span></li>`).join("");
+  const ul = $("#logList");
+  ul.replaceChildren(...items.map(i => {
+    const li = document.createElement("li");
+    const t = document.createElement("span");
+    t.className = "t";
+    t.textContent = i.t;
+    const m = document.createElement("span");
+    m.textContent = i.msg;
+    li.append(t, m);
+    return li;
+  }));
 }
 
 function renderKpis() {
   const escrow = state.purchases.filter(p => p.status === "funded")
-    .reduce((a, p) => a + p.price, 0) + Number(state.stats.escrow || 0);
+    .reduce((a, p) => a + (isNum(p.total) ? p.total : p.price), Number(state.stats.escrow || 0));
   $("#kpis").innerHTML = `
     <div class="kpi"><b>${sensorDevices(clubById(state.selectedClub))}</b><span>Móviles</span></div>
-    <div class="kpi"><b>${Math.round(escrow)} €</b><span>En escrow</span></div>
+    <div class="kpi"><b>${eur(escrow)}</b><span>En escrow</span></div>
     <div class="kpi"><b>${state.rides.filter(r => r.taken < r.seats).length}</b><span>Squads</span></div>`;
 }
 
@@ -395,7 +522,7 @@ function renderHome() {
   const sel = $("#homeClub");
   if (!sel) return;
   if (!sel.options.length) {
-    sel.innerHTML = state.clubs.map(x => `<option value="${x.id}">${x.name}</option>`).join("");
+    sel.innerHTML = state.clubs.map(x => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join("");
   }
   sel.value = c.id;
 
@@ -429,15 +556,15 @@ function renderHome() {
 function openVenuePanel(clubId) {
   const c = clubById(clubId || state.selectedClub);
   const col = satColor[satFromOcc(c.occ)];
-  const scans = (state.scans || []).slice(0, 5);
+  const scans = (state.scans || []).filter(s => s.club === c.id).slice(0, 5);
   const u = userSignal(c);
   const q = queueSignal(c);
   const doorPct = Math.round((c.inside / c.cap) * 100);
 
   openSheet(`
     <div class="sheet-head">
-      <div><h3>Panel del local</h3><p>${c.name} · puerta principal</p></div>
-      <button class="x-btn" data-close>✕</button>
+      <div><h3>Panel del local</h3><p>${esc(c.name)} · puerta principal</p></div>
+      <button class="x-btn" data-close aria-label="Cerrar">✕</button>
     </div>
     <div class="mini-label">Aforo estimado</div>
     <div class="panel-big"><b>${c.occ}%</b><span>contador ${c.inside}/${c.cap}</span></div>
@@ -456,7 +583,7 @@ function openVenuePanel(clubId) {
     <div class="section-title" style="margin:14px 0 6px"><h3>Últimos accesos</h3><span>${scans.length ? scans.length + " hoy" : "sin datos"}</span></div>
     <div class="scan-list">
       ${scans.length
-        ? scans.map(s => `<div class="scan-item"><span>${s.time}</span><b>${s.event}</b><small>${s.type}</small></div>`).join("")
+        ? scans.map(s => `<div class="scan-item"><span>${esc(s.time)}</span><b>${esc(s.event)}</b><small>${esc(s.type)}</small></div>`).join("")
         : `<p class="scan-empty">Todavía no hay entradas validadas.</p>`}
     </div>
     <div class="note-box" style="margin-top:12px">
@@ -473,18 +600,18 @@ function openCrowdCheck(clubId) {
   const c = clubById(clubId || state.selectedClub);
   openSheet(`
     <div class="sheet-head">
-      <div><h3>¿Cómo está la sala?</h3><p>${c.name} · 1 tap, 10 de karma</p></div>
-      <button class="x-btn" data-close>✕</button>
+      <div><h3>¿Cómo está la sala?</h3><p>${esc(c.name)} · 1 tap, 10 de karma</p></div>
+      <button class="x-btn" data-close aria-label="Cerrar">✕</button>
     </div>
     <p class="check-intro">Tu respuesta se pondera con la puerta y el sensor. Ganas karma para descuentos en reventa.</p>
     <div class="check-opts">
-      <button data-crowd="1" data-crowd-club="${c.id}">
+      <button data-crowd="1" data-crowd-club="${esc(c.id)}">
         <span>🟢</span><div><b>Fluido</b><small>30–50% · se está bien</small></div>
       </button>
-      <button data-crowd="2" data-crowd-club="${c.id}">
+      <button data-crowd="2" data-crowd-club="${esc(c.id)}">
         <span>🟡</span><div><b>Pista llena</b><small>60–80% · hay ambiente</small></div>
       </button>
-      <button data-crowd="3" data-crowd-club="${c.id}">
+      <button data-crowd="3" data-crowd-club="${esc(c.id)}">
         <span>🔴</span><div><b>Aforo máximo</b><small>90–100% · agobiante</small></div>
       </button>
     </div>
@@ -561,7 +688,7 @@ function doorMove(clubId, delta, announce) {
       toast(delta > 0 ? "Aforo completo en " + c.name : "No queda nadie dentro", "bad");
     } else {
       toast(`${real > 0 ? "+" : ""}${real} ${real > 0 ? "dentro" : "fuera"} · ${c.name} ${c.occ}%`, real > 0 ? "good" : "");
-      log(`Puerta <b>${c.name}</b> · ${real > 0 ? "+" : ""}${real} · ${c.inside}/${c.cap} dentro`);
+      log(`Puerta ${c.name} · ${real > 0 ? "+" : ""}${real} · ${c.inside}/${c.cap} dentro`);
     }
   }
   return real;
@@ -591,7 +718,7 @@ function buildMap() {
       <circle class="halo" r="${26 + c.occ * .34}" fill="url(#halo-${c.id})"/>
       <circle r="11" fill="${col}" opacity=".16"/>
       <circle class="core" r="5" fill="${col}" stroke="#0b0816" stroke-width="1.6"/>
-      <text y="19" text-anchor="middle">${c.name}</text>
+      <text y="19" text-anchor="middle">${esc(c.name)}</text>
     </g>`;
   }).join("");
 
@@ -627,9 +754,7 @@ function updateMapPins() {
     g.querySelector(".core").setAttribute("fill", col);
     g.querySelector(".halo").setAttribute("r", 26 + c.occ * .34);
     const grad = document.querySelector(`#halo-${c.id}`);
-    if (grad) {
-      grad.querySelectorAll("stop").forEach(s => s.setAttribute("stop-color", col));
-    }
+    if (grad) grad.querySelectorAll("stop").forEach(st => st.setAttribute("stop-color", col));
   });
 }
 
@@ -640,10 +765,10 @@ function renderClubs() {
   const sorted = [...state.clubs].sort((a, b) => b.occ - a.occ);
   list.innerHTML = sorted.map(c => {
     const col = satColor[satFromOcc(c.occ)];
-    return `<button class="club-row" data-club="${c.id}">
-      <div class="club-avatar">${c.short}</div>
+    return `<button class="club-row" data-club="${esc(c.id)}">
+      <div class="club-avatar">${esc(c.short)}</div>
       <div class="club-main">
-        <b>${c.name}</b>
+        <b>${esc(c.name)}</b>
         <small>${c.inside}/${c.cap} dentro · ${c.queue} en cola</small>
       </div>
       <div class="club-meter">
@@ -689,8 +814,8 @@ function openClub(id) {
 
   openSheet(`
     <div class="sheet-head">
-      <div><h3>${c.name}</h3><p>Aforo ${c.cap} personas · actualizado ahora</p></div>
-      <button class="x-btn" data-close>✕</button>
+      <div><h3>${esc(c.name)}</h3><p>Aforo ${c.cap} personas · actualizado ahora</p></div>
+      <button class="x-btn" data-close aria-label="Cerrar">✕</button>
     </div>
     <div class="gauge-wrap">
       <div class="gauge">
@@ -717,15 +842,15 @@ function openClub(id) {
       <div><span>Entradas</span><b>${c.entries}</b></div>
       <div><span>Salidas</span><b>${c.exits}</b></div>
     </div>
-    <p class="sheet-door-note">El aforo sube solo al validar un QR en la puerta. No hay botón de +1.</p>
-    <button class="btn ghost small" style="width:100%;margin-bottom:6px" data-checkin="${c.id}">Check-in rápido · +10 Karma</button>
-    <button class="btn primary" data-venue-panel="${c.id}">Abrir panel del local</button>
+    <p class="sheet-door-note">El aforo lo mueve el contador de puerta; cada QR validado suma 1. No hay botón de +1.</p>
+    <button class="btn ghost small" style="width:100%;margin-bottom:6px" data-checkin="${esc(c.id)}">Check-in rápido · +10 Karma</button>
+    <button class="btn primary" data-venue-panel="${esc(c.id)}">Abrir panel del local</button>
   `);
 }
 
 function initHome() {
   const sel = $("#homeClub");
-  sel.innerHTML = state.clubs.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+  sel.innerHTML = state.clubs.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("");
   sel.value = state.selectedClub;
   sel.addEventListener("change", () => {
     state.selectedClub = sel.value;
@@ -743,6 +868,7 @@ function initHome() {
 
 /* ---------------- tickets ---------------- */
 function makePurchase(listing) {
+  const fee = Math.round(listing.price * 0.1 * 100) / 100;
   return {
     id: "p" + Date.now().toString(36),
     listingId: listing.id,
@@ -752,6 +878,8 @@ function makePurchase(listing) {
     iso: listing.iso,
     type: listing.type,
     price: listing.price,
+    fee,
+    total: Math.round((listing.price + fee) * 100) / 100,
     code: listing.code,
     status: "funded",
     created: Date.now()
@@ -763,6 +891,8 @@ function setTicketTab(tab) {
   $$("#ticketSeg button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
   renderTickets();
 }
+
+const hasActivePurchase = (listingId) => state.purchases.some(p => p.listingId === listingId && p.status !== "refunded");
 
 function renderTickets() {
   const body = $("#ticketsBody");
@@ -776,21 +906,23 @@ function renderTickets() {
         <span>El pago queda <b>retenido en escrow</b>. Si el QR no valida en la puerta, se te devuelve solo.</span>
       </div>
       <div style="height:10px"></div>
-      ${state.listings.map(l => `
+      ${state.listings.map(l => {
+        const mine = state.purchases.find(p => p.listingId === l.id && p.status !== "refunded");
+        return `
         <article class="listing">
           <div class="listing-top">
-            <div class="listing-art" style="background:linear-gradient(150deg,${l.hue},#0d0a18)">
-              ${l.type}<br>${l.date.split(" · ")[0]}
+            <div class="listing-art" style="background:linear-gradient(150deg,${esc(l.hue)},#0d0a18)">
+              ${esc(l.type)}<br>${esc(l.date.split(" · ")[0])}
             </div>
             <div class="listing-info">
-              <h4>${l.event}</h4>
-              <div class="meta">${l.venue} · ${l.date}</div>
+              <h4>${esc(l.event)}</h4>
+              <div class="meta">${esc(l.venue)} · ${esc(l.date)}</div>
               <div class="tag-row">
-                <span class="tag ${l.type.toLowerCase() === "vip" ? "vip" : ""}">${l.type}</span>
+                <span class="tag ${l.type.toLowerCase() === "vip" ? "vip" : ""}">${esc(l.type)}</span>
                 <span class="tag verified">QR verificado</span>
                 ${l.price < l.original ? '<span class="tag deal">bajo coste</span>' : ""}
               </div>
-              <div class="meta" style="margin-top:5px">${l.seller} · ★ ${l.rating}</div>
+              <div class="meta" style="margin-top:5px">${esc(l.seller)} · ★ ${esc(l.rating)}</div>
             </div>
           </div>
           <div class="listing-buy">
@@ -799,9 +931,10 @@ function renderTickets() {
               ${l.price < l.original ? `<s>${eur(l.original)}</s>` : ""}
               <small>protegido por escrow</small>
             </div>
-            <button class="buy-btn" data-buy="${l.id}" ${state.purchases.some(p => p.listingId === l.id) ? "disabled style=\"opacity:.4\"" : ""}>${state.purchases.some(p => p.listingId === l.id) ? "En tu cartera" : "Comprar"}</button>
+            <button class="buy-btn" data-buy="${esc(l.id)}" ${mine ? 'disabled style="opacity:.4"' : ""}>${mine ? (mine.status === "redeemed" ? "Validada" : "En tu cartera") : "Comprar"}</button>
           </div>
-        </article>`).join("")}
+        </article>`;
+      }).join("")}
       <p style="font-size:9.5px;color:var(--tx-3);text-align:center;margin-top:6px;line-height:1.5">
         El vendedor no cobra hasta que tu QR se valida en la puerta.
       </p>`;
@@ -812,7 +945,7 @@ function renderTickets() {
     body.innerHTML = `
       <div class="form">
         <label class="field"><span>Evento</span>
-          <input id="sellEvent" value="Afterhours · Rooftop" />
+          <input id="sellEvent" value="Afterhours · Rooftop" maxlength="60" />
         </label>
         <div class="form-row">
           <label class="field"><span>Local</span>
@@ -824,14 +957,9 @@ function renderTickets() {
             <select id="sellType"><option>General</option><option>VIP</option><option>Mesa</option></select>
           </label>
         </div>
-        <div class="form-row">
-          <label class="field"><span>Precio (€)</span>
-            <input id="sellPrice" type="number" min="5" max="300" value="30" />
-          </label>
-          <label class="field"><span>Precio original</span>
-            <input value="35 €" disabled />
-          </label>
-        </div>
+        <label class="field"><span>Precio (€)</span>
+          <input id="sellPrice" type="number" min="5" max="300" value="30" />
+        </label>
         <button class="btn primary" id="btnPublish">Publicar con verificación IA</button>
       </div>
       <div style="height:12px"></div>
@@ -850,16 +978,10 @@ function renderTickets() {
       <div style="text-align:center;padding:34px 10px;color:var(--tx-3)">
         <div style="font-size:30px;margin-bottom:8px">🎟️</div>
         <p style="font-size:12px;color:var(--tx-2)">Todavía no tienes entradas.</p>
-        <p style="font-size:10px;margin-top:4px">Compra una en el marketplace o valida un QR.</p>
+        <p style="font-size:10px;margin-top:4px">Compra una en el marketplace.</p>
       </div>
-      <button class="btn ghost" id="btnScanAny">Validar una entrada</button>`;
-    $("#btnScanAny").addEventListener("click", () => {
-      if (!state.purchases.length) {
-        toast("Compra una entrada primero", "bad");
-        setTicketTab("buy");
-        return;
-      }
-    });
+      <button class="btn ghost" id="btnGoBuy">Ver entradas en venta</button>`;
+    $("#btnGoBuy").addEventListener("click", () => setTicketTab("buy"));
     return;
   }
 
@@ -876,10 +998,10 @@ function renderTickets() {
     const stLabel = p.status === "redeemed" ? "validada" : p.status === "refunded" ? "reembolsada" : "en escrow";
     return `<div class="escrow-ticket" style="margin-bottom:10px">
       <div class="e-ticket-head">
-        <div><h4>${p.event}</h4><small>${p.venue} · ${p.date}</small></div>
-        <span class="status-pill ${p.status}">${stLabel}</span>
+        <div><h4>${esc(p.event)}</h4><small>${esc(p.venue)} · ${esc(p.date)}</small></div>
+        <span class="status-pill ${esc(p.status)}">${stLabel}</span>
       </div>
-      <div class="e-code">${p.code}</div>
+      <div class="e-code">${esc(p.code)}</div>
       <div class="e-status">
         <small style="font-size:9px;color:var(--tx-2)">${label}</small>
         <b style="font-size:13px">${eur(p.price)}</b>
@@ -888,17 +1010,10 @@ function renderTickets() {
         ${steps.map(s => `<div class="step-dot ${s ? "on" : ""}"></div>`).join("")}
       </div>
       ${p.status === "funded"
-        ? `<button class="btn primary small" style="width:100%;margin-top:11px" data-scan="${p.id}">Validar en la puerta</button>`
+        ? `<button class="btn primary small" style="width:100%;margin-top:11px" data-validate="${esc(p.id)}">Validar en la puerta</button>`
         : ""}
     </div>`;
-  }).join("") + `<button class="btn ghost small" id="btnScanAny2" style="width:100%;margin-top:2px">Validar otra entrada</button>`;
-
-  const any = $("#btnScanAny2");
-  if (any) any.addEventListener("click", () => {
-    const p = state.purchases.find(x => x.status === "funded");
-    if (!p) return toast("No hay entradas pendientes de validar", "bad");
-    openScanner(p.id);
-  });
+  }).join("");
 }
 
 function openBuySheet(id) {
@@ -909,11 +1024,11 @@ function openBuySheet(id) {
 
   openSheet(`
     <div class="sheet-head">
-      <div><h3>${l.event}</h3><p>${l.venue} · ${l.date}</p></div>
-      <button class="x-btn" data-close>✕</button>
+      <div><h3>${esc(l.event)}</h3><p>${esc(l.venue)} · ${esc(l.date)}</p></div>
+      <button class="x-btn" data-close aria-label="Cerrar">✕</button>
     </div>
     <div class="pay-summary">
-      <div class="pay-row"><span>Entrada ${l.type}</span><b>${eur(l.price)}</b></div>
+      <div class="pay-row"><span>Entrada ${esc(l.type)}</span><b>${eur(l.price)}</b></div>
       <div class="pay-row"><span>Protección escrow (10%)</span><b>${eur(fee)}</b></div>
       <div class="pay-row"><span>Vendedor recibe</span><b>${eur(l.price)}</b></div>
       <div class="pay-row total"><span>Total a autorizar</span><b>${eur(total)}</b></div>
@@ -931,6 +1046,12 @@ function openBuySheet(id) {
   `);
 
   $("#btnPay").addEventListener("click", async () => {
+    refreshFromStorage();
+    if (hasActivePurchase(l.id)) {
+      closeSheet();
+      renderTickets();
+      return toast("Ya tienes esa entrada en tu cartera", "bad");
+    }
     $("#buyAction").innerHTML = `<div class="btn ghost" style="justify-content:center">Autorizando pago…</div>`;
     await sleep(1100);
     const p = makePurchase(l);
@@ -951,156 +1072,159 @@ function openBuySheet(id) {
       setView("tickets");
     });
     renderKpis();
-    log(`Compra protegida · <b>${l.event}</b> · ${eur(l.price)} en escrow`);
+    log(`Compra protegida · ${l.event} · ${eur(l.price)} en escrow`);
     toast("Pago retenido en escrow", "good");
   });
 }
 
 async function publishListing() {
   const btn = $("#btnPublish");
-  const event = $("#sellEvent").value.trim() || "Evento sin nombre";
+  const event = ($("#sellEvent").value.trim() || "Evento sin nombre").slice(0, 60);
   const venue = $("#sellVenue").value;
   const type = $("#sellType").value;
-  const price = clamp(Number($("#sellPrice").value) || 25, 5, 300);
+  const price = clamp(Math.round((Number($("#sellPrice").value) || 25) * 100) / 100, 5, 300);
 
   btn.disabled = true;
   btn.textContent = "Verificando QR con IA…";
   await sleep(1400);
 
-  const iso = "2026-10-22";
+  const iso = todayIso();
   const serial = "USR-" + Math.floor(1000 + Math.random() * 8999);
   const l = {
     id: "l" + Date.now().toString(36),
     event, venue, date: "HOY · 04:00", iso, type,
-    price, original: Math.round(price * 1.15),
+    price, original: price,
     seller: "Tú", rating: 5.0, serial, hue: "#a855f7",
     fraud: false, code: makeCode(event, serial, iso)
   };
   state.listings.unshift(l);
   save();
   toast("Entrada publicada · QR verificado", "good");
-  log(`<b>${event}</b> publicado con QR válido · ${eur(price)}`);
+  log(`${event} publicado con QR válido · ${eur(price)}`);
   setTicketTab("buy");
 }
 
-/* ---------------- escáner ---------------- */
-function openScanner(purchaseId) {
-  const p = state.purchases.find(x => x.id === purchaseId);
-  if (!p) return;
-  const el = $("#scanner");
-  el.className = "scanner open";
-  el.innerHTML = `
-    <div class="scanner-head">
-      <b>Validar entrada</b>
-      <button class="x-btn" data-scan-close>✕</button>
+/* ---------------- validación en puerta ---------------- */
+function openValidatePicker() {
+  refreshFromStorage();
+  const pending = state.purchases.filter(p => p.status === "funded");
+  if (!pending.length) {
+    setView("tickets");
+    setTicketTab("buy");
+    toast("Compra una entrada para validarla en la puerta", "bad");
+    return;
+  }
+  openSheet(`
+    <div class="sheet-head">
+      <div><h3>Validar entrada</h3><p>Elige la entrada que vas a validar en la puerta.</p></div>
+      <button class="x-btn" data-close aria-label="Cerrar">✕</button>
     </div>
-    <div class="scan-frame scan-corners">
-      <span></span>
-      <div class="scan-line"></div>
-      <svg class="scan-qr" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="1.4">
-        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-        <rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM21 14v3M14 21h4"/>
-      </svg>
+    ${pending.map(p => `
+      <button class="btn ghost" data-validate="${esc(p.id)}"
+        style="width:100%;margin-bottom:8px;justify-content:space-between;text-align:left">
+        <span><b style="font-size:11px">${esc(p.event)}</b><br>
+          <small style="font-size:9px;color:var(--tx-3)">${esc(p.venue)} · ${esc(p.date)}</small></span>
+        <small>${eur(p.price)}</small>
+      </button>`).join("")}
+  `);
+}
+
+function showValidationResult(p, resultado, v, club) {
+  openSheet(`
+    <div class="sheet-head">
+      <div><h3>Resultado</h3><p>${esc(p.event)} · ${esc(p.venue)}</p></div>
+      <button class="x-btn" data-close aria-label="Cerrar">✕</button>
     </div>
-    <div class="scanner-foot">
-      <b>Buscando QR…</b>
-      <small>Acércalo al lector · verificación firmada</small>
-    </div>`;
-
-  setTimeout(async () => {
-    const v = verifyCode(p.code, { event: p.event, iso: p.iso });
-    const club = clubByVenue(p.venue);
-    const resultado = {
-      firma_ok: v.ok,
-      evento: p.event,
-      tipo_entrada: p.type,
-      riesgo_fraude: v.ok ? "bajo" : "alto",
-      score_riesgo: v.ok ? 12 : 94,
-      decision: v.ok ? "aceptar" : "rechazar",
-      motivo: v.reason || "QR y evento coinciden"
-    };
-
-    if (v.ok) {
-      p.status = "redeemed";
-      p.clubId = club.id;
-      doorMove(club.id, 1, false);        // el aforo sube solo al validar el QR
-      state.scans.unshift({ event: p.event, type: p.type, time: nowStr(), club: club.id });
-      state.scans = state.scans.slice(0, 8);
-      resultado.aforo_actualizado = `${club.inside}/${club.cap}`;
-      resultado.aforo_pct = club.occ;
-      burst();
-      log(`Entrada validada · <b>${p.event}</b> · aforo ${club.name} ${club.inside}/${club.cap}`);
-      toast(`Entrada válida · aforo ${club.name} ${club.occ}%`, "good");
-    } else {
-      p.status = "refunded";
-      log(`Entrada rechazada · <b>${p.event}</b> · reembolso automático`);
-      toast("Entrada rechazada · reembolso emitido", "bad");
-    }
-    save();
-    renderKpis();
-    renderTickets();
-
-    el.innerHTML = `
-      <div class="scanner-head">
-        <b>Resultado</b>
-        <button class="x-btn" data-scan-close>✕</button>
+    <div class="scan-verdict ${v.ok ? "ok" : "bad"}">
+      <span class="icon">${v.ok ? "✅" : "⛔"}</span>
+      <div>
+        <b>${v.ok ? "Entrada válida" : "Entrada rechazada"}</b>
+        <small>${v.ok ? `QR verificado · aforo ${club.inside}/${club.cap}` : esc(v.reason)}</small>
       </div>
-      <div class="scan-result" style="flex:1;display:flex;flex-direction:column;justify-content:center">
-        <div class="scan-verdict ${v.ok ? "ok" : "bad"}">
-          <span class="icon">${v.ok ? "✅" : "⛔"}</span>
-          <div>
-            <b>${v.ok ? "Entrada válida" : "Entrada rechazada"}</b>
-            <small>${v.ok ? `QR verificado · aforo ${club.inside}/${club.cap}` : v.reason}</small>
-          </div>
-        </div>
-        <div class="stat-row">
-          <div class="stat"><span>Riesgo</span><b>${resultado.score_riesgo}/100</b></div>
-          <div class="stat"><span>Firma</span><b>${v.ok ? "OK" : "FALLO"}</b></div>
-          <div class="stat"><span>Aforo</span><b>${v.ok ? club.occ + "%" : "—"}</b></div>
-        </div>
-        <pre style="margin:0;padding:10px;border-radius:9px;background:#070511;border:1px solid rgba(255,255,255,.08);font-family:var(--mono);font-size:9px;line-height:1.55;color:#9fdfc8;white-space:pre-wrap">${JSON.stringify(resultado, null, 2)}</pre>
-        <div style="height:12px"></div>
-        ${v.ok ? `<button class="btn ghost small" style="width:100%;margin-bottom:8px" data-scan-aforo="${club.id}">Ver aforo en vivo</button>` : ""}
-        <button class="btn ${v.ok ? "primary" : "ghost"}" ${v.ok ? `data-scan-enter="${club.id}"` : "data-scan-close"}>${v.ok ? "Entrar al local" : "Cerrar y ver reembolso"}</button>
-      </div>`;
-  }, 1700);
+    </div>
+    <div class="stat-row">
+      <div class="stat"><span>Riesgo</span><b>${resultado.score_riesgo}/100</b></div>
+      <div class="stat"><span>Firma</span><b>${v.ok ? "OK" : "FALLO"}</b></div>
+      <div class="stat"><span>Aforo</span><b>${v.ok ? club.occ + "%" : "—"}</b></div>
+    </div>
+    <pre style="margin:0;padding:10px;border-radius:9px;background:#070511;border:1px solid rgba(255,255,255,.08);font-family:var(--mono);font-size:9px;line-height:1.55;color:#9fdfc8;white-space:pre-wrap">${esc(JSON.stringify(resultado, null, 2))}</pre>
+    <div style="height:12px"></div>
+    ${v.ok ? `<button class="btn ghost small" style="width:100%;margin-bottom:8px" id="btnResultAforo">Ver aforo en vivo</button>` : ""}
+    <button class="btn ${v.ok ? "primary" : "ghost"}" ${v.ok ? 'id="btnResultEnter"' : "data-close"}>${v.ok ? "Entrar al local" : "Cerrar"}</button>
+  `);
+  const aforoBtn = $("#btnResultAforo");
+  if (aforoBtn) aforoBtn.addEventListener("click", () => {
+    closeSheet();
+    state.selectedClub = club.id;
+    save();
+    $("#homeClub").value = club.id;
+    $("#doorClub").value = club.id;
+    setView("aforo");
+    renderDoor();
+  });
+  const enterBtn = $("#btnResultEnter");
+  if (enterBtn) enterBtn.addEventListener("click", () => {
+    closeSheet();
+    openCrowdCheck(club.id);
+  });
+}
 
-  el.onclick = (e) => {
-    const enter = e.target.closest("[data-scan-enter]");
-    if (enter) {
-      el.className = "scanner";
-      el.innerHTML = "";
-      openCrowdCheck(enter.dataset.scanEnter);
-      return;
-    }
-    const a = e.target.closest("[data-scan-aforo]");
-    if (a) {
-      state.selectedClub = a.dataset.scanAforo;
-      save();
-      $("#homeClub").value = state.selectedClub;
-      $("#doorClub").value = state.selectedClub;
-      el.className = "scanner";
-      el.innerHTML = "";
-      setView("aforo");
-      renderDoor();
-      return;
-    }
-    if (e.target.closest("[data-scan-close]")) {
-      el.className = "scanner";
-      el.innerHTML = "";
-    }
+function validateTicket(purchaseId) {
+  // Relee o estado para non validar dúas veces dende dúas pestanas
+  refreshFromStorage();
+  const p = state.purchases.find(x => x.id === purchaseId);
+  if (!p) return toast("Entrada no encontrada", "bad");
+  if (p.status !== "funded") {
+    toast(p.status === "redeemed" ? "Esa entrada ya fue validada" : "Esa entrada fue reembolsada", "bad");
+    setView("tickets");
+    setTicketTab("mine");
+    return;
+  }
+
+  const club = clubByVenue(p.venue);
+  const v = verifyCode(p.code, { event: p.event, iso: p.iso });
+  const resultado = {
+    firma_ok: v.ok,
+    evento: p.event,
+    tipo_entrada: p.type,
+    riesgo_fraude: v.ok ? "bajo" : "alto",
+    score_riesgo: v.ok ? 12 : 94,
+    decision: v.ok ? "aceptar" : "rechazar",
+    motivo: v.reason || "QR y evento coinciden"
   };
+
+  if (v.ok && p.iso !== todayIso()) {
+    return toast("La entrada no es para hoy · consérvala para su fecha", "bad");
+  }
+  if (v.ok && club.inside >= club.cap) {
+    return toast(`Aforo completo en ${club.name} · inténtalo en unos minutos`, "bad");
+  }
+
+  if (v.ok) {
+    p.status = "redeemed";
+    p.clubId = club.id;
+    doorMove(club.id, 1, false);        // el aforo sube solo al validar el QR
+    state.scans.unshift({ event: p.event, type: p.type, time: nowStr(), club: club.id });
+    state.scans = state.scans.slice(0, 8);
+    resultado.aforo_actualizado = `${club.inside}/${club.cap}`;
+    resultado.aforo_pct = club.occ;
+    burst();
+    log(`Entrada validada · ${p.event} · aforo ${club.name} ${club.inside}/${club.cap}`);
+    toast(`Entrada válida · aforo ${club.name} ${club.occ}%`, "good");
+  } else {
+    p.status = "refunded";
+    log(`Entrada rechazada · ${p.event} · reembolso automático`);
+    toast("Entrada rechazada · reembolso emitido", "bad");
+  }
+  save();
+  renderKpis();
+  renderClubs();
+  renderDoor();
+  renderTickets();
+  showValidationResult(p, resultado, v, club);
 }
 
 /* ---------------- taxi ---------------- */
-const DESTS = [
-  { name: "Centro", eta: 8, price: 9 },
-  { name: "Ensanche", eta: 10, price: 11 },
-  { name: "Vista Alegre", eta: 14, price: 14 },
-  { name: "Fontiñas", eta: 16, price: 16 },
-  { name: "San Lázaro", eta: 18, price: 18 }
-];
-
 function renderTaxi() {
   const club = clubById(state.selectedClub);
   $("#taxiClub").textContent = club.name;
@@ -1115,14 +1239,14 @@ function renderTaxi() {
   $("#squadBox").innerHTML = joined ? `
     <div class="squad">
       <div class="squad-head">
-        <b>Squad confirmado · ${joined.dest}</b>
+        <b>Squad confirmado · ${esc(joined.dest)}</b>
         <span class="badge media">${joined.taken}/${joined.seats}</span>
       </div>
       <div class="avatars">
-        ${joined.members.map(m => `<div class="avatar">${m}</div>`).join("")}
+        ${joined.members.map(m => `<div class="avatar">${esc(m)}</div>`).join("")}
         ${Array.from({ length: Math.max(0, joined.seats - joined.members.length) }).map(() => `<div class="avatar empty">+</div>`).join("")}
       </div>
-      <div class="ride-meta"><span>Salida <b>${joined.depart}</b></span><span>VTC <b>${joined.price} €</b></span><span>~<b>${Math.round(joined.price / Math.max(1, joined.taken))} €</b>/persona</span></div>
+      <div class="ride-meta"><span>Salida <b>${esc(joined.depart)}</b></span><span>VTC <b>${joined.price} €</b></span><span>~<b>${Math.round(joined.price / Math.max(1, joined.taken))} €</b>/persona</span></div>
       <button class="btn ghost small" style="width:100%" id="btnWhatsapp">Compartir en WhatsApp</button>
     </div>` : "";
 
@@ -1130,11 +1254,11 @@ function renderTaxi() {
     const full = r.taken >= r.seats;
     return `<div class="ride">
       <div class="ride-info">
-        <b>${r.dest} · ${r.depart}</b>
-        <small>${r.club} · ${full ? "completo" : (r.seats - r.taken) + " plazas libres"} · ${Math.round(r.price / r.seats)} €/pers</small>
+        <b>${esc(r.dest)} · ${esc(r.depart)}</b>
+        <small>${esc(r.club)} · ${full ? "completo" : (r.seats - r.taken) + " plazas libres"} · ${Math.round(r.price / r.seats)} €/pers</small>
         <div class="seats">${Array.from({ length: r.seats }).map((_, i) => `<i class="${i < r.taken ? "on" : ""}"></i>`).join("")}</div>
       </div>
-      <button class="join-btn" data-join="${r.id}" ${full || (joined && joined.id === r.id) ? "disabled" : ""}>
+      <button class="join-btn" data-join="${esc(r.id)}" ${full || (joined && joined.id === r.id) ? "disabled" : ""}>
         ${joined && joined.id === r.id ? "dentro" : full ? "lleno" : "unirme"}
       </button>
     </div>`;
@@ -1148,9 +1272,22 @@ function renderTaxi() {
   });
 }
 
+function leaveCurrentRide() {
+  const prev = state.rides.find(x => x.id === state.joinedRide);
+  if (!prev) return;
+  prev.taken = Math.max(0, prev.taken - 1);
+  prev.members = prev.members.filter(m => m !== "TÚ");
+}
+
 function joinRide(id) {
   const r = state.rides.find(x => x.id === id);
-  if (!r || r.taken >= r.seats) return;
+  if (!r) return;
+  if (state.joinedRide === r.id) return toast("Ya estás dentro de ese squad");
+  if (r.taken >= r.seats) return toast("Ese squad ya está completo", "bad");
+
+  // sae do squad anterior para non ocupar prazas en dous coches á vez
+  leaveCurrentRide();
+
   r.taken++;
   if (!r.members.includes("TÚ")) r.members.unshift("TÚ");
   state.joinedRide = r.id;
@@ -1158,13 +1295,14 @@ function joinRide(id) {
   renderTaxi();
   renderKpis();
   toast("Te has unido al squad a " + r.dest, "good");
-  log(`Nuevo squad a <b>${r.dest}</b> · ${r.taken}/${r.seats} plazas`);
+  log(`Nuevo squad a ${r.dest} · ${r.taken}/${r.seats} plazas`);
 }
 
 function createRide() {
   const d = DESTS.find(x => x.name === state.destination) || DESTS[0];
   const nm = nightStart + Math.floor((Date.now() - nowBase) / 60000) + 15;
   const dep = `${pad(Math.floor(nm / 60) % 24)}:${pad(nm % 60)}`;
+  leaveCurrentRide();
   const r = {
     id: "r" + Date.now().toString(36),
     dest: d.name, club: clubById(state.selectedClub).name, depart: dep,
@@ -1176,7 +1314,7 @@ function createRide() {
   renderTaxi();
   renderKpis();
   toast("Squad creado · comparte el enlace", "good");
-  log(`Squad creado a <b>${d.name}</b> · salida ${dep}`);
+  log(`Squad creado a ${d.name} · salida ${dep}`);
 }
 
 /* ---------------- vault ---------------- */
@@ -1190,7 +1328,7 @@ function revealVault(silent) {
   if (!silent) {
     burst();
     toast("Álbum revelado · ya podéis verlo todo", "good");
-    log("Party Vault revelado · <b>" + state.vault.photos.length + " fotos</b> desbloqueadas");
+    log("Party Vault revelado · " + state.vault.photos.length + " fotos desbloqueadas");
   }
 }
 
@@ -1215,7 +1353,7 @@ function renderVault() {
   grid.innerHTML = v.photos.map((p, i) => {
     const src = p.kind === "upload" ? p.dataUrl : makePhoto(p.seed);
     return `<div class="vault-photo ${v.revealed ? "revealed" : ""}" style="transition-delay:${v.revealed ? i * 55 : 0}ms">
-      <img src="${src}" alt="Foto del álbum" loading="lazy">
+      <img src="${esc(src)}" alt="Foto del álbum" loading="lazy">
       <div class="lock">${v.revealed ? "" : "🔒"}</div>
     </div>`;
   }).join("");
@@ -1272,25 +1410,41 @@ async function addVaultFiles(files) {
       kind: "upload",
       dataUrl: c.toDataURL("image/jpeg", .72)
     });
+    URL.revokeObjectURL(url);
     added++;
   }
-  if (!added) return;
-  save();
+  if (!added) return toast("Selecciona archivos de imagen", "bad");
+  const ok = save();
   renderVault();
-  toast(`${added} foto${added > 1 ? "s" : ""} bloqueada${added > 1 ? "s" : ""} hasta el revelado`, "good");
-  log(`${added} foto${added > 1 ? "s" : ""} nueva${added > 1 ? "s" : ""} en el <b>Party Vault</b>`);
+  toast(ok
+    ? `${added} foto${added > 1 ? "s" : ""} bloqueada${added > 1 ? "s" : ""} hasta el revelado`
+    : "Fotos añadidas, pero el almacenamiento local está lleno: no se guardarán",
+    ok ? "good" : "bad");
+  log(`${added} foto${added > 1 ? "s" : ""} nueva${added > 1 ? "s" : ""} en el Party Vault`);
 }
 
 /* ---------------- sheet ---------------- */
+let lastFocus = null;
 function openSheet(html) {
   const s = $("#sheet");
-  s.innerHTML = `<div class="sheet-card"><div class="grabber"></div>${html}</div>`;
-  requestAnimationFrame(() => s.classList.add("open"));
+  lastFocus = document.activeElement;
+  s.innerHTML = `<div class="sheet-card" role="dialog" aria-modal="true" aria-label="Panel"><div class="grabber"></div>${html}</div>`;
+  s.setAttribute("aria-hidden", "false");
+  requestAnimationFrame(() => {
+    s.classList.add("open");
+    const first = s.querySelector("button, [href], input, select, textarea");
+    if (first) first.focus({ preventScroll: true });
+  });
 }
 function closeSheet() {
   const s = $("#sheet");
   s.classList.remove("open");
+  s.setAttribute("aria-hidden", "true");
   setTimeout(() => { if (!s.classList.contains("open")) s.innerHTML = ""; }, 300);
+  if (lastFocus && lastFocus.isConnected) {
+    try { lastFocus.focus({ preventScroll: true }); } catch {}
+  }
+  lastFocus = null;
 }
 
 /* ---------------- confetti ---------------- */
@@ -1339,7 +1493,7 @@ function initNav() {
     renderVault();
     setView("vault");
     toast("Revelado en 60 s · modo demo", "good");
-    log("Temporizador del vault reiniciado a <b>60 s</b>");
+    log("Temporizador del vault reiniciado a 60 s");
   });
   $("#btnReset").addEventListener("click", () => {
     localStorage.removeItem(STORE);
@@ -1355,8 +1509,6 @@ function initTickets() {
   $("#ticketsBody").addEventListener("click", (e) => {
     const b = e.target.closest("[data-buy]");
     if (b) return openBuySheet(b.dataset.buy);
-    const s = e.target.closest("[data-scan]");
-    if (s) return openScanner(s.dataset.scan);
   });
 }
 
@@ -1421,7 +1573,7 @@ function initMisc() {
   });
 
   const dsel = $("#doorClub");
-  dsel.innerHTML = state.clubs.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+  dsel.innerHTML = state.clubs.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("");
   dsel.value = state.selectedClub;
   dsel.addEventListener("change", () => {
     state.selectedClub = dsel.value;
@@ -1433,17 +1585,7 @@ function initMisc() {
     toast("Aforo de " + clubById(dsel.value).name);
   });
 
-  $("#doorScan").addEventListener("click", () => {
-    const p = state.purchases.find(x => x.status === "funded" && clubByVenue(x.venue).id === state.selectedClub)
-      || state.purchases.find(x => x.status === "funded");
-    if (!p) {
-      setView("tickets");
-      setTicketTab("buy");
-      toast("Compra una entrada y valídala en la puerta", "bad");
-      return;
-    }
-    openScanner(p.id);
-  });
+  $("#doorScan").addEventListener("click", openValidatePicker);
 
   document.addEventListener("click", (e) => {
     const ck = e.target.closest("[data-checkin]");
@@ -1462,15 +1604,30 @@ function initMisc() {
       openVenuePanel(vp.dataset.venuePanel);
       return;
     }
+    const val = e.target.closest("[data-validate]");
+    if (val) {
+      validateTicket(val.dataset.validate);
+      return;
+    }
     if (e.target.closest("[data-close]")) closeSheet();
     if (e.target.id === "sheet") closeSheet();
   });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      closeSheet();
-      const sc = $("#scanner");
-      if (sc.classList.contains("open")) { sc.className = "scanner"; sc.innerHTML = ""; }
-    }
+    if (e.key === "Escape") closeSheet();
+  });
+
+  // sincroniza o estado se outra pestana modifica localStorage
+  window.addEventListener("storage", (e) => {
+    if (e.key !== STORE) return;
+    refreshFromStorage();
+    renderLog();
+    renderKpis();
+    renderSensor();
+    renderHome();
+    if (state.view === "aforo") { renderClubs(); renderDoor(); }
+    if (state.view === "tickets") renderTickets();
+    if (state.view === "taxi") renderTaxi();
+    if (state.view === "vault") renderVault();
   });
 
   setInterval(() => {
@@ -1596,6 +1753,11 @@ function init() {
 
   // bienvenida
   setTimeout(() => toast("Demo lista · todo en vivo"), 700);
+
+  // PWA instalable (require un service worker en Chrome/Android)
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  }
 }
 
 document.addEventListener("DOMContentLoaded", init);

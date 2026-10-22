@@ -7,12 +7,12 @@ dependencias, sin API keys.
 ## Arrancar
 
 ```bash
-cd nightpulse
 python3 -m http.server 8123
 ```
 
 Abre `http://localhost:8123` en el portátil (doble pantalla: pitch + móvil).
-En el móvil, `http://IP_DE_TU_PORTATIL:8123` — ocupa toda la pantalla como PWA.
+En el móvil, `http://IP_DE_TU_PORTATIL:8123` — ocupa toda la pantalla y se puede
+instalar como PWA (service worker + iconos 192/512).
 
 ## Acceso
 
@@ -60,6 +60,9 @@ Aforos y colas de la demo son simulados; direcciones y coordenadas, reales.
 - **Sensor Wi-Fi pasivo de 5 $** en la puerta. Detecta móviles en 25 m y estima
   personas y minutos. No requiere app y **no usa fotos**.
 - El aforo híbrido se calcula aparte (ver arriba).
+- **Accesos:** no hay escáner ni cámara simulada. La validación de la entrada es
+  instantánea desde *Entrada → Mis entradas → Validar en la puerta* o con el
+  botón **Validar entrada** del Aforo.
 
 ## Módulos
 
@@ -73,13 +76,16 @@ Aforos y colas de la demo son simulados; direcciones y coordenadas, reales.
 
 1. **Noche** — Circus 94% estimado · 469/500 · espera 11 min · 47 móviles. "Ver aforo y cola".
 2. **Aforo** — contador de puerta, plazas libres y mapa con los 6 locales.
-3. **Entrada** — compra "Nochevieja Universitaria" → "Validar en la puerta" →
-   el contador sube 1 y se libera el escrow. "Entrar al local" lanza el
-   **check-in 1-tap** (+10 Karma): el aforo estimado cambia y el **Panel del
-   local** muestra el desglose. Repite con "Urban Session": QR manipulado →
-   rechazo y reembolso.
+3. **Entrada** — compra "Noche Universitaria" → "Validar en la puerta" →
+   validación instantánea: el contador sube 1 y se libera el escrow. "Entrar al
+   local" lanza el **check-in 1-tap** (+10 Karma): el aforo estimado cambia y el
+   **Panel del local** muestra el desglose. Repite con "Urban Session": QR
+   manipulado → rechazo y reembolso.
 4. **Taxi** — únete a un squad o crea uno, comparte por WhatsApp.
 5. **Álbum** — 12 fotos bloqueadas. Panel izquierdo: **Timer 60 s** o **Revelar álbum**.
+
+Las entradas en venta llevan la fecha "HOY" del día actual. Si la demo sigue
+abierta después de medianoche, las compras antiguas quedan como "no es para hoy".
 
 ## Controles del panel izquierdo
 
@@ -92,4 +98,5 @@ Aforos y colas de la demo son simulados; direcciones y coordenadas, reales.
 - `app.js` — estado, login/edad, sensor, contador, escrow, taxis, álbum, panel.
 - `styles.css` — shell de doble pantalla + UI del móvil.
 - `index.html` — login + 5 vistas.
-- `manifest.webmanifest` / `icon.svg` — PWA.
+- `manifest.webmanifest` / `icon.svg` / `icons/` — PWA instalable.
+- `sw.js` — service worker (network-first + caché offline).
