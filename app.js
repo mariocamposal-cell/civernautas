@@ -683,7 +683,7 @@ function recomputeOcc(c) {
 }
 
 function sensorDevices(c) {
-  return Math.max(1, Math.round(c.queue / 1.35));
+  return Math.max(0, Math.round(c.queue / 1.35));
 }
 
 function renderSensor() {
@@ -771,7 +771,7 @@ function openVenuePanel(clubId) {
     </div>
     <div class="note-box" style="margin-top:12px">
       <span style="color:#22d3ee">◉</span>
-      <span>Fórmula: 55% puerta + entradas · 30% reportes · 15% cola estimada (personas en cola, normalizadas por capacidad). Los reportes caducan a los 30 min.</span>
+      <span>Fórmula: 55% puerta + entradas · 30% reportes · 15% cola estimada (personas en cola, normalizadas por capacidad). Los reportes pierden la mitad de su peso cada 30 min y caducan a los 90.</span>
     </div>
   `);
 }
@@ -808,6 +808,7 @@ function openCrowdCheck(clubId) {
 }
 
 function submitCrowd(clubId, level) {
+  refreshFromStorage();
   const c = clubById(clubId);
   const value = CROWD_LEVELS[level];
   if (!value) return;
@@ -1279,6 +1280,7 @@ function openBuySheet(id) {
     state.profile.bought = (state.profile.bought || 0) + 1;
     save();
     renderWallet();
+    renderTickets();
 
     $("#esc0").classList.remove("active");
     ["esc0", "esc1"].forEach(id => $("#" + id).classList.add("done"));
@@ -1864,6 +1866,7 @@ function initMisc() {
     if (state.view === "tickets") renderTickets();
     if (state.view === "taxi") renderTaxi();
     if (state.view === "vault") renderVault();
+    renderWallet();
   });
 
   setInterval(() => {
@@ -1881,7 +1884,7 @@ function initMisc() {
     if (document.hidden) return;
     state.clubs.forEach(c => {
       c.queue = clamp(c.queue + Math.round(Math.random() * 8 - 4), 0, 180);
-      c.wait = Math.max(1, Math.round(c.queue / 6));
+      c.wait = Math.max(0, Math.round(c.queue / 6));
       recomputeOcc(c);
     });
     sensorPingAt = Date.now();
