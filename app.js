@@ -76,13 +76,22 @@ const CLUBS = [
 ];
 
 const LISTINGS = [
-  { id: "l1", event: "Noche Universitaria", venue: "Circus", date: "HOY · 23:00", iso: DEMO_TODAY, type: "General", price: 25, original: 28, seller: "Marta R.", rating: 4.9, serial: "CIR-4471", hue: "#7c3aed", fraud: false },
-  { id: "l2", event: "Tech House Night", venue: "Way Club", date: "HOY · 23:30", iso: DEMO_TODAY, type: "VIP", price: 38, original: 35, seller: "Diego P.", rating: 4.7, serial: "WAY-1180", hue: "#0ea5e9", fraud: false },
-  { id: "l3", event: "Urban Session", venue: "Blaster", date: "HOY · 01:00", iso: DEMO_TODAY, type: "General", price: 18, original: 22, seller: "Lucía G.", rating: 5.0, serial: "BLA-9932", hue: "#f43f5e", fraud: true },
-  { id: "l4", event: "Afterhours · REM", venue: "REM", date: "HOY · 03:00", iso: DEMO_TODAY, type: "Mesa", price: 60, original: 75, seller: "Andrés M.", rating: 4.6, serial: "REM-2201", hue: "#22d3ee", fraud: false },
-  { id: "l5", event: "Nochevieja Universitaria", venue: "Circus", date: "31 DIC · 23:00", iso: "2026-12-31", type: "General", price: 28, original: 30, seller: "Nuria C.", rating: 4.8, serial: "CIR-8812", hue: "#f59e0b", fraud: false },
-  { id: "l6", event: "Indie Night", venue: "Momo", date: "VIE · 30 OCT", iso: "2026-10-30", type: "General", price: 15, original: 18, seller: "Pablo S.", rating: 4.5, serial: "MOM-2244", hue: "#84cc16", fraud: false }
+  { id: "l1", event: "Noche Universitaria", venue: "Circus", date: "HOY · 23:00", iso: DEMO_TODAY, type: "General", price: 25, original: 28, seller: "Marta R.", sellerId: "marta", rating: 4.9, serial: "CIR-4471", hue: "#7c3aed", fraud: false },
+  { id: "l2", event: "Tech House Night", venue: "Way Club", date: "HOY · 23:30", iso: DEMO_TODAY, type: "VIP", price: 38, original: 35, seller: "Diego P.", sellerId: "diego", rating: 4.7, serial: "WAY-1180", hue: "#0ea5e9", fraud: false },
+  { id: "l3", event: "Urban Session", venue: "Blaster", date: "HOY · 01:00", iso: DEMO_TODAY, type: "General", price: 18, original: 22, seller: "Lucía G.", sellerId: "lucia", rating: 5.0, serial: "BLA-9932", hue: "#f43f5e", fraud: true },
+  { id: "l4", event: "Afterhours · REM", venue: "REM", date: "HOY · 03:00", iso: DEMO_TODAY, type: "Mesa", price: 60, original: 75, seller: "Andrés M.", sellerId: "andres", rating: 4.6, serial: "REM-2201", hue: "#22d3ee", fraud: false },
+  { id: "l5", event: "Nochevieja Universitaria", venue: "Circus", date: "31 DIC · 23:00", iso: "2026-12-31", type: "General", price: 28, original: 30, seller: "Nuria C.", sellerId: "nuria", rating: 4.8, serial: "CIR-8812", hue: "#f59e0b", fraud: false },
+  { id: "l6", event: "Indie Night", venue: "Momo", date: "VIE · 30 OCT", iso: "2026-10-30", type: "General", price: 15, original: 18, seller: "Pablo S.", sellerId: "pablo", rating: 4.5, serial: "MOM-2244", hue: "#84cc16", fraud: false }
 ];
+
+const SELLERS = {
+  marta:  { name: "Marta R.",  rating: 4.9, sold: 18, bought: 6, since: "2024" },
+  diego:  { name: "Diego P.",  rating: 4.7, sold: 7,  bought: 3, since: "2025" },
+  lucia:  { name: "Lucía G.",  rating: 5.0, sold: 3,  bought: 9, since: "2025" },
+  andres: { name: "Andrés M.", rating: 4.6, sold: 12, bought: 4, since: "2023" },
+  nuria:  { name: "Nuria C.",  rating: 4.8, sold: 5,  bought: 2, since: "2025" },
+  pablo:  { name: "Pablo S.",  rating: 4.5, sold: 9,  bought: 1, since: "2024" }
+};
 
 const RIDES = [
   { id: "r1", dest: "Centro", club: "Circus", depart: "03:25", seats: 4, taken: 2, price: 9,  members: ["MR", "DP"] },
@@ -112,6 +121,7 @@ const DEFAULT = {
   crowdReports: [],
   karma: 120,
   wallet: 50,
+  profile: { sold: 3, bought: 0 },
   vault: { revealAt: 0, revealed: false, demo: false, photos: [] },
   stats: { reports: 12, escrow: 63, squads: 3 }
 };
@@ -184,6 +194,10 @@ function loadState() {
     l.price = isNum(l.price) ? l.price : 25;
     l.original = isNum(l.original) ? l.original : l.price;
     l.seller = typeof l.seller === "string" ? l.seller : "Tú";
+    if (!l.sellerId) {
+      const byName = { "Marta R.": "marta", "Diego P.": "diego", "Lucía G.": "lucia", "Andrés M.": "andres", "Nuria C.": "nuria", "Pablo S.": "pablo", "Tú": "me" };
+      l.sellerId = byName[l.seller] || "marta";
+    }
     l.rating = isNum(l.rating) ? l.rating : 5;
     l.hue = typeof l.hue === "string" && /^#[0-9a-f]{3,8}$/i.test(l.hue) ? l.hue : "#a855f7";
     l.serial = typeof l.serial === "string" ? l.serial : "USR-0000";
@@ -214,6 +228,10 @@ function loadState() {
     p.code = typeof p.code === "string" ? p.code : "";
     if (p.status === "funded" && !p.code) p.status = "refunded";
   });
+
+  s.profile = { sold: 3, bought: 0, ...(isObj(src.profile) ? src.profile : {}) };
+  ["sold", "bought"].forEach(k => { if (!isNum(s.profile[k])) s.profile[k] = k === "sold" ? 3 : 0; });
+  s.profile.bought = Math.max(s.profile.bought, s.purchases.filter(p => p.status !== "refunded").length);
 
   s.rides = (Array.isArray(src.rides) ? src.rides : structuredClone(RIDES)).filter(isObj);
   s.rides.forEach(r => {
@@ -427,7 +445,8 @@ function openAccount() {
         : `<small>Nivel máximo alcanzado</small>`}
     </div>
     <div class="acc-rows">
-      <div><span>Entradas</span><b>${mine}</b></div>
+      <div><span>Compradas</span><b>${state.profile.bought}</b></div>
+      <div><span>Vendidas</span><b>${state.profile.sold}</b></div>
       <div><span>Ciudad</span><b>Santiago de Compostela</b></div>
     </div>
     <div class="acc-actions">
@@ -474,6 +493,51 @@ function redeemKarma(cost) {
   toast(`Canjeado · +${eur(tier.eur)} al monedero`, "good");
   log(`Karma canjeado · ${tier.karma} pts → ${eur(tier.eur)} · saldo ${eur(state.wallet)}`);
   openAccount();
+}
+
+function sellerProfile(id) {
+  if (id === "me") {
+    return {
+      name: "Tú",
+      rating: 5,
+      sold: state.profile?.sold ?? 0,
+      bought: state.profile?.bought ?? 0,
+      since: "2026"
+    };
+  }
+  return SELLERS[id] || { name: "Vendedor", rating: 5, sold: 0, bought: 0, since: "2025" };
+}
+
+function openSeller(id) {
+  const p = sellerProfile(id);
+  const active = state.listings.filter(l => l.sellerId === id &&
+    !state.purchases.some(x => x.listingId === l.id && x.status !== "refunded"));
+
+  openSheet(`
+    <div class="sheet-head">
+      <div><h3>${esc(p.name)}</h3><p>Perfil de vendedor ${id === "me" ? "· tu cuenta" : "· identidad verificada"}</p></div>
+      <button class="x-btn" data-close aria-label="Cerrar">✕</button>
+    </div>
+    <div class="seller-hero">
+      <div class="seller-avatar">${esc(p.name.charAt(0))}</div>
+      <div class="seller-id"><b>${esc(p.name)}</b><small>Miembro desde ${esc(p.since)}</small></div>
+      <span class="badge media">★ ${esc(String(p.rating))}</span>
+    </div>
+    <div class="seller-stats">
+      <div><span>Vendidas</span><b>${p.sold}</b></div>
+      <div><span>Compradas</span><b>${p.bought}</b></div>
+      <div><span>Valoración</span><b>${esc(String(p.rating))}</b></div>
+    </div>
+    <div class="section-title" style="margin:12px 0 6px"><h3>Entradas activas</h3><span>${active.length}</span></div>
+    <div class="seller-list">
+      ${active.length
+        ? active.map(l => `<div class="seller-row"><div><b>${esc(l.event)}</b><small>${esc(l.venue)} · ${esc(l.date)}</small></div><span>${eur(l.price)}</span></div>`).join("")
+        : `<p class="scan-empty">Sin entradas activas ahora mismo.</p>`}
+    </div>
+    <div class="note-box" style="margin-top:12px">
+      <span>✓</span><span>Historial guardado en su perfil. Solo se valora después de completar una entrada.</span>
+    </div>
+  `);
 }
 
 /* ---------------- navegación ---------------- */
@@ -1050,7 +1114,11 @@ function renderTickets() {
                 <span class="tag verified">QR verificado</span>
                 ${l.price < l.original ? '<span class="tag deal">bajo coste</span>' : ""}
               </div>
-              <div class="meta" style="margin-top:5px">${esc(l.seller)} · ★ ${esc(l.rating)}</div>
+              <div class="meta" style="margin-top:5px">
+                <button class="seller-link" data-seller="${esc(l.sellerId || "marta")}">
+                  ${esc(l.seller)} · ★ ${esc(String(l.rating))} · ${sellerProfile(l.sellerId || "marta").sold} ventas
+                </button>
+              </div>
             </div>
           </div>
           <div class="listing-buy">
@@ -1208,6 +1276,7 @@ function openBuySheet(id) {
     state.wallet = Math.round((state.wallet - total) * 100) / 100;
     const p = makePurchase(l);
     state.purchases.unshift(p);
+    state.profile.bought = (state.profile.bought || 0) + 1;
     save();
     renderWallet();
 
@@ -1248,7 +1317,7 @@ async function publishListing() {
     id: "l" + Date.now().toString(36),
     event, venue, date: "HOY · 04:00", iso, type,
     price, original: price,
-    seller: "Tú", rating: 5.0, serial, hue: "#a855f7",
+    seller: "Tú", sellerId: "me", rating: 5.0, serial, hue: "#a855f7",
     fraud: false, code: makeCode(event, serial, iso)
   };
   state.listings.unshift(l);
@@ -1672,6 +1741,8 @@ function initTickets() {
     if (b) setTicketTab(b.dataset.tab);
   });
   $("#ticketsBody").addEventListener("click", (e) => {
+    const sl = e.target.closest("[data-seller]");
+    if (sl) return openSeller(sl.dataset.seller);
     const b = e.target.closest("[data-buy]");
     if (b) return openBuySheet(b.dataset.buy);
   });

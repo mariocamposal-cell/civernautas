@@ -32,7 +32,11 @@ Al pulsarlo se abre **Tu cuenta**:
 - Email y edad (+18) de la sesión.
 - Saldo, con recargas demo de +10 / +20 / +50 €.
 - **Karma**: 10 puntos por check-in. Canjeables en la misma cuenta:
-  **100 → 1 € · 250 → 3 € · 500 → 7 €**. El saldo entra en el monedero.
+  **100 → 1 € · 250 → 3 € · 500 → 7 €**. Al canjear, el importe se suma al
+  monedero al instante.
+- **Historial**: compradas y vendidas de tu cuenta. En cada entrada puedes pulsar
+  el nombre del vendedor para ver su perfil (vendidas, compradas, valoración y
+  entradas activas).
 - Entradas y ciudad.
 - Acceso a “Mis entradas” y **Cerrar sesión**.
 
