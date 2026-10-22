@@ -391,6 +391,7 @@ function openAccount() {
   const email = (s && s.email) || "demo@civernautas.app";
   const age = s ? ageFrom(s.dob) : null;
   const mine = state.purchases.filter(p => p.status !== "refunded").length;
+  const nextTier = KARMA_TIERS.find(t => t.karma > state.karma);
 
   openSheet(`
     <div class="sheet-head">
@@ -411,8 +412,18 @@ function openAccount() {
         <button data-topup="50">+50 €</button>
       </div>
     </div>
+    <div class="karma-card">
+      <div class="karma-head"><span>Karma</span><b>★ ${state.karma}</b></div>
+      <p>10 puntos por cada check-in. Canjéalos por saldo del monedero.</p>
+      <div class="karma-tiers">
+        ${KARMA_TIERS.map(t => `<button data-redeem="${t.karma}" ${state.karma < t.karma ? "disabled" : ""}>${t.karma} → ${eur(t.eur)}</button>`).join("")}
+      </div>
+      ${nextTier
+        ? `<div class="karma-progress"><i style="width:${Math.min(100, (state.karma / nextTier.karma) * 100)}%"></i></div>
+           <small>Te faltan ${nextTier.karma - state.karma} para ${eur(nextTier.eur)}</small>`
+        : `<small>Nivel máximo alcanzado</small>`}
+    </div>
     <div class="acc-rows">
-      <div><span>Karma</span><b>★ ${state.karma}</b></div>
       <div><span>Entradas</span><b>${mine}</b></div>
       <div><span>Ciudad</span><b>Santiago de Compostela</b></div>
     </div>
@@ -428,6 +439,10 @@ function openAccount() {
     openAccount();
   }));
 
+  $$("#sheet [data-redeem]").forEach(b => b.addEventListener("click", () => {
+    redeemKarma(Number(b.dataset.redeem));
+  }));
+
   $("#btnAccountTickets").addEventListener("click", () => {
     closeSheet();
     setTicketTab("mine");
@@ -435,6 +450,27 @@ function openAccount() {
   });
 
   $("#btnLogout").addEventListener("click", logout);
+}
+
+const KARMA_TIERS = [
+  { karma: 100, eur: 1 },
+  { karma: 250, eur: 3 },
+  { karma: 500, eur: 7 }
+];
+
+function redeemKarma(cost) {
+  const tier = KARMA_TIERS.find(t => t.karma === cost);
+  if (!tier) return;
+  if (state.karma < tier.karma) return toast("Te falta karma para ese canje", "bad");
+
+  state.karma -= tier.karma;
+  state.wallet = Math.round((state.wallet + tier.eur) * 100) / 100;
+  save();
+  renderWallet();
+  renderHome();
+  toast(`Canjeado · +${eur(tier.eur)} al monedero`, "good");
+  log(`Karma canjeado · ${tier.karma} pts → ${eur(tier.eur)} · saldo ${eur(state.wallet)}`);
+  openAccount();
 }
 
 /* ---------------- navegación ---------------- */
@@ -683,7 +719,7 @@ function openCrowdCheck(clubId) {
       <div><h3>¿Cómo está la sala?</h3><p>${esc(c.name)} · 1 tap, 10 de karma</p></div>
       <button class="x-btn" data-close aria-label="Cerrar">✕</button>
     </div>
-    <p class="check-intro">Tu respuesta se pondera con la puerta y el sensor. Ganas karma para descuentos en reventa.</p>
+    <p class="check-intro">Tu respuesta se pondera con la puerta y el sensor. Ganas +10 de karma, canjeable por saldo en Tu cuenta.</p>
     <div class="check-opts">
       <button data-crowd="1" data-crowd-club="${esc(c.id)}">
         <span>🟢</span><div><b>Fluido</b><small>30–50% · se está bien</small></div>

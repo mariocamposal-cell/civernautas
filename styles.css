@@ -973,6 +973,27 @@ details.json pre {
 }
 .topup-row button:hover { background: rgba(200,255,46,.16); color: #f2ffc4; }
 .acc-rows { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.karma-card {
+  padding: 11px; border-radius: 14px; margin-bottom: 10px;
+  border: 1px solid rgba(255,61,129,.22);
+  background: linear-gradient(150deg, rgba(255,61,129,.08), rgba(13,10,24,.55));
+}
+.karma-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  font-size: 8px; text-transform: uppercase; letter-spacing: .12em; color: var(--tx-3);
+}
+.karma-head b { font-size: 14px; letter-spacing: 0; color: #ff9dbd; }
+.karma-card p { font-size: 8.5px; line-height: 1.45; color: var(--tx-3); margin: 3px 0 8px; }
+.karma-tiers { display: flex; gap: 4px; }
+.karma-tiers button {
+  flex: 1; padding: 6px 3px; border-radius: 7px; font-size: 8.5px; font-weight: 700;
+  border: 1px solid rgba(255,61,129,.3); background: rgba(255,61,129,.08); color: #ffc2d6;
+}
+.karma-tiers button:hover:not(:disabled) { background: rgba(255,61,129,.18); color: #fff; }
+.karma-tiers button:disabled { opacity: .32; }
+.karma-progress { height: 3px; border-radius: 2px; background: rgba(255,255,255,.08); overflow: hidden; margin: 8px 0 4px; }
+.karma-progress i { display: block; height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--pink), var(--violet)); }
+.karma-card small { font-size: 7.5px; color: var(--tx-3); }
 .acc-rows div {
   display: flex; justify-content: space-between; align-items: center;
   padding: 8px 10px; border-radius: 8px; font-size: 10.5px;

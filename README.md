@@ -31,7 +31,9 @@ Al pulsarlo se abre **Tu cuenta**:
 
 - Email y edad (+18) de la sesión.
 - Saldo, con recargas demo de +10 / +20 / +50 €.
-- Karma, entradas y ciudad.
+- **Karma**: 10 puntos por check-in. Canjeables en la misma cuenta:
+  **100 → 1 € · 250 → 3 € · 500 → 7 €**. El saldo entra en el monedero.
+- Entradas y ciudad.
 - Acceso a “Mis entradas” y **Cerrar sesión**.
 
 Al comprar se comprueba el saldo: si no llega, el botón de pago se sustituye por
@@ -94,6 +96,7 @@ Aforos y colas de la demo son simulados; direcciones y coordenadas, reales.
    recarga. "Validar en la puerta" → el contador sube 1 y se libera el escrow.
    "Entrar al local" lanza el **check-in 1-tap** (+10 Karma). Repite con "Urban
    Session": QR manipulado → rechazo y **devolución al monedero**.
+   En **Tu cuenta** puedes canjear 100 Karma → 1 € de saldo.
 4. **Taxi** — únete a un squad o crea uno, comparte por WhatsApp.
 5. **Álbum** — 12 fotos bloqueadas. Panel izquierdo: **Timer 60 s** o **Revelar álbum**.
 
