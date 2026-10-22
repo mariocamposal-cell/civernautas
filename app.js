@@ -1207,7 +1207,9 @@ function renderTickets() {
         ${steps.map(s => `<div class="step-dot ${s ? "on" : ""}"></div>`).join("")}
       </div>
       ${p.status === "funded"
-        ? `<button class="btn primary small" style="width:100%;margin-top:11px" data-validate="${esc(p.id)}">Validar en la puerta</button>`
+        ? (p.iso === todayIso()
+          ? `<button class="btn primary small" style="width:100%;margin-top:11px" data-validate="${esc(p.id)}">Validar en la puerta</button>`
+          : `<div class="note-box" style="margin-top:10px"><span>📅</span><span>Entrada para ${esc(p.date)}. Se podrá validar ese día.</span></div>`)
         : ""}
     </div>`;
   }).join("");
@@ -1232,6 +1234,7 @@ function openBuySheet(id) {
       <div class="pay-row"><span>Monedero disponible</span><b class="${enough ? "" : "bad"}">${eur(state.wallet)}</b></div>
       <div class="pay-row total"><span>Total a autorizar</span><b>${eur(total)}</b></div>
     </div>
+    ${l.iso !== todayIso() ? `<div class="note-box" style="margin-bottom:10px"><span>📅</span><span>Entrada para ${esc(l.date)}: no se puede validar hoy.</span></div>` : ""}
     <div class="escrow-track">
       <div class="esc-step active" id="esc0"><div class="bullet">1</div><div class="txt"><b>Autorizas el pago</b><small>No se cobra todavía</small></div></div>
       <div class="esc-step" id="esc1"><div class="bullet">2</div><div class="txt"><b>Fondos retenidos</b><small>Escrow de NIGHTPULSE</small></div></div>
@@ -1332,11 +1335,12 @@ async function publishListing() {
 /* ---------------- validación en puerta ---------------- */
 function openValidatePicker() {
   refreshFromStorage();
-  const pending = state.purchases.filter(p => p.status === "funded");
+  const funded = state.purchases.filter(p => p.status === "funded");
+  const pending = funded.filter(p => p.iso === todayIso());
   if (!pending.length) {
     setView("tickets");
-    setTicketTab("buy");
-    toast("Compra una entrada para validarla en la puerta", "bad");
+    setTicketTab(funded.length ? "mine" : "buy");
+    toast(funded.length ? "Tus entradas son para otra fecha · no se validan hoy" : "Compra una entrada para validarla en la puerta", "bad");
     return;
   }
   openSheet(`
