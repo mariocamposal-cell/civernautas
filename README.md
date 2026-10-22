@@ -1,7 +1,7 @@
 # CIVERNAUTAS · NOCHE
 
-Demo navegable del MVP de ocio nocturno **NOCHE**: aforo en vivo, QR TOTP,
-escáner, mercado de entradas, taxi compartido, álbum privado y recap.
+Demo navegable del MVP de ocio nocturno **NOCHE**: login de usuarios, aforo en
+vivo, QR TOTP, escáner, mercado de entradas, taxi compartido, álbum privado y recap.
 
 La aplicación está dentro de la carpeta [`nightlife-mvp/`](nightlife-mvp/).
 
