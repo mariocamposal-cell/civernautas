@@ -31,7 +31,7 @@ Al pulsarlo se abre **Tu cuenta**:
 
 - Email y edad (+18) de la sesión.
 - Saldo, con recargas demo de +10 / +20 / +50 €.
-- **Karma**: 10 puntos por check-in. Canjeables en la misma cuenta:
+- **Karma**: +10 por reporte de aforo y +10 al validar una entrada. Canjeables en la misma cuenta:
   **100 → 1 € · 250 → 3 € · 500 → 7 €**. El saldo entra en el monedero.
 - Entradas y ciudad.
 - Acceso a “Mis entradas” y **Cerrar sesión**.
@@ -47,15 +47,18 @@ El porcentaje que se muestra es una estimación ponderada:
 ```
 aforo = 55% · (puerta + entradas usadas)
       + 30% · reportes 1-tap de usuarios
-      + 15% · sensor de cola (espera)
+      + 15% · cola estimada (personas en cola)
 ```
 
 - **Puerta + entradas:** contador exacto (`inside`) y cada QR validado suma +1.
 - **Reportes 1-tap:** 🟢 Fluido (40%) · 🟡 Pista llena (70%) · 🔴 Aforo máximo (95%).
   Cada reporte pesa la mitad cada 30 minutos y caduca a los 90.
-- **Sensor de cola:** corrige la base según la espera estimada.
+- **Cola estimada:** personas en la cola según el sensor Wi-Fi (móviles × 1,35).
+  Se normaliza por capacidad: una cola del **20% de la capacidad** equivale al
+  100% de presión; el valor se limita a 0-99. No modifica el contador exacto.
 - Cada **reporte de aforo** da **+10 karma** (máximo uno por local y noche) y
-  validar una entrada da otros **+10**. El karma se usará para ventajas en reventa.
+  validar una entrada da otros **+10**. El karma se canjea por saldo del monedero
+  en **Tu cuenta** (100 → 1 € · 250 → 3 € · 500 → 7 €).
 
 El contador exacto sigue visible en Aforo; el % es la estimación híbrida.
 
