@@ -1,0 +1,2948 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#06060a">
+<title>NOCHE · demo de la noche</title>
+<style>
+  :root{
+    --bg:#06060a;
+    --bg2:#0b0b13;
+    --card:#12121d;
+    --card2:#171726;
+    --line:rgba(255,255,255,.09);
+    --line2:rgba(255,255,255,.16);
+    --text:#f5f5fa;
+    --mute:#9393aa;
+    --dim:#62627a;
+    --lime:#c8ff3d;
+    --pink:#ff3d7f;
+    --cyan:#42e8ff;
+    --violet:#8b5cff;
+    --ok:#5dffae;
+    --warn:#ffce4a;
+    --bad:#ff5c6c;
+    --r:20px;
+    --font:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--font);
+    color:var(--text);
+    background:
+      radial-gradient(900px 600px at 15% 10%, rgba(255,61,127,.13), transparent 60%),
+      radial-gradient(800px 700px at 90% 85%, rgba(66,232,255,.10), transparent 60%),
+      radial-gradient(700px 500px at 70% 10%, rgba(139,92,255,.10), transparent 60%),
+      var(--bg);
+    min-height:100dvh;
+    overflow-x:hidden;
+  }
+  button,input{font:inherit;color:inherit}
+  button{cursor:pointer;border:0;background:none}
+  img{display:block;max-width:100%}
+  ::selection{background:var(--lime);color:#08080c}
+
+  .stage{
+    min-height:100dvh;
+    display:grid;
+    grid-template-columns:430px minmax(380px,1fr);
+    gap:42px;
+    align-items:center;
+    max-width:1220px;
+    margin:0 auto;
+    padding:28px 32px;
+  }
+
+  /* ---------------- phone ---------------- */
+  .phone-shell{display:flex;justify-content:center;min-width:0}
+  .phone{
+    position:relative;
+    display:flex;flex-direction:column;
+    width:100%;max-width:430px;
+    height:min(880px,calc(100dvh - 56px));
+    background:linear-gradient(180deg,#0a0a11,#07070b 45%,#08080e);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:44px;
+    overflow:hidden;
+    box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 8px rgba(255,255,255,.02),inset 0 0 0 1px rgba(255,255,255,.03);
+  }
+  .island{
+    position:absolute;top:12px;left:50%;transform:translateX(-50%);
+    width:104px;height:26px;border-radius:20px;background:#000;z-index:40;
+    border:1px solid rgba(255,255,255,.05);
+  }
+  .topbar{
+    flex:0 0 auto;z-index:30;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:calc(18px + env(safe-area-inset-top)) 18px 10px;
+  }
+  .brand{font-size:21px;font-weight:900;letter-spacing:-.04em}
+  .brand span{color:var(--lime)}
+  .top-actions{display:flex;gap:8px;align-items:center}
+  .live-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:10px;font-weight:800;letter-spacing:.12em;
+    padding:6px 9px;border-radius:999px;
+    background:rgba(255,61,127,.12);color:#ff8fb4;
+    border:1px solid rgba(255,61,127,.26);
+  }
+  .live-pill i{width:6px;height:6px;border-radius:50%;background:var(--pink);box-shadow:0 0 10px var(--pink);animation:blink 1.6s infinite}
+  .icon-btn{
+    width:34px;height:34px;border-radius:50%;
+    display:grid;place-items:center;text-decoration:none;flex:0 0 auto;
+    background:rgba(255,255,255,.06);
+    border:1px solid var(--line);
+    color:var(--mute);
+  }
+  .icon-btn:hover{color:var(--text);border-color:var(--line2)}
+  .icon-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+  #screens{position:relative;flex:1;min-height:0}
+  .screen{
+    position:absolute;inset:0;
+    overflow-y:auto;overscroll-behavior:contain;
+    padding:8px 18px 108px;
+    display:none;
+    scrollbar-width:none;
+  }
+  .screen::-webkit-scrollbar{display:none}
+  .screen.active{display:block;animation:fadeUp .32s ease both}
+
+  .tabbar{
+    position:absolute;left:0;right:0;bottom:0;z-index:30;
+    height:calc(74px + env(safe-area-inset-bottom));
+    padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+    display:grid;grid-template-columns:repeat(6,1fr);gap:1px;
+    background:rgba(8,8,13,.86);
+    border-top:1px solid var(--line);
+    backdrop-filter:blur(22px);
+  }
+  .tab{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    color:var(--dim);font-size:9.5px;font-weight:700;letter-spacing:.02em;
+    border-radius:14px;transition:color .18s,background .18s;
+  }
+  .tab svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .tab:hover{color:var(--mute)}
+  .tab.active{color:var(--lime);background:rgba(200,255,61,.06)}
+  .tab.active svg{filter:drop-shadow(0 0 8px rgba(200,255,61,.35))}
+
+  /* ---------------- generic ---------------- */
+  .label{display:block;font-size:9.5px;font-weight:800;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+  .card{
+    background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.018));
+    border:1px solid var(--line);
+    border-radius:var(--r);
+    padding:16px;
+  }
+  .btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    width:100%;min-height:50px;padding:0 18px;border-radius:16px;
+    font-weight:800;font-size:14.5px;letter-spacing:-.01em;
+    background:rgba(255,255,255,.06);
+    border:1px solid var(--line2);
+    color:var(--text);
+    transition:transform .12s,filter .18s,background .18s;
+  }
+  .btn:active{transform:scale(.98)}
+  .btn.primary{background:var(--lime);color:#0a0b06;border-color:transparent;box-shadow:0 8px 30px rgba(200,255,61,.18)}
+  .btn.primary:hover{filter:brightness(1.05)}
+  .btn.ghost{background:transparent}
+  .btn.danger{color:#ffb3bc;border-color:rgba(255,92,108,.35);background:rgba(255,92,108,.06)}
+  .btn.small{width:auto;min-height:36px;padding:0 13px;font-size:12px;border-radius:11px}
+  .btn:disabled{opacity:.35;pointer-events:none}
+  .row{display:flex;gap:10px}
+  .hidden{display:none!important}
+  .divider{
+    display:flex;align-items:center;gap:10px;color:var(--dim);
+    font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    margin:16px 0;
+  }
+  .divider::before,.divider::after{content:"";height:1px;background:var(--line);flex:1}
+  .toast{
+    position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);
+    background:#1a1a27;border:1px solid var(--line2);
+    padding:12px 18px;border-radius:14px;font-size:13px;font-weight:600;
+    box-shadow:0 20px 50px rgba(0,0,0,.5);z-index:200;
+    opacity:0;pointer-events:none;transition:.25s;max-width:90vw;text-align:center;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  #fx{position:fixed;inset:0;pointer-events:none;z-index:300;overflow:hidden}
+  .confetti{position:absolute;width:8px;height:14px;border-radius:2px;will-change:transform,opacity;animation:confetti 1.5s cubic-bezier(.2,.6,.4,1) forwards}
+
+  /* ---------------- home ---------------- */
+  .hero{
+    position:relative;height:188px;border-radius:24px;overflow:hidden;
+    border:1px solid var(--line);
+    margin-bottom:12px;
+  }
+  .hero img{width:100%;height:100%;object-fit:cover;filter:saturate(.85) contrast(1.05)}
+  .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 10%,rgba(4,4,8,.25) 45%,rgba(4,4,8,.94) 100%)}
+  .hero-content{position:absolute;left:16px;right:16px;bottom:14px;z-index:2}
+  .hero-content h1{margin:8px 0 3px;font-size:25px;line-height:1.02;letter-spacing:-.045em}
+  .hero-content h1 span{color:var(--mute);font-weight:600;font-size:15px;letter-spacing:-.01em}
+  .hero-content p{margin:0;color:#c8c8d8;font-size:12px}
+  .hero .live-pill{backdrop-filter:blur(8px)}
+  .hero .distance{
+    position:absolute;top:12px;right:12px;z-index:3;
+    font-size:10.5px;font-weight:700;padding:7px 10px;border-radius:999px;
+    background:rgba(6,6,10,.62);border:1px solid rgba(255,255,255,.15);
+    backdrop-filter:blur(10px);
+  }
+  .cap-card{padding:15px 16px 13px}
+  .cap-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .cap-num{display:flex;align-items:baseline;gap:6px;margin-top:4px}
+  .cap-num strong{font-size:40px;line-height:1;letter-spacing:-.06em;font-weight:900;transition:color .25s}
+  .cap-num small{color:var(--dim);font-size:13px;font-weight:700}
+  .ring{
+    --p:87;
+    width:72px;height:72px;border-radius:50%;flex:0 0 auto;
+    background:conic-gradient(var(--lime) calc(var(--p)*1%),rgba(255,255,255,.08) 0);
+    display:grid;place-items:center;position:relative;
+    transition:background .5s;
+  }
+  .ring::before{content:"";position:absolute;inset:6px;border-radius:50%;background:#101019;border:1px solid rgba(255,255,255,.05)}
+  .ring b{position:relative;font-size:16px;letter-spacing:-.04em}
+  .bar{height:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:14px}
+  .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--lime),#9dff4d);transition:width .5s cubic-bezier(.2,.7,.2,1)}
+  .cap-foot{display:flex;justify-content:space-between;align-items:center;margin-top:9px;font-size:11px;color:var(--mute)}
+  .cap-foot .status{display:flex;align-items:center;gap:6px;font-weight:700;color:var(--warn)}
+  .cap-foot .status i{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .stat{padding:13px 14px}
+  .stat strong{display:block;font-size:19px;letter-spacing:-.03em;margin-top:5px}
+  .stat small{display:block;color:var(--dim);font-size:10.5px;margin-top:2px}
+  .queue-wrap{margin-top:12px}
+  .queue-link{display:block;margin:9px auto 0;color:var(--dim);font-size:11px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+  .quick-title{display:flex;align-items:center;justify-content:space-between;margin:16px 0 9px}
+  .quick-title span{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+  .quick-title small{font-size:10px;color:var(--dim)}
+  .quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .quick{
+    display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+    padding:14px;border-radius:17px;text-align:left;
+    background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+    border:1px solid var(--line);
+    transition:transform .12s,border-color .18s;
+  }
+  .quick:active{transform:scale(.98)}
+  .quick:hover{border-color:var(--line2)}
+  .quick .ico{
+    width:32px;height:32px;border-radius:10px;display:grid;place-items:center;margin-bottom:6px;
+    background:rgba(200,255,61,.09);color:var(--lime);
+  }
+  .quick:nth-child(2) .ico{background:rgba(255,61,127,.1);color:var(--pink)}
+  .quick:nth-child(3) .ico{background:rgba(66,232,255,.09);color:var(--cyan)}
+  .quick:nth-child(4) .ico{background:rgba(139,92,255,.12);color:#b79cff}
+  .quick .ico svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .quick b{font-size:12.5px;letter-spacing:-.01em}
+  .quick small{font-size:10px;color:var(--dim)}
+  .quick .badge{
+    position:absolute;right:10px;top:10px;font-size:8.5px;font-weight:800;
+    background:var(--pink);color:#fff;border-radius:99px;padding:2px 6px;
+  }
+  .quick{position:relative}
+
+  /* ---------------- ticket ---------------- */
+  .ticket-wrap{perspective:1200px;margin-top:2px}
+  .ticket{
+    position:relative;border-radius:26px;padding:18px;overflow:hidden;
+    background:
+      radial-gradient(500px 200px at 50% -30%,rgba(200,255,61,.14),transparent 70%),
+      linear-gradient(180deg,#151522,#0e0e17);
+    border:1px solid rgba(200,255,61,.2);
+    box-shadow:0 20px 60px rgba(0,0,0,.45);
+  }
+  .ticket::before,.ticket::after{
+    content:"";position:absolute;width:22px;height:22px;border-radius:50%;background:var(--bg);
+    top:64%;border:1px solid rgba(200,255,61,.2);
+  }
+  .ticket::before{left:-12px}
+  .ticket::after{right:-12px}
+  .ticket-head{display:flex;align-items:center;justify-content:space-between}
+  .tier{font-size:10px;font-weight:900;letter-spacing:.18em;color:var(--lime)}
+  .ticket h2{margin:8px 0 2px;font-size:20px;letter-spacing:-.04em;line-height:1.1}
+  .ticket .meta{color:var(--mute);font-size:11.5px}
+  .qr-box{
+    position:relative;width:min(232px,78%);aspect-ratio:1;margin:18px auto 10px;
+    background:#fff;border-radius:18px;padding:12px;
+    box-shadow:0 10px 40px rgba(0,0,0,.35);
+  }
+  .qr-box svg{width:100%;height:100%;display:block}
+  .qr-scan{position:absolute;left:12px;right:12px;height:2px;background:linear-gradient(90deg,transparent,var(--lime),transparent);top:20%;animation:scanline 2.4s ease-in-out infinite;border-radius:99px;opacity:.7}
+  .stamp{
+    position:absolute;inset:0;display:none;place-items:center;z-index:3;
+    background:rgba(6,6,10,.55);backdrop-filter:blur(2px);border-radius:18px;
+  }
+  .stamp.show{display:grid}
+  .stamp b{
+    transform:rotate(-12deg);border:3px solid var(--bad);color:var(--bad);
+    font-size:20px;letter-spacing:.12em;padding:8px 16px;border-radius:10px;
+    background:rgba(6,6,10,.55);
+  }
+  .totp-line{display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+  .totp-code{font-variant-numeric:tabular-nums;font-weight:800;letter-spacing:.18em;font-size:16px}
+  .totp-timer{font-size:11px;color:var(--mute);font-weight:700}
+  .timer{height:4px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden;margin-top:7px}
+  .timer i{display:block;height:100%;background:var(--lime);border-radius:99px;transition:width .2s linear}
+  .ticket-hint{font-size:10px;color:var(--dim);text-align:center;margin:9px 0 0}
+  .listing-card{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    margin-top:12px;padding:13px 14px;border-radius:16px;
+    background:rgba(200,255,61,.07);border:1px solid rgba(200,255,61,.22);
+  }
+  .listing-card b{display:block;font-size:12.5px}
+  .listing-card small{display:block;color:var(--mute);font-size:10.5px;margin-top:2px}
+  .listing-card .price{font-size:17px;font-weight:900;letter-spacing:-.03em;color:var(--lime)}
+  .listing-card button{font-size:10px;color:var(--mute);text-decoration:underline;text-underline-offset:2px}
+
+  /* ---------------- mercado de entradas ---------------- */
+  .market-card{
+    margin-top:12px;padding:14px;border-radius:18px;border:1px solid var(--line2);
+    background:radial-gradient(320px 140px at 100% 0%,rgba(200,255,61,.055),transparent 70%),rgba(255,255,255,.025);
+  }
+  .market-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .market-head h3{margin:3px 0 0;font-size:16px;letter-spacing:-.035em}
+  .market-pill{
+    font-size:8.5px;font-weight:800;letter-spacing:.08em;padding:5px 7px;border-radius:7px;
+    background:rgba(200,255,61,.1);border:1px solid rgba(200,255,61,.25);color:var(--lime);white-space:nowrap;
+  }
+  .seg.three{grid-template-columns:repeat(3,1fr)}
+  .market-list{display:grid;gap:7px;margin-top:4px}
+  .market-item{display:flex;align-items:center;gap:9px;padding:10px;border-radius:13px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+  .market-item .info{flex:1;min-width:0}
+  .market-item b{display:block;font-size:11.5px}
+  .market-item small{display:block;color:var(--dim);font-size:9.5px;margin-top:2px;line-height:1.35}
+  .market-item .price{font-size:14px;font-weight:900;letter-spacing:-.03em;color:var(--lime);white-space:nowrap}
+  .market-item .btn{width:auto;min-height:32px;padding:0 10px;font-size:10px;margin:0;flex:0 0 auto}
+  .tier-badge{
+    display:grid;place-items:center;min-width:42px;height:42px;padding:0 4px;border-radius:11px;
+    background:rgba(66,232,255,.09);border:1px solid rgba(66,232,255,.2);color:var(--cyan);
+    font-size:9px;font-weight:900;letter-spacing:.08em;text-align:center;flex:0 0 auto;
+  }
+  .tier-badge.vip{background:rgba(200,255,61,.1);border-color:rgba(200,255,61,.24);color:var(--lime)}
+  .my-ticket{display:flex;align-items:center;gap:9px;padding:10px;border-radius:13px;background:rgba(255,255,255,.03);border:1px solid var(--line);margin-top:7px}
+  .my-ticket:first-child{margin-top:0}
+  .my-ticket .info{flex:1;min-width:0}
+  .my-ticket b{display:block;font-size:11.5px}
+  .my-ticket small{display:block;color:var(--dim);font-size:9.5px;margin-top:2px}
+  .my-ticket .btn{width:auto;min-height:32px;padding:0 10px;font-size:10px;margin:0;flex:0 0 auto}
+  .status-chip{font-size:8.5px;font-weight:900;letter-spacing:.06em;padding:4px 7px;border-radius:99px;white-space:nowrap}
+  .status-chip.valid{background:rgba(93,255,174,.1);color:var(--ok);border:1px solid rgba(93,255,174,.22)}
+  .status-chip.listed{background:rgba(200,255,61,.1);color:var(--lime);border:1px solid rgba(200,255,61,.22)}
+  .status-chip.used{background:rgba(255,255,255,.05);color:var(--dim);border:1px solid var(--line)}
+  .empty-market{padding:14px;text-align:center;color:var(--dim);font-size:11px;border:1px dashed var(--line2);border-radius:13px}
+  .ticket-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 0 8px}
+  .ticket-aforo{margin-top:12px}
+
+  /* ---------------- scanner ---------------- */
+  .screen-head h2{margin:4px 0 3px;font-size:25px;letter-spacing:-.045em}
+  .screen-head p{margin:0;color:var(--mute);font-size:12px}
+  .viewfinder{
+    position:relative;height:230px;border-radius:22px;overflow:hidden;
+    margin-top:14px;border:1px solid var(--line2);
+    background:
+      radial-gradient(circle at 50% 40%,rgba(66,232,255,.07),transparent 65%),
+      #08080d;
+    display:grid;place-items:center;
+  }
+  .viewfinder video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+  .viewfinder.on video{display:block}
+  .viewfinder.on .vf-placeholder{display:none}
+  .vf-placeholder{position:absolute;top:13px;left:13px;right:13px;z-index:1;display:flex;align-items:center;gap:7px;color:var(--dim);font-size:10px;text-align:left}
+  .vf-placeholder svg{width:17px;height:17px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;opacity:.7}
+  .scan-frame{position:absolute;width:130px;height:130px;border-radius:18px;box-shadow:0 0 0 999px rgba(4,4,8,.35);border:2px solid rgba(200,255,61,.7);z-index:2}
+  .scan-frame::before,.scan-frame::after{content:"";position:absolute;width:22px;height:22px;border:3px solid var(--lime);border-radius:6px}
+  .scan-frame::before{left:-3px;top:-3px;border-right:0;border-bottom:0}
+  .scan-frame::after{right:-3px;bottom:-3px;border-left:0;border-top:0}
+  .laser{position:absolute;left:8px;right:8px;height:2px;background:linear-gradient(90deg,transparent,var(--lime),transparent);top:20%;animation:scanline 2s ease-in-out infinite;border-radius:99px;box-shadow:0 0 12px var(--lime)}
+  .vf-hint{position:absolute;bottom:11px;left:0;right:0;text-align:center;font-size:10px;color:#c7c7d6;z-index:3;text-shadow:0 1px 8px #000}
+  .scan-actions{display:grid;gap:8px;margin-top:10px}
+  .manual{display:flex;gap:7px;margin-top:10px}
+  .manual input{
+    flex:1;min-width:0;background:rgba(255,255,255,.05);border:1px solid var(--line);
+    border-radius:13px;padding:0 12px;font-size:11.5px;outline:none;
+  }
+  .manual input:focus{border-color:rgba(200,255,61,.45)}
+  .manual button{min-height:44px;padding:0 14px;border-radius:13px;background:rgba(255,255,255,.08);border:1px solid var(--line2);font-size:12px;font-weight:700}
+  .scan-result{
+    margin-top:12px;border-radius:18px;padding:16px;text-align:center;
+    background:rgba(255,255,255,.03);border:1px solid var(--line);
+    min-height:84px;display:none;
+  }
+  .scan-result.show{display:block;animation:fadeUp .25s ease both}
+  .scan-result.ok{background:rgba(93,255,174,.07);border-color:rgba(93,255,174,.3)}
+  .scan-result.bad{background:rgba(255,92,108,.07);border-color:rgba(255,92,108,.3);animation:shake .3s ease}
+  .scan-result .big{font-size:15px;font-weight:900;letter-spacing:-.02em;margin-bottom:3px}
+  .scan-result.ok .big{color:var(--ok)}
+  .scan-result.bad .big{color:var(--bad)}
+  .scan-result small{color:var(--mute);font-size:11px;line-height:1.4;display:block}
+
+  /* ---------------- bar ---------------- */
+  .menu{display:grid;gap:8px;margin-top:14px}
+  .menu-item{
+    display:flex;align-items:center;gap:12px;padding:12px;
+    border-radius:17px;background:rgba(255,255,255,.035);border:1px solid var(--line);
+  }
+  .menu-item .em{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:19px;background:rgba(255,255,255,.05);flex:0 0 auto}
+  .menu-item .info{flex:1;min-width:0}
+  .menu-item b{display:block;font-size:12.5px}
+  .menu-item small{display:block;color:var(--dim);font-size:10px;margin-top:1px}
+  .menu-item .price{font-weight:800;font-size:12px;margin-left:2px}
+  .qty{display:flex;align-items:center;gap:4px}
+  .qty button{width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.07);border:1px solid var(--line);font-size:15px;line-height:1;display:grid;place-items:center}
+  .qty button:active{transform:scale(.94)}
+  .qty span{width:18px;text-align:center;font-size:12px;font-weight:800}
+  .cart{
+    position:absolute;left:18px;right:18px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:26;padding:13px 14px;
+    border-radius:18px;background:rgba(18,18,29,.94);border:1px solid var(--line2);
+    backdrop-filter:blur(18px);display:flex;align-items:center;gap:12px;
+  }
+  .cart .total{flex:1}
+  .cart .total small{display:block;color:var(--dim);font-size:9px;letter-spacing:.12em;font-weight:800}
+  .cart .total strong{font-size:19px;letter-spacing:-.03em}
+  .cart .btn{width:auto;min-height:44px;padding:0 18px}
+  .screen[data-screen="bar"]{padding-bottom:190px}
+  .order-card{
+    margin-top:14px;padding:16px;border-radius:20px;
+    background:radial-gradient(400px 150px at 50% 0%,rgba(200,255,61,.12),transparent 70%),linear-gradient(180deg,#14141f,#0e0e16);
+    border:1px solid rgba(200,255,61,.22);text-align:center;
+  }
+  .order-card .code{font-size:38px;font-weight:900;letter-spacing:.06em;color:var(--lime);margin:6px 0 2px}
+  .order-card .status{font-size:11px;color:var(--mute)}
+  .order-progress{display:flex;gap:5px;margin-top:12px}
+  .order-progress i{height:4px;flex:1;border-radius:99px;background:rgba(255,255,255,.1)}
+  .order-progress i.done{background:var(--lime)}
+
+  /* ---------------- album ---------------- */
+  .album-head{text-align:left;margin:2px 0 14px}
+  .album-head h2{margin:4px 0 3px;font-size:27px;letter-spacing:-.05em}
+  .album-head p{margin:0;color:var(--mute);font-size:12px}
+  .lock-card{
+    position:relative;overflow:hidden;border-radius:24px;padding:22px 18px;
+    background:linear-gradient(180deg,#141420,#0c0c13);
+    border:1px solid var(--line);text-align:center;
+  }
+  .blur-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:5px;
+    margin:16px -6px 18px;opacity:.5;filter:blur(4px) saturate(.7);
+    transform:scale(1.04);
+  }
+  .blur-grid img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px}
+  .lock-ico{
+    width:52px;height:52px;border-radius:50%;margin:0 auto 10px;
+    display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid var(--line2);
+  }
+  .lock-ico svg{width:22px;height:22px;fill:none;stroke:var(--lime);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .lock-card h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em}
+  .lock-card p{margin:0;color:var(--mute);font-size:12px}
+  .countdown{font-variant-numeric:tabular-nums;font-size:32px;font-weight:900;letter-spacing:-.03em;margin:14px 0 2px}
+  .countdown small{font-size:11px;color:var(--dim);font-weight:700;letter-spacing:.1em;display:block;margin-top:4px}
+  .lock-note{font-size:10px;color:var(--dim);margin:12px 0 0;line-height:1.5}
+  .album-grid{column-count:2;column-gap:8px;margin-top:12px}
+  .photo{
+    position:relative;break-inside:avoid;margin-bottom:8px;border-radius:14px;overflow:hidden;
+    border:1px solid var(--line);background:#111;
+    animation:reveal .5s ease both;
+  }
+  .photo img{width:100%;height:auto;object-fit:cover;transition:transform .4s}
+  .photo:hover img{transform:scale(1.03)}
+  .photo .tag{position:absolute;left:8px;bottom:8px;font-size:9px;font-weight:700;padding:4px 7px;border-radius:7px;background:rgba(4,4,8,.64);backdrop-filter:blur(8px)}
+  .photo:nth-child(3n+1) img{aspect-ratio:3/4}
+  .photo:nth-child(3n+2) img{aspect-ratio:1/1}
+  .photo:nth-child(3n) img{aspect-ratio:4/5}
+  .album-toolbar{display:flex;align-items:center;justify-content:space-between;margin:4px 0 2px}
+  .album-toolbar b{font-size:12px}
+  .album-toolbar small{display:block;color:var(--dim);font-size:10px;margin-top:1px}
+  .album-actions{display:grid;gap:8px;margin-top:14px}
+
+  /* ---------------- venue panel ---------------- */
+  .venue-panel{
+    border-radius:30px;padding:26px;
+    background:
+      radial-gradient(600px 300px at 80% 0%,rgba(200,255,61,.07),transparent 60%),
+      linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.012));
+    border:1px solid var(--line);
+    box-shadow:0 30px 80px rgba(0,0,0,.35);
+    min-width:0;
+  }
+  .panel-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .panel-top .label{color:var(--mute)}
+  .panel-venue{display:flex;align-items:center;gap:14px;margin:16px 0 22px}
+  .panel-venue img{width:58px;height:58px;border-radius:16px;object-fit:cover;border:1px solid var(--line2)}
+  .panel-venue h2{margin:0;font-size:21px;letter-spacing:-.04em}
+  .panel-venue p{margin:2px 0 0;color:var(--mute);font-size:11px}
+  .panel-occ{display:flex;align-items:baseline;gap:9px}
+  .panel-occ strong{font-size:86px;line-height:.9;letter-spacing:-.08em;font-weight:900;transition:color .3s}
+  .panel-occ small{font-size:16px;color:var(--dim);font-weight:700}
+  .panel-occ.pulse strong{animation:pulseNum .45s ease}
+  .panel-bar{height:10px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:16px}
+  .panel-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--lime),#9dff4d);transition:width .5s cubic-bezier(.2,.7,.2,1)}
+  .panel-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:20px}
+  .panel-stat{padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+  .panel-stat small{display:block;font-size:8.5px;letter-spacing:.12em;font-weight:800;color:var(--dim)}
+  .panel-stat b{display:block;font-size:19px;letter-spacing:-.03em;margin-top:4px}
+  .panel-section{display:flex;align-items:center;justify-content:space-between;margin:24px 0 10px}
+  .panel-section h3{margin:0;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+  .panel-section button{font-size:10px;color:var(--dim);text-decoration:underline;text-underline-offset:3px}
+  .scan-log{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+  .scan-log li{display:flex;align-items:center;gap:9px;font-size:11.5px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.04)}
+  .scan-log .dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto;background:var(--ok)}
+  .scan-log .dot.bad{background:var(--bad)}
+  .scan-log .dot.warn{background:var(--warn)}
+  .scan-log .who{flex:1;color:#dcdce8}
+  .scan-log .time{color:var(--dim);font-variant-numeric:tabular-nums;font-size:10px}
+  .scan-log .empty{color:var(--dim);font-size:11px;justify-content:center;background:transparent;border-style:dashed}
+  .panel-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:22px;padding-top:16px;border-top:1px solid var(--line);color:var(--dim);font-size:9.5px}
+  .panel-foot .sync{display:flex;align-items:center;gap:6px}
+  .panel-foot .sync i{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);animation:blink 2s infinite}
+  .back-link{display:none;margin-bottom:18px;font-size:11px;color:var(--mute);text-decoration:none}
+  .back-link:hover{color:var(--text)}
+  body.venue-mode .phone-shell{display:none}
+  body.venue-mode .stage{display:flex;align-items:center;max-width:920px;padding:28px;min-height:100dvh}
+  body.venue-mode .venue-panel{display:block;width:100%}
+  body.venue-mode .back-link{display:block}
+
+  /* ---------------- modal ---------------- */
+  .overlay{
+    position:fixed;inset:0;z-index:150;display:none;align-items:flex-end;justify-content:center;
+    background:rgba(3,3,6,.62);backdrop-filter:blur(8px);padding:0;
+  }
+  .overlay.open{display:flex;animation:fade .2s ease both}
+  .sheet{
+    display:none;width:min(460px,100%);max-height:88dvh;overflow-y:auto;
+    background:linear-gradient(180deg,#171724,#0d0d15);
+    border:1px solid var(--line2);border-radius:26px 26px 0 0;
+    padding:22px 20px calc(22px + env(safe-area-inset-bottom));
+    box-shadow:0 -20px 80px rgba(0,0,0,.5);
+    animation:sheetUp .28s cubic-bezier(.2,.8,.2,1) both;
+  }
+  .sheet.show{display:block}
+  .sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .sheet-head h3{margin:0;font-size:20px;letter-spacing:-.04em}
+  .sheet-head p{margin:3px 0 0;color:var(--mute);font-size:11.5px;line-height:1.4}
+  .close-x{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid var(--line);display:grid;place-items:center;color:var(--mute);flex:0 0 auto}
+  .close-x:hover{color:var(--text)}
+  .sheet .btn{margin-top:10px}
+  .metric-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px}
+  .metric-row:last-of-type{border-bottom:0}
+  .metric-row span{color:var(--mute)}
+  .metric-row b{font-size:13px}
+  .metric-row b.lime{color:var(--lime)}
+  .big-price{font-size:42px;font-weight:900;letter-spacing:-.06em;text-align:center;margin:10px 0 2px}
+  .big-price small{font-size:15px;color:var(--dim);font-weight:700}
+  input[type=range]{
+    -webkit-appearance:none;width:100%;height:6px;border-radius:99px;background:rgba(255,255,255,.12);outline:none;margin:14px 0 8px;
+  }
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--lime);border:4px solid #11111a;box-shadow:0 0 0 1px var(--lime),0 4px 14px rgba(200,255,61,.3);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--lime);border:4px solid #11111a;cursor:pointer}
+  .range-labels{display:flex;justify-content:space-between;font-size:9.5px;color:var(--dim);font-weight:700}
+  .notice{font-size:10.5px;color:var(--dim);line-height:1.5;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:12px}
+  .notice b{color:var(--mute)}
+
+  .profile{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid var(--line);margin-top:8px}
+  .avatar{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;color:#0b0b10;flex:0 0 auto;background:linear-gradient(135deg,var(--pink),var(--violet))}
+  .profile:nth-child(2) .avatar{background:linear-gradient(135deg,var(--cyan),#5d8bff)}
+  .profile:nth-child(3) .avatar{background:linear-gradient(135deg,var(--lime),#68d391)}
+  .profile .info{flex:1;min-width:0}
+  .profile b{display:block;font-size:12.5px}
+  .profile small{display:block;color:var(--dim);font-size:10px;margin-top:2px}
+  .profile .tags{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+  .profile .tags i{font-style:normal;font-size:8.5px;padding:2px 6px;border-radius:99px;background:rgba(255,255,255,.06);color:var(--mute)}
+  .like-btn{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(255,61,127,.1);border:1px solid rgba(255,61,127,.25);color:var(--pink);flex:0 0 auto}
+  .like-btn.liked{background:var(--pink);color:#fff}
+  .like-btn svg{width:16px;height:16px;fill:currentColor}
+  .lime{color:var(--lime)}
+  .chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .chip{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.03);font-size:11px;font-weight:700;color:var(--mute);transition:.18s}
+  .chip.active{border-color:rgba(200,255,61,.55);color:var(--lime);background:rgba(200,255,61,.08)}
+  .split-box{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding:12px 14px;border-radius:14px;background:rgba(200,255,61,.055);border:1px solid rgba(200,255,61,.2)}
+  .split-box small{display:block;font-size:8px;font-weight:800;letter-spacing:.13em;color:var(--dim)}
+  .split-box strong{display:block;font-size:17px;letter-spacing:-.03em;margin-top:2px}
+  .group-card{padding:14px;border-radius:16px;border:1px solid rgba(200,255,61,.22);background:radial-gradient(300px 120px at 20% 0%,rgba(200,255,61,.08),transparent 70%),rgba(255,255,255,.025)}
+  .group-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+  .group-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;font-weight:900;letter-spacing:.08em;color:var(--lime)}
+  .members{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .member-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:99px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:10px;color:var(--mute)}
+  .avatar-sm{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:900;color:#0b0b10;background:linear-gradient(135deg,var(--pink),var(--violet))}
+  .member-pill:nth-child(2) .avatar-sm{background:linear-gradient(135deg,var(--cyan),#5d8bff)}
+  .member-pill:nth-child(3) .avatar-sm{background:linear-gradient(135deg,var(--lime),#68d391)}
+  .member-pill:nth-child(4) .avatar-sm{background:linear-gradient(135deg,var(--amber),#ff8b5c)}
+  .member-toggle{display:inline-flex;align-items:center;gap:6px;padding:7px 9px;border-radius:999px;background:rgba(255,255,255,.035);border:1px solid var(--line);font-size:10.5px;color:var(--mute);transition:.18s}
+  .member-toggle.selected{border-color:rgba(200,255,61,.4);background:rgba(200,255,61,.07);color:var(--text)}
+  .member-toggle .check{width:15px;height:15px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:900;background:rgba(255,255,255,.07);color:transparent}
+  .member-toggle.selected .check{background:var(--lime);color:#0a0b06}
+  .member-toggle[disabled]{opacity:.8;cursor:default}
+
+  /* ---------------- taxi de vuelta ---------------- */
+  .taxi-live{
+    margin-top:12px;padding:14px;border-radius:18px;
+    border:1px solid rgba(66,232,255,.22);
+    background:radial-gradient(260px 100px at 0% 0%,rgba(66,232,255,.09),transparent 70%),rgba(255,255,255,.025);
+  }
+  .taxi-live-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .taxi-live-main{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:7px}
+  .taxi-live-main>div{flex:1;min-width:0}
+  .taxi-live-main b{display:block;font-size:13px;letter-spacing:-.02em}
+  .taxi-live-main small{display:block;color:var(--dim);font-size:10.5px;margin-top:2px;line-height:1.35}
+  .taxi-live-main .btn{width:auto;min-height:34px;padding:0 13px;font-size:11px;flex:0 0 auto}
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid var(--line);margin-bottom:15px}
+  .seg-btn{min-height:34px;border-radius:9px;font-size:11px;font-weight:800;color:var(--mute)}
+  .seg-btn.active{background:rgba(200,255,61,.1);color:var(--lime);box-shadow:inset 0 0 0 1px rgba(200,255,61,.28)}
+  .route-box{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-top:8px;padding:10px 11px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.025)}
+  .route-node{font-size:9.5px;font-weight:800;letter-spacing:.02em;padding:4px 7px;border-radius:7px;background:rgba(255,255,255,.06);color:var(--mute);white-space:nowrap}
+  .route-node.start{background:rgba(200,255,61,.12);color:var(--lime)}
+  .route-node.end{background:rgba(66,232,255,.1);color:var(--cyan)}
+  .route-arrow{color:var(--dim);font-size:9px}
+  .join-row{display:flex;gap:8px;margin-top:8px}
+  .join-row input{
+    flex:1;min-width:0;background:rgba(255,255,255,.05);border:1px solid var(--line);
+    border-radius:13px;padding:0 12px;min-height:44px;font-size:12px;font-weight:800;
+    letter-spacing:.08em;text-transform:uppercase;outline:none;
+  }
+  .join-row input:focus{border-color:rgba(200,255,61,.45)}
+  .join-row .btn{width:auto;flex:0 0 auto;min-height:44px;padding:0 15px;margin-top:0;font-size:12px}
+  @media (max-width:390px){
+    .join-row{flex-wrap:wrap}
+    .join-row input{flex:1 1 100%}
+    .join-row .btn{width:100%}
+  }
+  .route-stops{display:grid;gap:6px;margin-top:10px}
+  .route-stop{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid var(--line)}
+  .route-stop .n{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:900;background:rgba(66,232,255,.12);color:var(--cyan);flex:0 0 auto}
+  .route-stop b{display:block;font-size:11px}
+  .route-stop small{display:block;color:var(--dim);font-size:9.5px;margin-top:1px}
+  .ride-card{
+    margin-top:12px;padding:14px;border-radius:16px;
+    border:1px solid rgba(66,232,255,.22);
+    background:radial-gradient(280px 120px at 100% 0%,rgba(66,232,255,.09),transparent 70%),rgba(255,255,255,.025);
+  }
+  .ride-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .ride-pin{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--cyan);padding:4px 7px;border-radius:6px;background:rgba(66,232,255,.08);border:1px solid rgba(66,232,255,.2)}
+  .ride-driver{display:flex;align-items:center;gap:10px;margin-top:11px}
+  .ride-driver .avatar{width:38px;height:38px;font-size:13px;background:linear-gradient(135deg,var(--cyan),#5d8bff)}
+  .ride-driver b{display:block;font-size:12px}
+  .ride-driver small{display:block;color:var(--dim);font-size:9.5px;margin-top:2px}
+  .ride-eta{display:flex;align-items:baseline;gap:7px;margin-top:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.07)}
+  .ride-eta strong{font-size:23px;letter-spacing:-.05em;color:var(--cyan)}
+  .ride-eta small{color:var(--mute);font-size:10px;line-height:1.35}
+  .ride-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
+  .ride-actions .btn{min-height:34px;padding:0 10px;font-size:10px;margin-top:0}
+  .ride-search{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:800}
+  .ride-search i{width:16px;height:16px;border-radius:50%;border:2px solid rgba(66,232,255,.25);border-top-color:var(--cyan);animation:spin .8s linear infinite;flex:0 0 auto}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .shot-frame{
+    background:#fff;border-radius:12px;padding:12px;width:190px;margin:8px auto 12px;position:relative;
+  }
+  .shot-frame svg{width:100%;height:auto;display:block}
+  .shot-frame .old{position:absolute;inset:0;display:grid;place-items:center;background:rgba(255,60,80,.18);border-radius:12px}
+  .shot-frame .old b{transform:rotate(-10deg);border:2px solid #e11d48;color:#e11d48;font-size:12px;letter-spacing:.1em;padding:4px 8px;border-radius:6px;background:rgba(255,255,255,.8)}
+
+  .recap-sheet{
+    width:min(420px,100%);max-height:92dvh;padding:0;background:#050508;border-radius:26px;
+    overflow:hidden;position:relative;
+  }
+  .recap-stage{position:relative;aspect-ratio:9/16;max-height:74dvh;background:#000;overflow:hidden}
+  .recap-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.08);transition:opacity .55s ease,transform 2.4s linear}
+  .recap-stage img.on{opacity:1;transform:scale(1)}
+  .recap-stage::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.45),transparent 25%,transparent 55%,rgba(0,0,0,.88))}
+  .recap-top{position:absolute;top:0;left:0;right:0;z-index:2;padding:14px 14px 0}
+  .recap-progress{display:flex;gap:3px}
+  .recap-progress i{height:3px;flex:1;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden}
+  .recap-progress i.done{background:var(--lime)}
+  .recap-brand{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:10px;font-weight:800;letter-spacing:.15em}
+  .recap-brand span{color:var(--lime)}
+  .recap-brand em{font-style:normal;color:rgba(255,255,255,.7);font-size:9px}
+  .recap-caption{position:absolute;left:16px;right:16px;bottom:64px;z-index:2}
+  .recap-caption b{display:block;font-size:20px;letter-spacing:-.04em;line-height:1.1}
+  .recap-caption small{display:block;margin-top:4px;font-size:10.5px;color:rgba(255,255,255,.68)}
+  .recap-bottom{position:absolute;left:16px;right:16px;bottom:16px;z-index:2;display:flex;gap:8px}
+  .recap-bottom .btn{min-height:42px;font-size:12px;background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.22);backdrop-filter:blur(10px)}
+  .recap-end{position:absolute;inset:0;z-index:3;display:none;place-items:center;text-align:center;background:rgba(4,4,8,.72);backdrop-filter:blur(10px);padding:24px}
+  .recap-end.show{display:grid}
+  .recap-end h3{margin:0 0 4px;font-size:23px;letter-spacing:-.04em}
+  .recap-end p{margin:0 0 16px;color:var(--mute);font-size:11.5px}
+  .recap-end .btn{min-height:42px;font-size:12px}
+
+  .kbd{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 5px;border-radius:6px;background:rgba(255,255,255,.08);border:1px solid var(--line2);font-size:10px;font-weight:800;font-family:ui-monospace,monospace}
+  .help-step{display:flex;gap:11px;margin-top:12px}
+  .help-step .n{width:24px;height:24px;border-radius:50%;background:rgba(200,255,61,.12);color:var(--lime);display:grid;place-items:center;font-size:11px;font-weight:900;flex:0 0 auto}
+  .help-step b{display:block;font-size:12px}
+  .help-step small{display:block;color:var(--mute);font-size:10.5px;line-height:1.5;margin-top:2px}
+
+  .lightbox-img{width:100%;max-height:62dvh;object-fit:contain;border-radius:14px;background:#000}
+  .lightbox-meta{display:flex;justify-content:space-between;color:var(--mute);font-size:11px;margin-top:10px}
+
+  /* ---------------- animations ---------------- */
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes sheetUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+  @keyframes scanline{0%,100%{top:13%;opacity:.25}50%{top:84%;opacity:.9}}
+  @keyframes pulseNum{0%{transform:scale(1);color:var(--lime)}45%{transform:scale(1.06);color:var(--lime)}100%{transform:scale(1);color:var(--text)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  @keyframes reveal{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes confetti{
+    0%{opacity:1;transform:translate3d(0,0,0) rotate(0)}
+    100%{opacity:0;transform:translate3d(var(--dx),var(--dy),0) rotate(var(--rot))}
+  }
+
+  /* ---------------- responsive ---------------- */
+  @media (max-width:980px){
+    .stage{display:block;padding:0;min-height:100dvh}
+    .phone-shell{display:block}
+    .phone{
+      height:100dvh;max-width:none;border-radius:0;border:0;
+      box-shadow:none;
+    }
+    .island{display:none}
+    .venue-panel{display:none}
+    body.venue-mode .phone-shell{display:none}
+    body.venue-mode .venue-panel{display:block;border-radius:0;min-height:100dvh;padding:22px 18px}
+    body.venue-mode .stage{display:block}
+    body.venue-mode .back-link{display:block}
+    .overlay{align-items:flex-end}
+  }
+  @media (min-width:981px){
+    .overlay{align-items:center;padding:24px}
+    .sheet{border-radius:26px}
+    .recap-sheet{border-radius:26px}
+  }
+  @media (max-width:380px){
+    .screen{padding-left:14px;padding-right:14px}
+    .cap-num strong{font-size:34px}
+    .quick b{font-size:11.5px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone-shell">
+    <div class="phone">
+      <div class="island"></div>
+      <header class="topbar">
+        <div class="brand">NOCHE<span>.</span></div>
+        <div class="top-actions">
+          <a class="icon-btn" href="security.html" title="DevTrust · Security Lab" aria-label="Security Lab">
+            <svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+          </a>
+          <button class="icon-btn" id="btnPanel" title="Abrir panel del local" aria-label="Panel del local">
+            <svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
+          </button>
+          <button class="icon-btn" id="btnHelp" title="Guion del demo" aria-label="Ayuda">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 17h.01"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <main id="screens">
+        <!-- ================= HOME ================= -->
+        <section class="screen active" data-screen="home">
+          <div class="hero">
+            <img src="assets/photo-3.jpg" alt="Fabrik lleno de gente">
+            <span class="distance" id="heroDistance">a 42 m de ti</span>
+            <div class="hero-content">
+              <span class="live-pill"><i></i> EN VIVO</span>
+              <h1>Fabrik <span>· Sala 2</span></h1>
+              <p>Sábado de techno · 23:30 — 06:00</p>
+            </div>
+          </div>
+
+          <div class="card cap-card">
+            <div class="cap-head">
+              <div>
+                <span class="label">Aforo en tiempo real</span>
+                <div class="cap-num"><strong id="occNum">412</strong><small>/ <span id="capTotal">475</span></small></div>
+              </div>
+              <div class="ring" id="capRing" style="--p:87"><b id="capPct">87%</b></div>
+            </div>
+            <div class="bar"><i id="capBar" style="width:87%"></i></div>
+            <div class="cap-foot">
+              <span class="status" id="capStatus"><i></i> Casi lleno</span>
+              <span id="capDelta">actualizado ahora</span>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="card stat">
+              <span class="label">Espera estimada</span>
+              <strong id="waitNum">14 min</strong>
+              <small><span id="queueCount">38</span> personas en cola</small>
+            </div>
+            <div class="card stat">
+              <span class="label">Tu grupo</span>
+              <strong>4 amigos</strong>
+              <small>Lucía, Mario +2</small>
+            </div>
+          </div>
+
+          <div class="queue-wrap">
+            <button class="btn primary" id="btnQueue">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-5.4 7-12a7 7 0 1 0-14 0c0 6.6 7 12 7 12Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+              <span id="queueLabel">Entrar en la cola virtual</span>
+            </button>
+            <button class="queue-link hidden" id="btnLeaveQueue">Salir de la cola</button>
+          </div>
+
+          <div class="quick-title"><span>Esta noche</span><small>5 módulos activos</small></div>
+          <div class="quick-grid">
+            <button class="quick" data-go="taxi">
+              <span class="ico"><svg viewBox="0 0 24 24"><path d="M5 17h14M6 17l-1-5 2-5h10l2 5-1 5M7 17v2M17 17v2"/><circle cx="7.5" cy="14.5" r="1"/><circle cx="16.5" cy="14.5" r="1"/></svg></span>
+              <b>Taxi de vuelta</b><small id="taxiHint">~14 € entre 3</small>
+            </button>
+            <button class="quick" data-go="bar">
+              <span class="ico"><svg viewBox="0 0 24 24"><path d="M8 22h8M12 11v11M5 3h14l-7 8-7-8Z"/></svg></span>
+              <b>Comanda express</b><small>Sin fila en la barra</small>
+            </button>
+            <button class="quick" data-modal="radar">
+              <span class="ico"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8Z"/></svg></span>
+              <b>Radar social</b><small id="radarHint">3 personas cerca</small>
+            </button>
+            <button class="quick" data-go="ticket" data-market="sell">
+              <span class="ico"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></svg></span>
+              <b>Reventa segura</b><small>Tope 110% · escrow</small>
+            </button>
+          </div>
+
+          <div class="card taxi-live hidden" id="taxiHomeCard">
+            <div class="taxi-live-head">
+              <span class="label">TAXI DE VUELTA</span>
+              <span class="group-code" id="taxiHomeCode">NOCHE-000</span>
+            </div>
+            <div class="taxi-live-main">
+              <div>
+                <b id="taxiHomeTitle">Grupo de 3 · 04:30</b>
+                <small id="taxiHomeSub">Fabrik → Malasaña · 4,67 €/persona</small>
+              </div>
+              <button class="btn primary" data-go="taxi" type="button">Abrir</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TICKET / MARKET ================= -->
+        <section class="screen" data-screen="ticket">
+          <div class="screen-head">
+            <span class="label">Entradas</span>
+            <h2>Fabrik · Sábado de techno</h2>
+            <p>Compra, vende y gestiona tus entradas de esta noche.</p>
+          </div>
+
+          <div class="market-card">
+            <div class="market-head">
+              <div><span class="label">MERCADO DE ENTRADAS</span><h3>Compra y reventa segura</h3></div>
+              <span class="market-pill">Tope 110%</span>
+            </div>
+
+            <div class="seg three" id="marketTabs" role="tablist" aria-label="Mercado de entradas">
+              <button class="seg-btn active" data-market-tab="buy" type="button">Comprar</button>
+              <button class="seg-btn" data-market-tab="sell" type="button">Vender</button>
+              <button class="seg-btn" data-market-tab="mine" type="button">Mis entradas</button>
+            </div>
+
+            <div id="marketBuyPane">
+              <div class="market-list" id="marketList"></div>
+              <p class="notice">Entradas verificadas y pago retenido. El QR se reemite al comprador y el del vendedor queda invalidado.</p>
+            </div>
+
+            <div id="marketSellPane" class="hidden">
+              <div class="label">Entrada que quieres vender</div>
+              <div class="members" id="sellTicketChips"></div>
+
+              <div class="label" style="margin-top:14px">Precio de venta</div>
+              <div class="big-price"><span id="resalePrice">25,00</span> <small>€</small></div>
+              <input type="range" id="resaleRange" min="1250" max="2750" step="50" value="2500" aria-label="Precio de reventa">
+              <div class="range-labels"><span id="resaleMinLabel">12,50 €</span><span style="color:var(--lime)" id="resaleMaxLabel">TOPE 27,50 €</span></div>
+              <div class="metric-row"><span>Nominal</span><b id="resaleFace">25,00 €</b></div>
+              <div class="metric-row"><span>Comisión plataforma (8 %)</span><b id="resaleFee">2,00 €</b></div>
+              <div class="metric-row"><span>Recibes al cerrar el evento</span><b class="lime" id="resaleNet">23,00 €</b></div>
+              <button class="btn primary" id="btnPublish">Publicar en el mercado</button>
+              <p class="notice"><b>Cómo funciona:</b> el comprador paga, la plataforma retiene el dinero y tu QR se invalida. Al terminar el evento cobras.</p>
+            </div>
+
+            <div id="marketMinePane" class="hidden">
+              <div id="myTicketsList"></div>
+              <div class="listing-card hidden" id="listingCard">
+                <div>
+                  <b>EN VENTA · mercado P2P</b>
+                  <small>Precio <span id="listingPrice">27,50 €</span> · tope 110% · escrow activo</small>
+                </div>
+                <button id="btnCancelListing">Cancelar</button>
+              </div>
+              <p class="notice">Puedes vender cualquier entrada válida. Al publicarla, su QR se invalida hasta que la canceles.</p>
+            </div>
+          </div>
+
+          <div class="card cap-card ticket-aforo">
+            <div class="cap-head">
+              <div>
+                <span class="label">Aforo en vivo</span>
+                <div class="cap-num"><strong id="ticketOccNum">412</strong><small>/ <span id="ticketCapTotal">475</span></small></div>
+              </div>
+              <div class="ring" id="ticketCapRing" style="--p:87"><b id="ticketCapPct">87%</b></div>
+            </div>
+            <div class="bar"><i id="ticketCapBar" style="width:87%"></i></div>
+            <div class="cap-foot">
+              <span class="status" id="ticketCapStatus"><i></i> Casi lleno</span>
+              <span id="ticketCapDelta">quedan 63 plazas</span>
+            </div>
+          </div>
+
+          <div class="ticket-section-title"><span class="label">TU ENTRADA</span></div>
+
+          <div class="ticket-wrap">
+            <div class="ticket">
+              <div class="ticket-head">
+                <span class="tier">GENERAL</span>
+                <span class="live-pill"><i></i> VÁLIDA</span>
+              </div>
+              <h2>Fabrik · Sábado de techno</h2>
+              <p class="meta">Puerta principal · 23:30 — 06:00</p>
+
+              <div class="qr-box">
+                <div id="ticketQr" style="width:100%;height:100%"></div>
+                <div class="qr-scan"></div>
+                <div class="stamp" id="ticketStamp"><b>USADA</b></div>
+              </div>
+
+              <div class="totp-line">
+                <span class="totp-code" id="totpCode">0000 0000</span>
+                <span class="totp-timer" id="totpTimer">10 s</span>
+              </div>
+              <div class="timer"><i id="timerBar" style="width:100%"></i></div>
+              <p class="ticket-hint">El código rota cada 10 s. Una captura de pantalla no sirve.</p>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:12px">
+            <button class="btn ghost" id="btnShot">Simular captura</button>
+            <button class="btn ghost" id="btnResell">Vender mi entrada</button>
+          </div>
+          <p class="notice"><b>Anti-fraude:</b> el QR se genera en el servidor y solo es válido una vez. Si revendes, la entrada se reemite con un secreto nuevo y el QR anterior muere.</p>
+        </section>
+
+        <!-- ================= SCANNER ================= -->
+        <section class="screen" data-screen="scan">
+          <div class="screen-head">
+            <span class="label">Modo portero</span>
+            <h2>Escáner</h2>
+            <p>Fabrik · puerta principal · turno 23:00</p>
+          </div>
+
+          <div class="viewfinder" id="viewfinder">
+            <video id="cam" playsinline muted></video>
+            <canvas id="camCanvas" hidden></canvas>
+            <div class="vf-placeholder">
+              <svg viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M4 12h16"/></svg>
+              Cámara apagada · usa el escaneo simulado
+            </div>
+            <div class="scan-frame"><i class="laser"></i></div>
+            <div class="vf-hint" id="vfHint">Apunta al QR del invitado</div>
+          </div>
+
+          <div class="scan-actions">
+            <button class="btn" id="btnCam">Activar cámara</button>
+            <button class="btn primary" id="btnScanCurrent">Escanear el ticket de Lucía</button>
+            <button class="btn danger" id="btnScanOld">Probar una captura de hace 30 s</button>
+          </div>
+
+          <div class="manual">
+            <input id="manualInput" placeholder="Pega un payload NLV1|ticket|counter|code" autocomplete="off" spellcheck="false">
+            <button id="btnManual">Validar</button>
+          </div>
+
+          <div class="scan-result" id="scanResult" aria-live="polite"></div>
+          <p class="notice">El escaneo actualiza el aforo en el panel del local: <b>+1 en tiempo real</b>. El servidor rechaza duplicados, códigos caducados y aforo completo.</p>
+        </section>
+
+        <!-- ================= AFORO ================= -->
+        <section class="screen" data-screen="aforo">
+          <div class="screen-head">
+            <span class="label">Aforo</span>
+            <h2>Fabrik · Sala 2</h2>
+            <p>Entrada principal · actualizado en vivo</p>
+          </div>
+
+          <div class="card cap-card">
+            <div class="cap-head">
+              <div>
+                <span class="label">Dentro ahora</span>
+                <div class="cap-num"><strong id="aforoOcc">412</strong><small>/ <span id="aforoCap">475</span></small></div>
+              </div>
+              <div class="ring" id="aforoRing" style="--p:87"><b id="aforoPct">87%</b></div>
+            </div>
+            <div class="bar"><i id="aforoBar" style="width:87%"></i></div>
+            <div class="cap-foot">
+              <span class="status" id="aforoStatus"><i></i> Casi lleno</span>
+              <span id="aforoFree">quedan 63 plazas</span>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="card stat">
+              <span class="label">Espera estimada</span>
+              <strong id="aforoWait">14 min</strong>
+              <small>para entrar</small>
+            </div>
+            <div class="card stat">
+              <span class="label">En cola</span>
+              <strong id="aforoQueue">38</strong>
+              <small>personas esperando</small>
+            </div>
+            <div class="card stat">
+              <span class="label">Accesos hoy</span>
+              <strong id="aforoScans">0</strong>
+              <small>escaneos válidos</small>
+            </div>
+            <div class="card stat">
+              <span class="label">Plazas libres</span>
+              <strong id="aforoFreeStat">63</strong>
+              <small>de 475</small>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:12px">
+            <button class="btn primary" data-go="scan">Abrir escáner</button>
+            <button class="btn ghost" data-go="ticket">Mis entradas</button>
+          </div>
+
+          <p class="notice"><b>Cómo se calcula:</b> cada escaneo de entrada suma 1 y cada salida resta 1. El contador se actualiza en tiempo real y bloquea nuevos accesos al alcanzar el aforo legal.</p>
+        </section>
+
+        <!-- ================= BAR ================= -->
+        <section class="screen" data-screen="bar">
+          <div class="screen-head">
+            <span class="label">Dentro del local</span>
+            <h2>Comanda express</h2>
+            <p>Pide desde aquí. Recoges en barra sin hacer fila.</p>
+          </div>
+
+          <div class="order-card hidden" id="barOrderCard">
+            <span class="label">Tu pedido</span>
+            <div class="code" id="barOrderCode">N-000</div>
+            <div class="status" id="barOrderStatus">Preparando…</div>
+            <div class="order-progress" id="barOrderProgress"><i></i><i></i><i></i></div>
+            <div style="font-size:10px;color:var(--dim);margin-top:9px">Enseña este código en la barra · <span id="barOrderTotal">0,00 €</span></div>
+          </div>
+
+          <div class="menu" id="menuList"></div>
+
+        </section>
+
+        <!-- ================= ALBUM ================= -->
+        <section class="screen" data-screen="album">
+          <div class="album-head">
+            <span class="label">Night recap</span>
+            <h2>Nuestra noche</h2>
+            <p>Fabrik · 8 fotos · 4 amigos</p>
+          </div>
+
+          <div class="lock-card" id="albumLocked">
+            <div class="lock-ico">
+              <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+            </div>
+            <h3>Se revela a las 10:00</h3>
+            <p>El álbum privado de tu grupo está sellado.</p>
+            <div class="countdown" id="albumCountdown">07:12:44<small>PARA EL REVELADO</small></div>
+            <div class="blur-grid" id="blurGrid"></div>
+            <button class="btn primary" id="btnReveal">Modo demo · revelar ahora</button>
+            <p class="lock-note">En producción, el servidor desbloquea el álbum a las 10:00 del día siguiente. Ni el dueño del local puede verlo antes.</p>
+          </div>
+
+          <div id="albumOpen" class="hidden">
+            <div class="album-toolbar">
+              <div><b>8 recuerdos</b><small>03:47 — 06:02 · ordenados por hora</small></div>
+              <button class="btn small primary" id="btnRecap">▶ Ver recap</button>
+            </div>
+            <div class="album-grid" id="albumGrid"></div>
+            <div class="album-actions">
+              <button class="btn ghost" id="btnShare">Compartir en Stories</button>
+            </div>
+            <p class="notice"><b>Recap con IA:</b> selecciona los mejores clips, los ordena por hora y los monta en vertical para TikTok o Reels.</p>
+          </div>
+        </section>
+
+        <!-- ================= TAXI ================= -->
+        <section class="screen" data-screen="taxi">
+          <div class="screen-head">
+            <span class="label">Salida</span>
+            <h2>Taxi de vuelta</h2>
+            <p>Formad grupo, repartid la tarifa y volved a casa juntos.</p>
+          </div>
+
+          <div id="taxiSetup">
+            <div class="seg" id="taxiMode" role="tablist" aria-label="Crear o unirse a un grupo">
+              <button class="seg-btn active" data-taxi-mode="create" type="button">Crear grupo</button>
+              <button class="seg-btn" data-taxi-mode="join" type="button">Unirme con código</button>
+            </div>
+
+            <div id="taxiCreatePane">
+              <div class="label">Recogida</div>
+              <div class="metric-row"><span>Punto</span><b>Puerta principal · Fabrik</b></div>
+              <div class="metric-row"><span>Hora de salida</span><b id="taxiDraftTimeLabel">04:30</b></div>
+              <div class="chip-row" id="taxiTimeChips">
+                <button class="chip" data-time="Ahora" type="button">Ahora</button>
+                <button class="chip active" data-time="04:30" type="button">04:30</button>
+                <button class="chip" data-time="05:00" type="button">05:00</button>
+                <button class="chip" data-time="05:30" type="button">05:30</button>
+              </div>
+
+              <div class="label" style="margin-top:16px">Ruta a casa</div>
+              <div class="route-box" id="taxiRoutePreview"></div>
+
+              <div class="label" style="margin-top:16px">¿Quién vuelve contigo?</div>
+              <div class="members" id="taxiFriends"></div>
+              <p class="notice" style="margin-top:8px">Máximo 4 personas por taxi. Cada amigo tiene su parada; la tarifa se reparte a partes iguales.</p>
+
+              <div class="split-box">
+                <div><small>ESTIMADO</small><strong id="taxiDraftFare">14,00 €</strong></div>
+                <div style="text-align:right"><small>ENTRE <span id="taxiDraftCount">3</span></small><strong id="taxiDraftSplit">4,67 €</strong></div>
+              </div>
+
+              <button class="btn primary" id="btnCreateTaxiGroup" type="button">Crear grupo de taxi</button>
+            </div>
+
+            <div id="taxiJoinPane" class="hidden">
+              <div class="label">Código de invitación</div>
+              <div class="join-row">
+                <input id="taxiJoinCode" placeholder="NOCHE-247" autocomplete="off" spellcheck="false" maxlength="9">
+                <button class="btn primary" id="btnJoinTaxi" type="button">Unirme</button>
+              </div>
+              <p class="notice">Pide el código a quien organiza el taxi. Demo: <b>NOCHE-247</b> te une al grupo de Mario.</p>
+              <button class="btn ghost" id="btnJoinDemo" type="button">Usar código de demo</button>
+            </div>
+          </div>
+
+          <div id="taxiGroup" class="hidden">
+            <div class="group-card">
+              <div class="group-head">
+                <span class="label">GRUPO DE TAXI · <span id="taxiGroupOwner">Lucía</span></span>
+                <span class="group-code" id="taxiCode">NOCHE-000</span>
+              </div>
+              <div class="metric-row"><span>Recogida</span><b id="taxiGroupTime">04:30 · puerta principal</b></div>
+              <div class="metric-row"><span>Ruta</span><b id="taxiGroupRoute">Fabrik → Malasaña → Chamberí</b></div>
+              <div class="metric-row"><span>Personas</span><b><span id="taxiGroupCount">3</span> <small id="taxiGroupSeats" style="color:var(--dim)">· 1 plaza libre</small></b></div>
+              <div class="metric-row"><span>Total estimado</span><b id="taxiGroupFare">14,00 €</b></div>
+              <div class="metric-row"><span>Por persona</span><b class="lime" id="taxiGroupSplit">4,67 €</b></div>
+              <div class="members" id="taxiMembers"></div>
+            </div>
+
+            <div class="route-stops" id="taxiStops"></div>
+
+            <button class="btn primary" id="btnRide" type="button">Reservar taxi para el grupo</button>
+            <div class="row" style="margin-top:8px">
+              <button class="btn ghost" id="btnShareTaxi" type="button">Compartir invitación</button>
+              <button class="btn ghost danger" id="btnLeaveTaxi" type="button">Salir del grupo</button>
+            </div>
+            <div id="rideResult" class="ride-card hidden"></div>
+          </div>
+
+          <p class="notice"><b>Seguridad:</b> PIN de viaje, matrícula visible y enlace temporal. Solo se comparte la ubicación mientras el viaje está activo.</p>
+        </section>
+      </main>
+
+      <div class="cart hidden" id="cartBar">
+        <div class="total">
+          <small>TOTAL</small>
+          <strong id="cartTotal">0,00 €</strong>
+        </div>
+        <button class="btn primary" id="btnOrder">Pedir</button>
+      </div>
+
+      <nav class="tabbar" aria-label="Navegación principal">
+        <button class="tab active" data-go="home">
+          <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Noche
+        </button>
+        <button class="tab" data-go="ticket">
+          <svg viewBox="0 0 24 24"><path d="M3 9a2 2 0 0 0 0 4v4h18v-4a2 2 0 0 0 0-4V5H3v4Z"/><path d="M13 5v2M13 11v2M13 17v2"/></svg>Entrada
+        </button>
+        <button class="tab" data-go="taxi">
+          <svg viewBox="0 0 24 24"><path d="M5 17h14M6 17l-1-5 2-5h10l2 5-1 5M7 17v2M17 17v2"/><circle cx="7.5" cy="14.5" r="1"/><circle cx="16.5" cy="14.5" r="1"/></svg>Taxi
+        </button>
+        <button class="tab" data-go="scan">
+          <svg viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M4 12h16"/></svg>Escáner
+        </button>
+        <button class="tab" data-go="aforo">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Aforo
+        </button>
+        <button class="tab" data-go="album">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m21 15-5-5L5 20"/></svg>Álbum
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- ================= VENUE PANEL ================= -->
+  <aside class="venue-panel" id="venuePanel">
+    <a class="back-link" href="index.html">← Volver a la app</a>
+    <div class="panel-top">
+      <span class="label">Panel del local</span>
+      <span class="live-pill"><i></i> LIVE</span>
+    </div>
+    <div class="panel-venue">
+      <img src="assets/photo-2.jpg" alt="Fabrik">
+      <div>
+        <h2>Fabrik · Sala 2</h2>
+        <p>Sábado de techno · puerta principal</p>
+      </div>
+    </div>
+
+    <div class="panel-occ" id="panelOccWrap"><strong id="panelOcc">412</strong><small>/ <span id="panelCap">475</span> · <span id="panelPct">87%</span></small></div>
+    <div class="panel-bar"><i id="panelBar" style="width:87%"></i></div>
+
+    <div class="panel-stats">
+      <div class="panel-stat"><small>EN COLA</small><b id="panelQueue">38</b></div>
+      <div class="panel-stat"><small>ESPERA</small><b id="panelWait">14 min</b></div>
+      <div class="panel-stat"><small>ENTRADAS</small><b id="panelScans">0</b></div>
+      <div class="panel-stat"><small>BARRA</small><b id="panelRevenue">216 €</b></div>
+    </div>
+
+    <div class="panel-section">
+      <h3>Últimos escaneos</h3>
+      <button id="btnReset" type="button">Reset demo</button>
+    </div>
+    <ul class="scan-log" id="scanLog">
+      <li class="empty">Sin escaneos todavía · escanea el ticket de Lucía</li>
+    </ul>
+
+    <div class="panel-foot">
+      <span class="sync"><i></i> BroadcastChannel · WebSocket simulado</span>
+      <span>NOCHE · MVP 36 h</span>
+    </div>
+  </aside>
+</div>
+
+<!-- ================= MODALS ================= -->
+<div class="overlay" id="modalRoot">
+  <!-- queue -->
+  <div class="sheet" data-sheet="queue">
+    <div class="sheet-head">
+      <div><h3>Estás en la cola</h3><p>Geofence verificado · Fabrik Sala 2</p></div>
+      <button class="close-x" data-close aria-label="Cerrar">✕</button>
+    </div>
+    <div style="text-align:center;padding:14px 0 4px">
+      <span class="label">Tu posición</span>
+      <div class="big-price" style="margin-top:2px">#<span id="queuePos">39</span></div>
+      <div style="color:var(--mute);font-size:11.5px">Entrada estimada en <b id="queueEta" style="color:var(--lime)">12–18 min</b></div>
+    </div>
+    <div class="metric-row"><span>Personas delante</span><b id="queueAhead">38</b></div>
+    <div class="metric-row"><span>Tiempo medio por persona</span><b>22 s</b></div>
+    <div class="metric-row"><span>Fast-Pass</span><b class="lime">3,00 € · salta la cola</b></div>
+    <button class="btn primary" id="btnBuyFastpass">Comprar Fast-Pass</button>
+    <button class="btn ghost" id="btnLeaveQueueModal">Salir de la cola</button>
+    <p class="notice">La cola se actualiza en vivo. Si te alejas más de 150 m, pierdes la posición.</p>
+  </div>
+
+  <!-- screenshot -->
+  <div class="sheet" data-sheet="screenshot">
+    <div class="sheet-head">
+      <div><h3>Captura de pantalla</h3><p>Esta captura se hizo hace 30 s. El QR ya ha rotado.</p></div>
+      <button class="close-x" data-close aria-label="Cerrar">✕</button>
+    </div>
+    <div class="shot-frame" id="screenshotQr"></div>
+    <div style="text-align:center;font-size:10.5px;color:var(--dim);margin-bottom:8px">captura · hace 30 s · pantalla bloqueada</div>
+    <button class="btn danger" id="btnScanShot">Escanear esta captura</button>
+    <p class="notice">El escáner la rechazará: el código pertenece a un contador anterior y el servidor solo acepta ±1 ventana de 10 s.</p>
+  </div>
+
+  <!-- radar -->
+  <div class="sheet" data-sheet="radar">
+    <div class="sheet-head">
+      <div><h3>Radar social</h3><p>Solo esta noche · ubicación difuminada a ~150 m · opt-in.</p></div>
+      <button class="close-x" data-close aria-label="Cerrar">✕</button>
+    </div>
+    <div id="radarList">
+      <div class="profile">
+        <div class="avatar">A</div>
+        <div class="info"><b>Álex · 27</b><small>a 40 m · sala 2</small><div class="tags"><i>techno</i><i>vermut</i><i>madrugada</i></div></div>
+        <button class="like-btn" data-like="alex" aria-label="Me gusta Álex"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8Z"/></svg></button>
+      </div>
+      <div class="profile">
+        <div class="avatar">N</div>
+        <div class="info"><b>Noa · 25</b><small>a 65 m · barra</small><div class="tags"><i>pop</i><i>fotos</i><i>taxi</i></div></div>
+        <button class="like-btn" data-like="noa" aria-label="Me gusta Noa"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8Z"/></svg></button>
+      </div>
+      <div class="profile">
+        <div class="avatar">D</div>
+        <div class="info"><b>Dani · 29</b><small>a 90 m · terraza</small><div class="tags"><i>indie</i><i>cerveza</i></div></div>
+        <button class="like-btn" data-like="dani" aria-label="Me gusta Dani"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8Z"/></svg></button>
+      </div>
+    </div>
+    <div id="radarMatch" class="hidden">
+      <div style="text-align:center;padding:20px 0 8px">
+        <div style="font-size:42px">💜</div>
+        <div class="big-price" style="font-size:26px;margin:4px 0">¡Match con Álex!</div>
+        <p style="color:var(--mute);font-size:11.5px;margin:0">Solo visible esta noche. Ya podéis compartir el taxi.</p>
+      </div>
+      <button class="btn primary" data-go="taxi">Compartir taxi con Álex</button>
+    </div>
+    <p class="notice">El radar no muestra ubicación exacta ni permite capturas. Los matches caducan en 24 h.</p>
+  </div>
+
+  <!-- recap -->
+  <div class="sheet recap-sheet" data-sheet="recap">
+    <div class="recap-stage" id="recapStage">
+      <div class="recap-top">
+        <div class="recap-progress" id="recapProgress"></div>
+        <div class="recap-brand"><span>NOCHE · RECAP</span><em>IA · 15 s</em></div>
+      </div>
+      <div class="recap-caption"><b id="recapTitle">Llegamos</b><small id="recapSub">03:47 · Fabrik</small></div>
+      <div class="recap-bottom">
+        <button class="btn" id="btnRecapShare">Compartir</button>
+        <button class="btn" data-close>Cerrar</button>
+      </div>
+      <div class="recap-end" id="recapEnd">
+        <div>
+          <h3>Eso fue la noche.</h3>
+          <p>8 recuerdos · 4 amigos · 1 recap listo para Stories</p>
+          <div style="display:flex;gap:8px;justify-content:center">
+            <button class="btn primary" id="btnRecapReplay">Repetir</button>
+            <button class="btn" data-close>Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- lightbox -->
+  <div class="sheet" data-sheet="lightbox">
+    <div class="sheet-head">
+      <div><h3>Recuerdo</h3><p id="lightboxTime">03:47 · Fabrik</p></div>
+      <button class="close-x" data-close aria-label="Cerrar">✕</button>
+    </div>
+    <img class="lightbox-img" id="lightboxImg" alt="Foto del álbum">
+    <div class="lightbox-meta"><span>Álbum privado · 4 amigos</span><span>Se abre a las 10:00</span></div>
+  </div>
+
+  <!-- help -->
+  <div class="sheet" data-sheet="help">
+    <div class="sheet-head">
+      <div><h3>Guion del demo</h3><p>90 segundos. Todo funciona sin backend.</p></div>
+      <button class="close-x" data-close aria-label="Cerrar">✕</button>
+    </div>
+    <div class="help-step"><div class="n">1</div><div><b>Aforo + escaneo</b><small>Escáner → “Escanear el ticket de Lucía”. Mira la pestaña Aforo y el panel: 412 → 413 en directo.</small></div></div>
+    <div class="help-step"><div class="n">2</div><div><b>Captura antigua</b><small>Entrada → “Simular captura” → “Escanear esta captura”. El servidor la rechaza.</small></div></div>
+    <div class="help-step"><div class="n">3</div><div><b>Mercado de entradas</b><small>Entradas → Comprar / Vender / Mis entradas. El precio no pasa del 110 % y el aforo se ve en vivo.</small></div></div>
+    <div class="help-step"><div class="n">4</div><div><b>Night recap</b><small>Álbum → “Modo demo · revelar ahora” → “Ver recap”.</small></div></div>
+    <div class="help-step"><div class="n">5</div><div><b>Panel del local</b><small>Icono de barras arriba a la derecha: abre el panel en otra pestaña y sincroniza por BroadcastChannel.</small></div></div>
+    <div class="help-step"><div class="n">6</div><div><b>Taxi de vuelta</b><small>Pestaña Taxi → crea el grupo (o únete con NOCHE-247) → reserva → comparte viaje con PIN y matrícula.</small></div></div>
+    <p class="notice" style="margin-top:16px">Atajos: <span class="kbd">1</span>–<span class="kbd">6</span> pestañas · <span class="kbd">T</span> taxi · <span class="kbd">S</span> escanear · <span class="kbd">X</span> captura vieja · <span class="kbd">R</span> revelar · <span class="kbd">?</span> ayuda</p>
+    <p class="notice"><b>DevTrust Security Lab:</b> auditoría del módulo Taxi de NightApp, exploit SQLi y parche en 1 clic. <a href="security.html" style="color:var(--lime)">Abrir caso →</a></p>
+    <button class="btn ghost" id="btnResetHelp" style="margin-top:10px">Reiniciar demo</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div id="fx"></div>
+
+<script src="vendor/qrcode.js"></script>
+<script src="vendor/jsQR.js"></script>
+<script>
+/* ============================================================
+   NOCHE · demo local
+   - TOTP real (HMAC-SHA1, 10 s) en el navegador
+   - Aforo y escaneos sincronizados entre pestañas
+   - Sin backend: localStorage + BroadcastChannel
+   ============================================================ */
+(() => {
+  'use strict';
+
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const eur = (cents) => (cents / 100).toFixed(2).replace('.', ',') + ' €';
+
+  /* ---------- TOTP ---------- */
+  const TICKET_ID = '12121212-1212-1212-1212-121212121212';
+  const SECRET_B32 = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'; // ASCII "12345678901234567890"
+  const STEP = 10;
+  const DIGITS = 8;
+  const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+
+  function b32decode(input) {
+    const clean = input.toUpperCase().replace(/=|\s|-/g, '');
+    let bits = 0, value = 0;
+    const out = [];
+    for (const ch of clean) {
+      const idx = B32.indexOf(ch);
+      if (idx < 0) throw new Error('BASE32_INVALID');
+      value = (value << 5) | idx;
+      bits += 5;
+      if (bits >= 8) {
+        out.push((value >>> (bits - 8)) & 0xff);
+        bits -= 8;
+      }
+    }
+    return new Uint8Array(out);
+  }
+
+  const secret = b32decode(SECRET_B32);
+  const encoder = new TextEncoder();
+  let hmacKey = null;
+  const codeCache = new Map();
+
+  async function getHmacKey() {
+    if (!hmacKey) {
+      hmacKey = await crypto.subtle.importKey(
+        'raw', secret, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']
+      );
+    }
+    return hmacKey;
+  }
+
+  async function hotp(counter) {
+    if (codeCache.has(counter)) return codeCache.get(counter);
+    const msg = new Uint8Array(8);
+    new DataView(msg.buffer).setBigUint64(0, BigInt(counter));
+    const sig = new Uint8Array(await crypto.subtle.sign('HMAC', await getHmacKey(), msg));
+    const off = sig[sig.length - 1] & 0x0f;
+    const bin = ((sig[off] & 0x7f) << 24) | (sig[off + 1] << 16) | (sig[off + 2] << 8) | sig[off + 3];
+    const code = String(bin % 10 ** DIGITS).padStart(DIGITS, '0');
+    codeCache.set(counter, code);
+    if (codeCache.size > 24) codeCache.delete(codeCache.keys().next().value);
+    return code;
+  }
+
+  const counterNow = () => Math.floor(Date.now() / 1000 / STEP);
+
+  function safeEqual(a, b) {
+    if (a.length !== b.length) return false;
+    let d = 0;
+    for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    return d === 0;
+  }
+
+  function buildPayload(counter, code) {
+    return `NLV1|${TICKET_ID}|${counter}|${code}`;
+  }
+
+  function parsePayload(raw) {
+    const parts = String(raw || '').trim().split('|');
+    if (parts.length !== 4 || parts[0] !== 'NLV1') return null;
+    if (!/^[0-9a-f-]{36}$/i.test(parts[1])) return null;
+    if (!/^\d+$/.test(parts[2]) || !/^\d{8}$/.test(parts[3])) return null;
+    return { ticketId: parts[1].toLowerCase(), counter: Number(parts[2]), code: parts[3] };
+  }
+
+  async function validatePayload(raw) {
+    const p = parsePayload(raw);
+    if (!p) return { ok: false, reason: 'Formato de QR no válido' };
+    if (p.ticketId !== TICKET_ID) return { ok: false, reason: 'Entrada de otro evento o local' };
+    const now = counterNow();
+    if (Math.abs(p.counter - now) > 1) return { ok: false, reason: 'Código caducado · captura antigua' };
+    const expected = await hotp(p.counter);
+    if (!safeEqual(expected, p.code)) return { ok: false, reason: 'Código inválido' };
+    return { ok: true, ...p };
+  }
+
+  function qrSvg(text, cellSize = 4) {
+    try {
+      const qr = qrcode(0, 'M');
+      qr.addData(text);
+      qr.make();
+      return qr.createSvgTag({ cellSize, margin: cellSize * 2, scalable: true });
+    } catch (e) {
+      return '<div style="font-size:10px;color:#333;padding:10px">QR no disponible</div>';
+    }
+  }
+
+  /* ---------- estado ---------- */
+  const KEY = 'noche-demo-v1';
+  const DEFAULT_STATE = {
+    occupancy: 412,
+    capacity: 475,
+    waiting: 38,
+    wait: 14,
+    queue: null,
+    scans: [],
+    usedCounters: [],
+    ticketUsed: false,
+    listing: null,
+    bought: [],
+    marketTab: 'buy',
+    sellTicketId: 'lucia',
+    albumUnlocked: false,
+    barOrder: null,
+    revenue: 216,
+    match: false,
+    taxiGroup: null,
+    ride: null
+  };
+  const MARKET_LISTINGS = [
+    { id: 'mk-1', tier: 'General', face: 2500, price: 2750, seller: 'Álex', zone: 'Sala 2' },
+    { id: 'mk-2', tier: 'VIP', face: 4500, price: 4950, seller: 'Noa', zone: 'Zona VIP' },
+    { id: 'mk-3', tier: 'General', face: 2500, price: 2350, seller: 'Dani', zone: 'Sala 1' }
+  ];
+  let state = loadState();
+  let applyingRemote = false;
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return JSON.parse(JSON.stringify(DEFAULT_STATE));
+      const parsed = JSON.parse(raw);
+      return {
+        ...DEFAULT_STATE,
+        ...parsed,
+        scans: Array.isArray(parsed.scans) ? parsed.scans.slice(0, 10) : [],
+        usedCounters: Array.isArray(parsed.usedCounters) ? parsed.usedCounters : [],
+        bought: Array.isArray(parsed.bought) ? parsed.bought : [],
+        marketTab: ['buy', 'sell', 'mine'].includes(parsed.marketTab) ? parsed.marketTab : 'buy'
+      };
+    } catch {
+      return JSON.parse(JSON.stringify(DEFAULT_STATE));
+    }
+  }
+
+  const bc = ('BroadcastChannel' in window) ? new BroadcastChannel('noche-demo') : null;
+
+  function persist(broadcast = true) {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
+    updateUI();
+    if (broadcast && bc && !applyingRemote) {
+      bc.postMessage({ type: 'state', state: JSON.parse(JSON.stringify(state)) });
+    }
+  }
+
+  bc?.addEventListener('message', (e) => {
+    if (e.data?.type !== 'state') return;
+    applyingRemote = true;
+    state = { ...DEFAULT_STATE, ...e.data.state };
+    updateUI();
+    applyingRemote = false;
+  });
+
+  window.addEventListener('storage', (e) => {
+    if (e.key !== KEY || !e.newValue) return;
+    try {
+      applyingRemote = true;
+      state = { ...DEFAULT_STATE, ...JSON.parse(e.newValue) };
+      updateUI();
+      applyingRemote = false;
+    } catch {}
+  });
+
+  /* ---------- UI refs ---------- */
+  const occNum = $('#occNum');
+  const capTotal = $('#capTotal');
+  const capPct = $('#capPct');
+  const capBar = $('#capBar');
+  const capRing = $('#capRing');
+  const capStatus = $('#capStatus');
+  const capDelta = $('#capDelta');
+  const waitNum = $('#waitNum');
+  const queueCount = $('#queueCount');
+  const queueLabel = $('#queueLabel');
+  const btnQueue = $('#btnQueue');
+  const btnLeaveQueue = $('#btnLeaveQueue');
+  const heroDistance = $('#heroDistance');
+  const ticketQr = $('#ticketQr');
+  const totpCode = $('#totpCode');
+  const totpTimer = $('#totpTimer');
+  const timerBar = $('#timerBar');
+  const ticketStamp = $('#ticketStamp');
+  const listingCard = $('#listingCard');
+  const listingPrice = $('#listingPrice');
+  const scanResult = $('#scanResult');
+  const scanLog = $('#scanLog');
+  const panelOcc = $('#panelOcc');
+  const panelOccWrap = $('#panelOccWrap');
+  const panelPct = $('#panelPct');
+  const panelBar = $('#panelBar');
+  const panelQueue = $('#panelQueue');
+  const panelWait = $('#panelWait');
+  const panelScans = $('#panelScans');
+  const panelRevenue = $('#panelRevenue');
+  const panelCap = $('#panelCap');
+  const albumLocked = $('#albumLocked');
+  const albumOpen = $('#albumOpen');
+  const albumCountdown = $('#albumCountdown');
+  const barOrderCard = $('#barOrderCard');
+  const barOrderCode = $('#barOrderCode');
+  const barOrderStatus = $('#barOrderStatus');
+  const barOrderTotal = $('#barOrderTotal');
+  const barOrderProgress = $('#barOrderProgress');
+  let lastOcc = null;
+
+  /* ---------- update UI ---------- */
+  function statusFor(pct) {
+    if (pct >= 95) return { text: 'Completo', color: 'var(--bad)' };
+    if (pct >= 80) return { text: 'Casi lleno', color: 'var(--warn)' };
+    if (pct >= 55) return { text: 'Ambiente bueno', color: 'var(--lime)' };
+    return { text: 'Tranquilo', color: 'var(--ok)' };
+  }
+
+  function updateUI() {
+    const pct = Math.min(100, Math.round((state.occupancy / state.capacity) * 100));
+    const st = statusFor(pct);
+
+    occNum.textContent = state.occupancy;
+    capTotal.textContent = state.capacity;
+    capPct.textContent = pct + '%';
+    capBar.style.width = pct + '%';
+    capRing.style.setProperty('--p', pct);
+    capStatus.innerHTML = `<i></i> ${st.text}`;
+    capStatus.style.color = st.color;
+
+    const ticketOccNum = $('#ticketOccNum');
+    if (ticketOccNum) {
+      ticketOccNum.textContent = state.occupancy;
+      $('#ticketCapTotal').textContent = state.capacity;
+      $('#ticketCapPct').textContent = pct + '%';
+      $('#ticketCapBar').style.width = pct + '%';
+      $('#ticketCapRing').style.setProperty('--p', pct);
+      $('#ticketCapStatus').innerHTML = `<i></i> ${st.text}`;
+      $('#ticketCapStatus').style.color = st.color;
+      $('#ticketCapDelta').textContent = `quedan ${Math.max(0, state.capacity - state.occupancy)} plazas`;
+    }
+
+    const okScans = state.scans.filter(s => s.result === 'ok').length;
+    capDelta.textContent = okScans
+      ? `+${okScans} accesos hoy`
+      : (state.scans.length ? 'último intento rechazado' : 'actualizado ahora');
+
+    const aforoOcc = $('#aforoOcc');
+    if (aforoOcc) {
+      const free = Math.max(0, state.capacity - state.occupancy);
+      aforoOcc.textContent = state.occupancy;
+      $('#aforoCap').textContent = state.capacity;
+      $('#aforoPct').textContent = pct + '%';
+      $('#aforoBar').style.width = pct + '%';
+      $('#aforoRing').style.setProperty('--p', pct);
+      $('#aforoStatus').innerHTML = `<i></i> ${st.text}`;
+      $('#aforoStatus').style.color = st.color;
+      $('#aforoFree').textContent = `quedan ${free} plazas`;
+      $('#aforoWait').textContent = state.wait + ' min';
+      $('#aforoQueue').textContent = state.waiting;
+      $('#aforoScans').textContent = okScans;
+      $('#aforoFreeStat').textContent = free;
+    }
+
+    waitNum.textContent = state.wait + ' min';
+    queueCount.textContent = state.waiting;
+    panelOcc.textContent = state.occupancy;
+    panelCap.textContent = state.capacity;
+    panelPct.textContent = pct + '%';
+    panelBar.style.width = pct + '%';
+    panelQueue.textContent = state.waiting;
+    panelWait.textContent = state.wait + ' min';
+    panelScans.textContent = state.scans.filter(s => s.result === 'ok').length;
+    panelRevenue.textContent = state.revenue + ' €';
+
+    if (lastOcc !== null && state.occupancy > lastOcc) pulseOccupancy();
+    lastOcc = state.occupancy;
+
+    if (state.queue) {
+      btnQueue.classList.remove('primary');
+      btnQueue.classList.add('ghost');
+      queueLabel.textContent = `En cola · #${state.queue.position} · 12–18 min`;
+      btnLeaveQueue.classList.remove('hidden');
+      heroDistance.textContent = 'dentro del geofence';
+    } else {
+      btnQueue.classList.add('primary');
+      btnQueue.classList.remove('ghost');
+      queueLabel.textContent = 'Entrar en la cola virtual';
+      btnLeaveQueue.classList.add('hidden');
+      heroDistance.textContent = 'a 42 m de ti';
+    }
+
+    ticketStamp.classList.toggle('show', !!state.ticketUsed);
+
+    if (state.listing) {
+      listingCard.classList.remove('hidden');
+      listingPrice.textContent = eur(state.listing.price);
+    } else {
+      listingCard.classList.add('hidden');
+    }
+
+    renderScanLog();
+
+    if (state.barOrder) {
+      barOrderCard.classList.remove('hidden');
+      barOrderCode.textContent = state.barOrder.code;
+      barOrderTotal.textContent = eur(state.barOrder.total);
+      const ready = state.barOrder.status === 'ready';
+      barOrderStatus.textContent = ready ? 'Listo para recoger en barra' : 'Preparando…';
+      const prog = $$('i', barOrderProgress);
+      prog.forEach((el, i) => el.classList.toggle('done', ready || i === 0));
+    } else {
+      barOrderCard.classList.add('hidden');
+    }
+
+    if (state.albumUnlocked) {
+      albumLocked.classList.add('hidden');
+      albumOpen.classList.remove('hidden');
+      renderAlbum();
+    } else {
+      albumLocked.classList.remove('hidden');
+      albumOpen.classList.add('hidden');
+    }
+
+    $('#radarHint').textContent = state.match ? '¡Tienes un match!' : '3 personas cerca';
+
+    const ride = state.ride;
+    let taxiHint = '~14 € entre 3';
+    if (ride) {
+      const rideStatus = ride.status || 'assigned';
+      const rideEta = ride.arrivesAt
+        ? Math.max(0, Math.ceil((ride.arrivesAt - Date.now()) / 60000))
+        : (ride.eta ?? 4);
+      taxiHint = rideStatus === 'searching'
+        ? 'Buscando taxi…'
+        : rideStatus === 'assigned'
+          ? `Taxi en ${rideEta} min`
+          : rideStatus === 'arrived'
+            ? 'Taxi en la puerta'
+            : rideStatus === 'in_progress'
+              ? 'En viaje a casa'
+              : rideStatus === 'completed'
+                ? 'Has llegado a casa'
+                : 'Taxi reservado';
+    } else if (state.taxiGroup) {
+      taxiHint = `Grupo · ${state.taxiGroup.code}`;
+    }
+    $('#taxiHint').textContent = taxiHint;
+    renderTaxi();
+    renderMarket();
+  }
+
+  function pulseOccupancy() {
+    panelOccWrap.classList.remove('pulse');
+    void panelOccWrap.offsetWidth;
+    panelOccWrap.classList.add('pulse');
+  }
+
+  function renderScanLog() {
+    const items = state.scans.slice(0, 7);
+    if (!items.length) {
+      scanLog.innerHTML = '<li class="empty">Sin escaneos todavía · escanea el ticket de Lucía</li>';
+      return;
+    }
+    scanLog.innerHTML = items.map(s => {
+      const cls = s.result === 'ok' ? '' : (s.result === 'duplicate' ? 'warn' : 'bad');
+      const time = new Date(s.at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const label = s.result === 'ok' ? 'Lucía · acceso OK' : (s.label || 'Rechazado');
+      return `<li><span class="dot ${cls}"></span><span class="who">${label}</span><span class="time">${time}</span></li>`;
+    }).join('');
+  }
+
+  /* ---------- navegación ---------- */
+  function showScreen(name) {
+    closeModal();
+    $$('.screen').forEach(s => s.classList.toggle('active', s.dataset.screen === name));
+    $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.go === name));
+    if (name !== 'scan') stopCamera();
+    if (name === 'album') updateCountdown();
+    if (name === 'taxi') renderTaxi();
+    const cartBar = $('#cartBar');
+    if (cartBar) cartBar.classList.toggle('hidden', name !== 'bar');
+  }
+
+  document.addEventListener('click', (e) => {
+    const go = e.target.closest('[data-go]');
+    if (!go) return;
+    showScreen(go.dataset.go);
+    if (go.dataset.market && ['buy', 'sell', 'mine'].includes(go.dataset.market)) {
+      state.marketTab = go.dataset.market;
+      persist();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.matches('input, textarea')) return;
+    if (e.key >= '1' && e.key <= '6') {
+      showScreen(['home', 'ticket', 'taxi', 'scan', 'aforo', 'album'][Number(e.key) - 1]);
+    } else if (e.key.toLowerCase() === 's') { scanCurrent(); }
+    else if (e.key.toLowerCase() === 'x') { scanOld(); }
+    else if (e.key.toLowerCase() === 'r') { revealAlbum(); }
+    else if (e.key.toLowerCase() === 't') { showScreen('taxi'); }
+    else if (e.key === '?') { openModal('help'); }
+    else if (e.key === 'Escape') { closeModal(); }
+  });
+
+  /* ---------- TOTP tick ---------- */
+  let lastCounter = -1;
+  let currentCode = '00000000';
+  let rotateLock = false;
+
+  async function rotateCode(counter) {
+    if (rotateLock) return;
+    rotateLock = true;
+    try {
+      const code = await hotp(counter);
+      if (counter !== counterNow()) return;
+      currentCode = code;
+      const payload = buildPayload(counter, code);
+      if (ticketQr) ticketQr.innerHTML = qrSvg(payload, 4);
+      totpCode.textContent = code.slice(0, 4) + ' ' + code.slice(4);
+    } finally {
+      rotateLock = false;
+    }
+  }
+
+  function tick() {
+    const now = Date.now();
+    const counter = counterNow();
+    const remaining = STEP - ((now / 1000) % STEP);
+    const secs = Math.max(0, Math.ceil(remaining));
+    totpTimer.textContent = secs + ' s';
+    timerBar.style.width = Math.min(100, (remaining / STEP) * 100) + '%';
+    if (counter !== lastCounter) {
+      lastCounter = counter;
+      rotateCode(counter);
+    }
+  }
+
+  tick();
+  setInterval(tick, 200);
+
+  /* ---------- escaneo ---------- */
+  function logScan(result, label) {
+    state.scans.unshift({ at: Date.now(), result, label });
+    state.scans = state.scans.slice(0, 10);
+  }
+
+  async function processPayload(raw, source = 'sim') {
+    const res = await validatePayload(raw);
+    if (!res.ok) {
+      logScan('bad', res.reason);
+      persist();
+      showScanResult(false, 'ACCESO DENEGADO', res.reason);
+      return false;
+    }
+    if (state.ticketUsed) {
+      logScan('duplicate', 'Entrada ya utilizada');
+      persist();
+      showScanResult(false, 'ACCESO DENEGADO', 'Esta entrada ya se usó para entrar.');
+      return false;
+    }
+    if (state.listing && (!state.listing.ticketId || state.listing.ticketId === 'lucia')) {
+      logScan('bad', 'Entrada en reventa');
+      persist();
+      showScanResult(false, 'ACCESO DENEGADO', 'La entrada está bloqueada: publicada en el mercado P2P.');
+      return false;
+    }
+    if (state.occupancy >= state.capacity) {
+      logScan('bad', 'Aforo completo');
+      persist();
+      showScanResult(false, 'AFORO COMPLETO', 'No se puede superar el aforo legal del local.');
+      return false;
+    }
+
+    state.ticketUsed = true;
+    state.usedCounters.push(`${res.ticketId}:${res.counter}`);
+    state.occupancy = Math.min(state.capacity, state.occupancy + 1);
+    state.waiting = Math.max(0, state.waiting - 1);
+    state.queue = null;
+    logScan('ok', 'Lucía · acceso OK');
+    persist();
+    showScanResult(true, 'ACCESO OK', `Aforo actualizado: ${state.occupancy} / ${state.capacity} dentro.`);
+    pulseOccupancy();
+    confetti();
+    toast('Acceso OK · aforo ' + state.occupancy);
+    return true;
+  }
+
+  function showScanResult(ok, title, text) {
+    scanResult.className = 'scan-result show ' + (ok ? 'ok' : 'bad');
+    scanResult.innerHTML = `<div class="big">${ok ? '✓ ' : '✕ '}${title}</div><small>${text}</small>`;
+    scanResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  async function scanCurrent() {
+    showScreen('scan');
+    const c = counterNow();
+    const code = await hotp(c);
+    await processPayload(buildPayload(c, code), 'current');
+  }
+
+  async function scanOld() {
+    showScreen('scan');
+    const c = counterNow() - 2;
+    const code = await hotp(c);
+    await processPayload(buildPayload(c, code), 'old');
+  }
+
+  /* ---------- cámara ---------- */
+  let stream = null, raf = null;
+  const video = $('#cam');
+  const canvas = $('#camCanvas');
+  const viewfinder = $('#viewfinder');
+
+  async function startCamera() {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast('Necesitas abrir el demo por http://localhost, no con file://');
+      return;
+    }
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } }, audio: false
+      });
+      video.srcObject = stream;
+      await video.play();
+      viewfinder.classList.add('on');
+      $('#btnCam').textContent = 'Detener cámara';
+      $('#vfHint').textContent = 'Buscando QR…';
+      scanLoop();
+    } catch (err) {
+      toast('No se pudo abrir la cámara: ' + (err.message || 'permiso denegado'));
+    }
+  }
+
+  function stopCamera() {
+    if (raf) cancelAnimationFrame(raf);
+    raf = null;
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    stream = null;
+    if (video) video.srcObject = null;
+    viewfinder.classList.remove('on');
+    const btn = $('#btnCam');
+    if (btn) btn.textContent = 'Activar cámara';
+    const hint = $('#vfHint');
+    if (hint) hint.textContent = 'Apunta al QR del invitado';
+  }
+
+  function scanLoop() {
+    if (!stream) return;
+    if (video.readyState === video.HAVE_ENOUGH_DATA && window.jsQR) {
+      const w = video.videoWidth, h = video.videoHeight;
+      if (w && h) {
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(video, 0, 0, w, h);
+        const img = ctx.getImageData(0, 0, w, h);
+        const found = jsQR(img.data, w, h, { inversionAttempts: 'dontInvert' });
+        if (found?.data) {
+          stopCamera();
+          processPayload(found.data, 'camera');
+          return;
+        }
+      }
+    }
+    raf = requestAnimationFrame(scanLoop);
+  }
+
+  $('#btnCam').addEventListener('click', () => {
+    if (stream) stopCamera(); else startCamera();
+  });
+  $('#btnScanCurrent').addEventListener('click', scanCurrent);
+  $('#btnScanOld').addEventListener('click', scanOld);
+  $('#btnManual').addEventListener('click', () => {
+    const v = $('#manualInput').value.trim();
+    if (!v) return toast('Pega un payload primero');
+    processPayload(v, 'manual');
+  });
+  $('#manualInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('#btnManual').click();
+  });
+
+  /* ---------- cola ---------- */
+  btnQueue.addEventListener('click', () => {
+    if (state.queue) { openModal('queue'); return; }
+    const original = queueLabel.textContent;
+    queueLabel.textContent = 'Comprobando geofence…';
+    btnQueue.disabled = true;
+    setTimeout(() => {
+      state.queue = { position: state.waiting + 1, at: Date.now() };
+      state.waiting += 1;
+      state.wait += 1;
+      persist();
+      btnQueue.disabled = false;
+      toast('Dentro del geofence (42 m) · posición #' + state.queue.position);
+      confetti();
+    }, 850);
+    setTimeout(() => { if (!state.queue) queueLabel.textContent = original; }, 3000);
+  });
+
+  btnLeaveQueue.addEventListener('click', () => leaveQueue());
+  $('#btnLeaveQueueModal').addEventListener('click', () => { leaveQueue(); closeModal(); });
+
+  function leaveQueue() {
+    if (!state.queue) return;
+    state.waiting = Math.max(0, state.waiting - 1);
+    state.wait = Math.max(1, state.wait - 1);
+    state.queue = null;
+    persist();
+    closeModal();
+    toast('Has salido de la cola virtual');
+  }
+
+  $('#btnBuyFastpass').addEventListener('click', () => {
+    if (!state.queue) return;
+    state.queue.position = 1;
+    state.queue.fastpass = true;
+    persist();
+    toast('Fast-Pass activo · pasas al frente de la cola');
+    confetti();
+    closeModal();
+  });
+
+  /* ---------- mercado de entradas ---------- */
+  const range = $('#resaleRange');
+  let currentResaleTicket = null;
+  let resaleTicketId = null;
+
+  function myTickets() {
+    const luciaListed = state.listing && (!state.listing.ticketId || state.listing.ticketId === 'lucia');
+    const luciaStatus = state.ticketUsed ? 'used' : luciaListed ? 'listed' : 'valid';
+    const base = {
+      id: 'lucia',
+      tier: 'General',
+      face: 2500,
+      price: 2500,
+      source: 'Compra original · Lucía',
+      status: luciaStatus
+    };
+    const bought = (state.bought || []).map(id => {
+      const item = MARKET_LISTINGS.find(m => m.id === id);
+      if (!item) return null;
+      const listed = state.listing?.ticketId === id;
+      return {
+        id,
+        tier: item.tier,
+        face: item.face,
+        price: item.price,
+        source: `Reventa · ${item.seller}`,
+        status: listed ? 'listed' : 'valid'
+      };
+    }).filter(Boolean);
+    return [base, ...bought];
+  }
+
+  const sellableTickets = () => myTickets().filter(t => t.status === 'valid');
+  const selectedSellTicket = () => {
+    const tickets = sellableTickets();
+    return tickets.find(t => t.id === state.sellTicketId) || tickets[0] || null;
+  };
+
+  function configureResale() {
+    const tickets = sellableTickets();
+    const selected = selectedSellTicket();
+    currentResaleTicket = selected;
+    state.sellTicketId = selected?.id || null;
+
+    $('#sellTicketChips').innerHTML = tickets.length
+      ? tickets.map(t => {
+        const label = t.id === 'lucia' ? `Mi ${t.tier}` : `${t.tier} · ${t.source.replace('Reventa · ', '')}`;
+        return `
+          <button class="member-toggle ${t.id === selected?.id ? 'selected' : ''}" data-sell-ticket="${t.id}" type="button">
+            <span class="avatar-sm">${t.id === 'lucia' ? 'L' : t.tier[0]}</span>${label}<span class="check">✓</span>
+          </button>`;
+      }).join('')
+      : '<span class="empty-market">No tienes entradas válidas para vender</span>';
+
+    const publish = $('#btnPublish');
+    if (!selected) {
+      publish.disabled = true;
+      return;
+    }
+    publish.disabled = false;
+
+    const min = Math.max(100, Math.floor(selected.face * 0.5));
+    const max = Math.floor(selected.face * 1.10);
+    range.min = String(min);
+    range.max = String(max);
+    if (resaleTicketId !== selected.id) {
+      range.value = String(selected.face);
+      resaleTicketId = selected.id;
+    }
+
+    $('#resaleFace').textContent = eur(selected.face);
+    $('#resaleMinLabel').textContent = eur(min);
+    $('#resaleMaxLabel').textContent = 'TOPE ' + eur(max);
+    syncResale();
+  }
+
+  function syncResale() {
+    if (!currentResaleTicket) return;
+    const price = Number(range.value);
+    const fee = Math.round(price * 0.08);
+    $('#resalePrice').textContent = (price / 100).toFixed(2).replace('.', ',');
+    $('#resaleFee').textContent = eur(fee);
+    $('#resaleNet').textContent = eur(price - fee);
+  }
+
+  function renderMarket() {
+    const tab = state.marketTab || 'buy';
+    $$('#marketTabs .seg-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.marketTab === tab);
+    });
+    $('#marketBuyPane').classList.toggle('hidden', tab !== 'buy');
+    $('#marketSellPane').classList.toggle('hidden', tab !== 'sell');
+    $('#marketMinePane').classList.toggle('hidden', tab !== 'mine');
+
+    const available = MARKET_LISTINGS.filter(m => !(state.bought || []).includes(m.id));
+    $('#marketList').innerHTML = available.length
+      ? available.map(m => `
+          <div class="market-item">
+            <span class="tier-badge ${m.tier === 'VIP' ? 'vip' : ''}">${m.tier}</span>
+            <div class="info">
+              <b>${m.seller} · ${m.zone}</b>
+              <small>Nominal ${eur(m.face)} · tope ${eur(Math.floor(m.face * 1.10))}</small>
+            </div>
+            <span class="price">${eur(m.price)}</span>
+            <button class="btn small primary" data-buy-ticket="${m.id}" type="button">Comprar</button>
+          </div>`).join('')
+      : '<div class="empty-market">No hay entradas en venta ahora mismo.</div>';
+
+    const tickets = myTickets();
+    $('#myTicketsList').innerHTML = tickets.map(t => {
+      const statusLabel = t.status === 'valid' ? 'VÁLIDA' : t.status === 'listed' ? 'EN VENTA' : 'USADA';
+      return `
+        <div class="my-ticket">
+          <span class="tier-badge ${t.tier === 'VIP' ? 'vip' : ''}">${t.tier}</span>
+          <div class="info"><b>${t.source}</b><small>${eur(t.price)} · ${statusLabel.toLowerCase()}</small></div>
+          <span class="status-chip ${t.status}">${statusLabel}</span>
+          ${t.status === 'valid' ? `<button class="btn small ghost" data-sell-ticket="${t.id}" type="button">Vender</button>` : ''}
+        </div>`;
+    }).join('');
+
+    if (state.listing) {
+      const listed = tickets.find(t => t.id === (state.listing.ticketId || 'lucia'));
+      $('#listingCard b').textContent = `EN VENTA · ${listed?.tier || 'Entrada'}`;
+      $('#listingPrice').textContent = eur(state.listing.price);
+      $('#listingCard').classList.remove('hidden');
+    } else {
+      $('#listingCard').classList.add('hidden');
+    }
+
+    if (tab === 'sell') configureResale();
+  }
+
+  function buyTicket(id) {
+    const item = MARKET_LISTINGS.find(m => m.id === id);
+    if (!item || (state.bought || []).includes(id)) return;
+    state.bought = [...(state.bought || []), id];
+    state.marketTab = 'mine';
+    persist();
+    confetti();
+    toast(`Entrada ${item.tier} comprada · ya está en Mis entradas`);
+  }
+
+  $('#marketTabs').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-market-tab]');
+    if (!b) return;
+    state.marketTab = b.dataset.marketTab;
+    persist();
+  });
+
+  $('#marketList').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-buy-ticket]');
+    if (!b) return;
+    buyTicket(b.dataset.buyTicket);
+  });
+
+  $('#myTicketsList').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-sell-ticket]');
+    if (!b) return;
+    state.sellTicketId = b.dataset.sellTicket;
+    state.marketTab = 'sell';
+    resaleTicketId = null;
+    persist();
+  });
+
+  $('#sellTicketChips').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-sell-ticket]');
+    if (!b) return;
+    state.sellTicketId = b.dataset.sellTicket;
+    resaleTicketId = null;
+    renderMarket();
+  });
+
+  range.addEventListener('input', syncResale);
+
+  $('#btnPublish').addEventListener('click', () => {
+    if (state.listing) return toast('Ya tienes una entrada en venta · cancélala primero');
+    const ticket = currentResaleTicket || selectedSellTicket();
+    if (!ticket) return toast('No tienes una entrada válida para vender');
+    const price = Number(range.value);
+    const max = Math.floor(ticket.face * 1.10);
+    if (price > max) return toast(`El tope es ${eur(max)}`);
+    state.listing = { ticketId: ticket.id, price, at: Date.now() };
+    state.marketTab = 'mine';
+    persist();
+    toast('Entrada publicada · el QR anterior queda invalidado');
+    confetti();
+  });
+
+  $('#btnCancelListing').addEventListener('click', () => {
+    state.listing = null;
+    persist();
+    toast('Reventa cancelada · el QR vuelve a estar activo');
+  });
+
+  $('#btnResell').addEventListener('click', () => {
+    state.marketTab = 'sell';
+    persist();
+    $('.market-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!sellableTickets().length) toast('No tienes entradas válidas para vender');
+  });
+
+  let shotPayload = '';
+  $('#btnShot').addEventListener('click', async () => {
+    const c = counterNow() - 2;
+    const code = await hotp(c);
+    shotPayload = buildPayload(c, code);
+    $('#screenshotQr').innerHTML = qrSvg(shotPayload, 4) + '<div class="old"><b>CADUCADO</b></div>';
+    openModal('screenshot');
+  });
+
+  $('#btnScanShot').addEventListener('click', async () => {
+    closeModal();
+    showScreen('scan');
+    if (!shotPayload) {
+      const c = counterNow() - 2;
+      shotPayload = buildPayload(c, await hotp(c));
+    }
+    await processPayload(shotPayload, 'screenshot');
+  });
+
+  /* ---------- barra ---------- */
+  const MENU = [
+    { id: 'copa', name: 'Copa nacional', desc: 'Ginebra, ron o vodka', price: 1200, emoji: '🥃' },
+    { id: 'premium', name: 'Copa premium', desc: 'Tanqueray / Jack Daniel’s', price: 1500, emoji: '🍸' },
+    { id: 'cerveza', name: 'Cerveza', desc: 'Estrella Galicia', price: 600, emoji: '🍺' },
+    { id: 'agua', name: 'Agua', desc: '50 cl', price: 300, emoji: '💧' },
+    { id: 'shots', name: 'Shots x3', desc: 'Para el grupo', price: 900, emoji: '🥂' }
+  ];
+  let cart = {};
+
+  function renderMenu() {
+    $('#menuList').innerHTML = MENU.map(item => `
+      <div class="menu-item">
+        <div class="em">${item.emoji}</div>
+        <div class="info"><b>${item.name}</b><small>${item.desc}</small></div>
+        <span class="price">${eur(item.price)}</span>
+        <div class="qty">
+          <button data-sub="${item.id}" aria-label="Quitar ${item.name}">−</button>
+          <span id="qty-${item.id}">0</span>
+          <button data-add="${item.id}" aria-label="Añadir ${item.name}">+</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function cartTotal() {
+    return Object.entries(cart).reduce((sum, [id, qty]) => {
+      const item = MENU.find(m => m.id === id);
+      return sum + (item ? item.price * qty : 0);
+    }, 0);
+  }
+
+  function renderCart() {
+    MENU.forEach(m => {
+      const el = $('#qty-' + m.id);
+      if (el) el.textContent = cart[m.id] || 0;
+    });
+    $('#cartTotal').textContent = eur(cartTotal());
+    $('#btnOrder').disabled = cartTotal() === 0;
+  }
+
+  $('#menuList').addEventListener('click', (e) => {
+    const add = e.target.closest('[data-add]');
+    const sub = e.target.closest('[data-sub]');
+    if (add) { cart[add.dataset.add] = (cart[add.dataset.add] || 0) + 1; renderCart(); }
+    if (sub) {
+      const id = sub.dataset.sub;
+      cart[id] = Math.max(0, (cart[id] || 0) - 1);
+      if (!cart[id]) delete cart[id];
+      renderCart();
+    }
+  });
+
+  $('#btnOrder').addEventListener('click', () => {
+    const total = cartTotal();
+    if (!total) return;
+    const code = 'N-' + String(Math.floor(100 + Math.random() * 900));
+    state.barOrder = { code, total, status: 'preparing', at: Date.now() };
+    state.revenue += Math.round(total / 100);
+    cart = {};
+    renderCart();
+    persist();
+    toast('Pedido enviado a barra · ' + code);
+    setTimeout(() => {
+      if (state.barOrder && state.barOrder.code === code) {
+        state.barOrder.status = 'ready';
+        persist();
+        toast('Pedido listo · recógelo en barra');
+      }
+    }, 6000);
+  });
+
+  function syncBarOrder() {
+    if (state.barOrder && state.barOrder.status !== 'ready' && Date.now() - state.barOrder.at > 6000) {
+      state.barOrder.status = 'ready';
+      persist();
+    }
+  }
+  setInterval(syncBarOrder, 1000);
+
+  /* ---------- álbum ---------- */
+  const PHOTOS = [
+    { src: 'assets/photo-1.jpg', time: '03:47', title: 'Llegamos', sub: 'La noche empieza' },
+    { src: 'assets/photo-2.jpg', time: '04:02', title: 'Primera ronda', sub: 'La barra estaba a tope' },
+    { src: 'assets/photo-3.jpg', time: '04:18', title: 'Sala principal', sub: 'El drop que lo cambió todo' },
+    { src: 'assets/photo-4.jpg', time: '04:41', title: 'Detrás del booth', sub: 'El DJ nos dejó pasar' },
+    { src: 'assets/photo-5.jpg', time: '05:03', title: 'Una más', sub: 'Cocktail de despedida' },
+    { src: 'assets/photo-6.jpg', time: '05:26', title: 'Todo el mundo arriba', sub: 'Manos al aire' },
+    { src: 'assets/photo-7.jpg', time: '05:48', title: 'Última canción', sub: 'No queríamos que acabara' },
+    { src: 'assets/photo-8.jpg', time: '06:02', title: 'La salida', sub: 'Taxi compartido a casa' }
+  ];
+
+  function nextTen() {
+    const d = new Date();
+    const t = new Date(d);
+    t.setHours(10, 0, 0, 0);
+    if (d >= t) t.setDate(t.getDate() + 1);
+    return t;
+  }
+
+  function updateCountdown() {
+    if (state.albumUnlocked) return;
+    const ms = nextTen() - Date.now();
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const h = String(Math.floor(total / 3600)).padStart(2, '0');
+    const m = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
+    const s = String(total % 60).padStart(2, '0');
+    albumCountdown.innerHTML = `${h}:${m}:${s}<small>PARA EL REVELADO</small>`;
+  }
+  setInterval(updateCountdown, 1000);
+
+  function renderBlurGrid() {
+    const grid = $('#blurGrid');
+    if (!grid || grid.dataset.done) return;
+    grid.dataset.done = '1';
+    grid.innerHTML = PHOTOS.slice(0, 8).map(p => `<img src="${p.src}" alt="">`).join('');
+  }
+
+  let albumRendered = false;
+  function renderAlbum() {
+    if (albumRendered) return;
+    albumRendered = true;
+    $('#albumGrid').innerHTML = PHOTOS.map((p, i) => `
+      <button class="photo" data-photo="${i}" style="animation-delay:${i * 50}ms">
+        <img src="${p.src}" alt="${p.title}">
+        <span class="tag">${p.time}</span>
+      </button>`).join('');
+  }
+
+  function revealAlbum() {
+    if (state.albumUnlocked) { showScreen('album'); return; }
+    state.albumUnlocked = true;
+    persist();
+    showScreen('album');
+    confetti();
+    toast('10:00 · el álbum se ha revelado');
+  }
+  $('#btnReveal').addEventListener('click', revealAlbum);
+
+  $('#albumGrid').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-photo]');
+    if (!btn) return;
+    const p = PHOTOS[Number(btn.dataset.photo)];
+    if (!p) return;
+    $('#lightboxImg').src = p.src;
+    $('#lightboxTime').textContent = `${p.time} · Fabrik · ${p.title}`;
+    openModal('lightbox');
+  });
+
+  $('#btnShare').addEventListener('click', shareRecap);
+
+  async function shareRecap() {
+    const text = 'Nuestra noche en Fabrik · recap privado en NOCHE';
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Nuestra noche · NOCHE', text });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText('https://noche.app/r/abc123');
+        toast('Enlace copiado · listo para Stories');
+      } else {
+        toast('Recap listo para exportar a Stories');
+      }
+    } catch {
+      toast('Recap listo para exportar a Stories');
+    }
+  }
+
+  /* ---------- recap ---------- */
+  let recapTimer = null;
+  let recapIndex = 0;
+
+  function openRecap() {
+    const stage = $('#recapStage');
+    $$('img', stage).forEach(img => img.remove());
+    $('#recapEnd').classList.remove('show');
+    $('#recapProgress').innerHTML = PHOTOS.map(() => '<i></i>').join('');
+    recapIndex = 0;
+    renderRecapSlide();
+    openModal('recap');
+    clearInterval(recapTimer);
+    recapTimer = setInterval(() => {
+      recapIndex++;
+      if (recapIndex >= PHOTOS.length) {
+        clearInterval(recapTimer);
+        recapTimer = null;
+        $('#recapEnd').classList.add('show');
+        confetti();
+        return;
+      }
+      renderRecapSlide();
+    }, 1700);
+  }
+
+  function renderRecapSlide() {
+    const stage = $('#recapStage');
+    const p = PHOTOS[recapIndex];
+    const img = document.createElement('img');
+    img.src = p.src;
+    img.alt = p.title;
+    stage.insertBefore(img, stage.querySelector('.recap-top'));
+    requestAnimationFrame(() => img.classList.add('on'));
+    $$('img', stage).forEach(other => {
+      if (other !== img) other.classList.remove('on');
+    });
+    setTimeout(() => { $$('img', stage).forEach(other => { if (other !== img && !other.classList.contains('on')) other.remove(); }); }, 700);
+    $('#recapTitle').textContent = p.title;
+    $('#recapSub').textContent = `${p.time} · Fabrik`;
+    $$('#recapProgress i').forEach((bar, i) => bar.classList.toggle('done', i <= recapIndex));
+  }
+
+  function stopRecap() {
+    clearInterval(recapTimer);
+    recapTimer = null;
+  }
+
+  $('#btnRecap').addEventListener('click', openRecap);
+  $('#btnRecapReplay').addEventListener('click', () => {
+    $('#recapEnd').classList.remove('show');
+    openRecap();
+  });
+  $('#btnRecapShare').addEventListener('click', shareRecap);
+
+  /* ---------- radar ---------- */
+  document.addEventListener('click', (e) => {
+    const like = e.target.closest('[data-like]');
+    if (!like) return;
+    like.classList.toggle('liked');
+    if (like.classList.contains('liked')) {
+      setTimeout(() => {
+        state.match = true;
+        persist();
+        $('#radarList').classList.add('hidden');
+        $('#radarMatch').classList.remove('hidden');
+        confetti();
+      }, 700);
+    }
+  });
+
+  /* ---------- taxi: grupo de vuelta a casa ---------- */
+  const TAXI_FRIENDS = [
+    { id: 'lucia', name: 'Lucía', initial: 'L', home: 'Malasaña', address: 'Calle del Pez 12', fixed: true },
+    { id: 'mario', name: 'Mario', initial: 'M', home: 'Chamberí', address: 'Calle de Almagro 8' },
+    { id: 'noa', name: 'Noa', initial: 'N', home: 'Lavapiés', address: 'Calle de la Fe 3' },
+    { id: 'dani', name: 'Dani', initial: 'D', home: 'Retiro', address: 'Calle de Ibiza 21' }
+  ];
+  const TAXI_MAX = 4;
+  const TAXI_BASE_CENTS = 800;
+  const TAXI_PER_STOP_CENTS = 200;
+  let taxiDraft = { time: '04:30', members: ['lucia', 'mario', 'noa'] };
+  let taxiMode = 'create';
+  let rideAssignTimer = null;
+
+  const taxiFriend = (id) => TAXI_FRIENDS.find(f => f.id === id);
+  const taxiFare = (n) => TAXI_BASE_CENTS + TAXI_PER_STOP_CENTS * Math.max(1, n);
+  const taxiSplit = (fare, n) => eur(Math.round(fare / Math.max(1, n)));
+  const taxiMembers = (ids) => (ids || []).map(taxiFriend).filter(Boolean);
+  const taxiRoute = (ids) => ['Fabrik', ...taxiMembers(ids).map(f => f.home)];
+  const taxiRouteText = (ids) => taxiRoute(ids).join(' → ');
+
+  function renderTaxiHome() {
+    const card = $('#taxiHomeCard');
+    if (!card) return;
+    const g = state.taxiGroup;
+    const ride = state.ride;
+    card.classList.toggle('hidden', !g);
+    if (!g) return;
+
+    const count = g.members.length;
+    const fare = g.fare ?? taxiFare(count);
+    let title = `Grupo de ${count} · ${g.time}`;
+    let sub = `${taxiRouteText(g.members)} · ${taxiSplit(fare, count)}/persona`;
+
+    if (ride) {
+      const status = ride.status || 'assigned';
+      const eta = ride.arrivesAt
+        ? Math.max(0, Math.ceil((ride.arrivesAt - Date.now()) / 60000))
+        : (ride.eta ?? 4);
+      if (status === 'searching') title = 'Buscando taxi…';
+      else if (status === 'assigned') title = `Taxi en ${eta} min`;
+      else if (status === 'arrived') title = 'Taxi en la puerta';
+      else if (status === 'in_progress') title = 'En viaje a casa';
+      else if (status === 'completed') title = 'Has llegado a casa';
+      if (ride.driver && status !== 'completed') sub = `${ride.driver} · ${ride.plate || ''} · PIN ${ride.pin}`;
+    }
+
+    $('#taxiHomeCode').textContent = g.code;
+    $('#taxiHomeTitle').textContent = title;
+    $('#taxiHomeSub').textContent = sub;
+  }
+
+  function renderTaxi() {
+    const setup = $('#taxiSetup');
+    const group = $('#taxiGroup');
+    if (!setup || !group) return;
+    const g = state.taxiGroup;
+    setup.classList.toggle('hidden', !!g);
+    group.classList.toggle('hidden', !g);
+    renderTaxiHome();
+
+    if (!g) {
+      renderTaxiDraft();
+      return;
+    }
+    renderTaxiGroup(g);
+  }
+
+  function renderTaxiDraft() {
+    $('#taxiDraftTimeLabel').textContent = taxiDraft.time;
+    $$('#taxiTimeChips .chip').forEach(c => c.classList.toggle('active', c.dataset.time === taxiDraft.time));
+    $$('#taxiMode .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.taxiMode === taxiMode));
+    $('#taxiCreatePane').classList.toggle('hidden', taxiMode !== 'create');
+    $('#taxiJoinPane').classList.toggle('hidden', taxiMode !== 'join');
+
+    const n = taxiDraft.members.length;
+    $('#taxiFriends').innerHTML = TAXI_FRIENDS.map(f => {
+      const on = taxiDraft.members.includes(f.id);
+      const full = !on && n >= TAXI_MAX;
+      return `<button class="member-toggle ${on ? 'selected' : ''}" data-friend="${f.id}" type="button" ${f.fixed || full ? 'disabled' : ''} title="${f.home} · ${f.address}">
+        <span class="avatar-sm">${f.initial}</span>${f.name}${f.fixed ? ' · tú' : ''}<span class="check">✓</span>
+      </button>`;
+    }).join('');
+
+    const fare = taxiFare(n);
+    $('#taxiDraftCount').textContent = n;
+    $('#taxiDraftFare').textContent = eur(fare);
+    $('#taxiDraftSplit').textContent = taxiSplit(fare, n);
+    $('#taxiRoutePreview').innerHTML = taxiRoute(taxiDraft.members).map((stop, i, arr) =>
+      `<span class="route-node ${i === 0 ? 'start' : (i === arr.length - 1 ? 'end' : '')}">${stop}</span>${i < arr.length - 1 ? '<span class="route-arrow">→</span>' : ''}`
+    ).join('');
+    $('#btnCreateTaxiGroup').disabled = n < 2;
+  }
+
+  function renderTaxiGroup(g) {
+    const members = g.members || [];
+    const count = members.length;
+    const fare = g.fare ?? taxiFare(count);
+    const owner = g.owner || (g.joined ? 'Mario' : 'Lucía');
+
+    $('#taxiCode').textContent = g.code;
+    $('#taxiGroupOwner').textContent = owner;
+    $('#taxiGroupTime').textContent = `${g.time} · puerta principal`;
+    $('#taxiGroupRoute').textContent = taxiRouteText(members);
+    $('#taxiGroupCount').textContent = count;
+    const free = TAXI_MAX - count;
+    $('#taxiGroupSeats').textContent = free <= 0 ? '· completo' : `· ${free} plaza${free === 1 ? '' : 's'} libre${free === 1 ? '' : 's'}`;
+    $('#taxiGroupFare').textContent = eur(fare);
+    $('#taxiGroupSplit').textContent = taxiSplit(fare, count);
+    $('#taxiMembers').innerHTML = members.map(id => {
+      const f = taxiFriend(id);
+      return `<span class="member-pill"><span class="avatar-sm">${f ? f.initial : '?'}</span>${f ? f.name : id}</span>`;
+    }).join('');
+
+    $('#taxiStops').innerHTML = taxiMembers(members).map((f, i) => `
+      <div class="route-stop">
+        <span class="n">${i + 1}</span>
+        <div><b>${f.home}${f.fixed ? ' · tu casa' : ` · ${f.name}`}</b><small>${f.address}</small></div>
+      </div>`).join('');
+
+    renderTaxiRide(g, fare);
+  }
+
+  function renderTaxiRide(g, fare) {
+    const btn = $('#btnRide');
+    const box = $('#rideResult');
+    const ride = state.ride;
+
+    if (!ride) {
+      btn.disabled = false;
+      btn.textContent = g.time === 'Ahora' ? 'Pedir taxi ahora' : `Reservar taxi para las ${g.time}`;
+      box.classList.add('hidden');
+      box.innerHTML = '';
+      return;
+    }
+
+    const status = ride.status || 'assigned';
+    btn.disabled = true;
+    btn.textContent = status === 'completed' ? 'Viaje completado ✓' : 'Taxi reservado ✓';
+    box.classList.remove('hidden');
+
+    if (status === 'searching') {
+      box.innerHTML = `
+        <div class="ride-head"><span class="label">BUSCANDO TAXI</span><span class="ride-pin">PIN ${ride.pin}</span></div>
+        <div class="ride-search" style="margin-top:12px"><i></i> Contactando con los taxis de la zona…</div>
+        <p class="notice" style="margin-top:10px">Tarifa estimada ${eur(fare)} · ${taxiSplit(fare, g.members.length)} por persona. Te avisamos en cuanto haya coche.</p>
+        <div class="ride-actions"><button class="btn ghost danger" data-ride-action="cancel" type="button">Cancelar búsqueda</button></div>`;
+      return;
+    }
+
+    if (status === 'completed') {
+      box.innerHTML = `
+        <div class="ride-head"><span class="live-pill"><i></i> LLEGADA</span><span class="ride-pin">PIN ${ride.pin}</span></div>
+        <div class="ride-eta"><strong>En casa</strong><small>${taxiRouteText(g.members)} · ${taxiSplit(fare, g.members.length)} por persona</small></div>
+        <p class="notice">Viaje cerrado. El recibo y el reparto ya están en vuestro historial.</p>
+        <div class="ride-actions">
+          <button class="btn ghost" data-ride-action="share" type="button">Compartir recibo</button>
+          <button class="btn ghost" data-ride-action="clear" type="button">Nuevo taxi</button>
+        </div>`;
+      return;
+    }
+
+    const eta = ride.arrivesAt
+      ? Math.max(0, Math.ceil((ride.arrivesAt - Date.now()) / 60000))
+      : (ride.eta ?? 4);
+    const etaText = status === 'arrived' ? 'En la puerta' : status === 'in_progress' ? 'En camino' : `${eta} min`;
+    const etaSub = status === 'arrived'
+      ? 'Sal por la puerta principal · matrícula visible'
+      : status === 'in_progress'
+        ? `Llegada a ${taxiFriend(g.members[g.members.length - 1])?.home || 'casa'} en unos ${ride.tripMinutes ?? 12} min`
+        : 'para llegar a Fabrik · puerta principal';
+    const advanceLabel = status === 'assigned'
+      ? 'Demo: el taxi ha llegado'
+      : status === 'arrived'
+        ? 'Demo: iniciar viaje'
+        : 'Demo: llegar a casa';
+
+    box.innerHTML = `
+      <div class="ride-head">
+        <span class="live-pill"><i></i> ${status === 'arrived' ? 'EN LA PUERTA' : status === 'in_progress' ? 'EN VIAJE' : 'EN CAMINO'}</span>
+        <span class="ride-pin">PIN ${ride.pin}</span>
+      </div>
+      <div class="ride-driver">
+        <div class="avatar">${(ride.driver || 'Taxi').slice(0, 1)}</div>
+        <div><b>${ride.driver || 'Conductor'} · ${ride.rating || '4,9'} ★</b><small>${ride.car || 'Taxi'} · ${ride.plate || '—'}</small></div>
+      </div>
+      <div class="ride-eta"><strong>${etaText}</strong><small>${etaSub}</small></div>
+      <div class="ride-actions">
+        <button class="btn ghost" data-ride-action="share" type="button">Compartir viaje</button>
+        <button class="btn ghost" data-ride-action="advance" type="button">${advanceLabel}</button>
+        <button class="btn ghost danger" data-ride-action="cancel" type="button">Cancelar</button>
+      </div>`;
+  }
+
+  $('#taxiMode').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-taxi-mode]');
+    if (!b) return;
+    taxiMode = b.dataset.taxiMode;
+    renderTaxi();
+  });
+
+  $('#taxiTimeChips').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-time]');
+    if (!b) return;
+    taxiDraft.time = b.dataset.time;
+    renderTaxi();
+  });
+
+  $('#taxiFriends').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-friend]');
+    if (!b || b.disabled) return;
+    const id = b.dataset.friend;
+    const on = taxiDraft.members.includes(id);
+    if (on) {
+      if (taxiDraft.members.length <= 2) return toast('El grupo necesita al menos 2 personas');
+      taxiDraft.members = taxiDraft.members.filter(x => x !== id);
+    } else {
+      if (taxiDraft.members.length >= TAXI_MAX) return toast('Máximo 4 personas por taxi');
+      taxiDraft.members.push(id);
+    }
+    renderTaxi();
+  });
+
+  $('#btnCreateTaxiGroup').addEventListener('click', () => {
+    if (taxiDraft.members.length < 2) return toast('Añade al menos un amigo al grupo');
+    const code = 'NOCHE-' + String(Math.floor(100 + Math.random() * 900));
+    state.taxiGroup = {
+      code,
+      time: taxiDraft.time,
+      owner: 'Lucía',
+      members: [...taxiDraft.members],
+      fare: taxiFare(taxiDraft.members.length),
+      createdAt: Date.now()
+    };
+    state.ride = null;
+    persist();
+    renderTaxi();
+    confetti();
+    toast('Grupo creado · comparte el código ' + code);
+  });
+
+  function joinTaxiGroup(raw) {
+    const code = String(raw || '').trim().toUpperCase();
+    if (code !== 'NOCHE-247') return toast('Código no válido · usa NOCHE-247 en el demo');
+    if (state.taxiGroup?.code === code) return toast('Ya estás en ese grupo');
+
+    state.taxiGroup = {
+      code,
+      time: '04:30',
+      owner: 'Mario',
+      members: ['lucia', 'mario'],
+      fare: taxiFare(2),
+      joined: true,
+      createdAt: Date.now()
+    };
+    state.ride = null;
+    persist();
+    renderTaxi();
+    confetti();
+    toast('Te has unido al grupo de Mario · ' + code);
+  }
+
+  $('#btnJoinTaxi').addEventListener('click', () => joinTaxiGroup($('#taxiJoinCode').value));
+  $('#btnJoinDemo').addEventListener('click', () => {
+    $('#taxiJoinCode').value = 'NOCHE-247';
+    joinTaxiGroup('NOCHE-247');
+  });
+
+  async function shareText(text, okMessage) {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Taxi de vuelta · NOCHE', text });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(text);
+        toast(okMessage || 'Copiado');
+      } else {
+        toast(text);
+      }
+    } catch {
+      toast(text);
+    }
+  }
+
+  async function shareTaxi() {
+    const g = state.taxiGroup;
+    if (!g) return;
+    const per = taxiSplit(g.fare, g.members.length);
+    const text = `Taxi de vuelta a las ${g.time} desde Fabrik. Ruta: ${taxiRouteText(g.members)}. Únete con el código ${g.code} · ${per}/persona.`;
+    await shareText(text, 'Invitación copiada · ' + g.code);
+  }
+
+  async function shareRide() {
+    const g = state.taxiGroup;
+    const ride = state.ride;
+    if (!g || !ride) return;
+    const per = taxiSplit(ride.fare ?? g.fare, g.members.length);
+    const text = ride.status === 'completed'
+      ? `Noche terminada · ${taxiRouteText(g.members)}. ${per}/persona.`
+      : `Voy en taxi a casa · ${ride.driver || 'Taxi'} · ${ride.plate || ''} · PIN ${ride.pin}. Ruta: ${taxiRouteText(g.members)}.`;
+    await shareText(text, 'Viaje compartido');
+  }
+
+  $('#btnShareTaxi').addEventListener('click', shareTaxi);
+
+  $('#btnLeaveTaxi').addEventListener('click', () => {
+    if (state.ride && !['completed'].includes(state.ride.status || 'assigned')) {
+      return toast('Cancela el taxi antes de salir del grupo');
+    }
+    clearTimeout(rideAssignTimer);
+    state.taxiGroup = null;
+    state.ride = null;
+    taxiDraft = { time: '04:30', members: ['lucia', 'mario', 'noa'] };
+    taxiMode = 'create';
+    persist();
+    renderTaxi();
+    toast('Has salido del grupo de taxi');
+  });
+
+  function scheduleRideAssignment() {
+    clearTimeout(rideAssignTimer);
+    rideAssignTimer = setTimeout(() => {
+      if (!state.ride || state.ride.status !== 'searching') return;
+      state.ride.status = 'assigned';
+      state.ride.driver = 'Javier M.';
+      state.ride.rating = '4,9';
+      state.ride.car = 'Toyota Prius · blanco';
+      state.ride.plate = '4821 KTM';
+      state.ride.eta = 4;
+      state.ride.arrivesAt = Date.now() + 4 * 60000;
+      persist();
+      confetti();
+      toast('Taxi asignado · llega en 4 min');
+    }, 1800);
+  }
+
+  $('#btnRide').addEventListener('click', () => {
+    const g = state.taxiGroup;
+    if (!g) return;
+    state.ride = {
+      status: 'searching',
+      time: g.time,
+      members: [...g.members],
+      fare: g.fare,
+      code: g.code,
+      pin: String(Math.floor(1000 + Math.random() * 9000)),
+      requestedAt: Date.now()
+    };
+    persist();
+    scheduleRideAssignment();
+    toast('Buscando taxi para ' + g.members.length + ' personas…');
+  });
+
+  document.addEventListener('click', (e) => {
+    const action = e.target.closest('[data-ride-action]');
+    if (!action) return;
+    const g = state.taxiGroup;
+    const ride = state.ride;
+    if (!g || !ride) return;
+
+    const kind = action.dataset.rideAction;
+    if (kind === 'share') { shareRide(); return; }
+    if (kind === 'cancel') {
+      clearTimeout(rideAssignTimer);
+      state.ride = null;
+      persist();
+      renderTaxi();
+      toast('Reserva cancelada · el grupo sigue activo');
+      return;
+    }
+    if (kind === 'clear') {
+      state.ride = null;
+      persist();
+      renderTaxi();
+      toast('Listo para pedir otro taxi');
+      return;
+    }
+    if (kind === 'advance') {
+      const status = ride.status || 'assigned';
+      if (status === 'assigned') {
+        ride.status = 'arrived';
+        toast('Tu taxi está en la puerta');
+      } else if (status === 'arrived') {
+        ride.status = 'in_progress';
+        ride.tripMinutes = 12;
+        toast('En viaje a casa');
+      } else if (status === 'in_progress') {
+        ride.status = 'completed';
+        ride.completedAt = Date.now();
+        confetti();
+        toast('Has llegado a casa');
+      }
+      persist();
+      renderTaxi();
+    }
+  });
+
+  /* ---------- modal ---------- */
+  const modalRoot = $('#modalRoot');
+
+  function openModal(name) {
+    stopCamera();
+    $$('.sheet', modalRoot).forEach(s => s.classList.toggle('show', s.dataset.sheet === name));
+    modalRoot.classList.add('open');
+    if (name === 'queue') {
+      $('#queuePos').textContent = state.queue?.position ?? 39;
+      $('#queueAhead').textContent = Math.max(0, (state.queue?.position ?? 39) - 1);
+    }
+    if (name === 'recap') {
+      // openRecap ya se encarga; si se abre desde otra ruta, reinicia
+    }
+  }
+
+  function closeModal() {
+    modalRoot.classList.remove('open');
+    $$('.sheet', modalRoot).forEach(s => s.classList.remove('show'));
+    stopRecap();
+    stopCamera();
+  }
+
+  document.addEventListener('click', (e) => {
+    const opener = e.target.closest('[data-modal]');
+    if (opener) {
+      const name = opener.dataset.modal;
+      if (name === 'recap') openRecap();
+      else openModal(name);
+      return;
+    }
+    if (e.target.closest('[data-close]')) { closeModal(); return; }
+    if (e.target === modalRoot) closeModal();
+  });
+
+  $('#btnHelp').addEventListener('click', () => openModal('help'));
+  $('#btnPanel').addEventListener('click', () => {
+    window.open('?mode=venue', '_blank', 'noopener');
+  });
+
+  /* ---------- reset ---------- */
+  function resetDemo() {
+    state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    cart = {};
+    taxiDraft = { time: '04:30', dest: 'Malasaña', members: ['lucia', 'mario', 'noa'] };
+    albumRendered = false;
+    $('#albumGrid').innerHTML = '';
+    const grid = $('#blurGrid');
+    if (grid) { grid.dataset.done = ''; grid.innerHTML = ''; }
+    renderBlurGrid();
+    renderCart();
+    scanResult.className = 'scan-result';
+    scanResult.innerHTML = '';
+    closeModal();
+    persist();
+    toast('Demo reiniciada · 412 dentro');
+  }
+  $('#btnReset').addEventListener('click', resetDemo);
+  $('#btnResetHelp').addEventListener('click', () => { resetDemo(); closeModal(); });
+
+  /* ---------- confetti / toast ---------- */
+  function toast(msg) {
+    const el = $('#toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => el.classList.remove('show'), 2600);
+  }
+
+  function confetti() {
+    const fx = $('#fx');
+    const colors = ['#c8ff3d', '#ff3d7f', '#42e8ff', '#8b5cff', '#ffffff'];
+    for (let i = 0; i < 36; i++) {
+      const piece = document.createElement('i');
+      piece.className = 'confetti';
+      piece.style.left = (45 + Math.random() * 10) + '%';
+      piece.style.top = '55%';
+      piece.style.background = colors[i % colors.length];
+      piece.style.setProperty('--dx', (Math.random() * 300 - 150) + 'px');
+      piece.style.setProperty('--dy', (-120 - Math.random() * 220) + 'px');
+      piece.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+      piece.style.animationDelay = (Math.random() * 0.12) + 's';
+      fx.appendChild(piece);
+      setTimeout(() => piece.remove(), 1800);
+    }
+  }
+
+  /* ---------- modo panel ---------- */
+  const isVenue = new URLSearchParams(location.search).get('mode') === 'venue';
+  if (isVenue) document.body.classList.add('venue-mode');
+
+  /* ---------- init ---------- */
+  renderMenu();
+  renderCart();
+  renderBlurGrid();
+  updateUI();
+  updateCountdown();
+  if (state.ride?.status === 'searching') scheduleRideAssignment();
+  setInterval(() => {
+    if (state.ride?.status === 'assigned' && state.taxiGroup) renderTaxi();
+  }, 20000);
+  if (isVenue) {
+    // Refresca el panel cada segundo por si el reloj o el estado cambian.
+    setInterval(updateUI, 1000);
+  }
+
+  // Exponer un par de utilidades para depurar en consola.
+  window.NOCHE = { get state() { return state; }, resetDemo, openModal };
+})();
+</script>
+</body>
+</html>

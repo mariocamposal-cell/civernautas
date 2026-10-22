@@ -1,0 +1,16 @@
+{
+  "name": "nightlife-mvp",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "NOCHE · diseño, esquema y utilidades del MVP de ocio nocturno",
+  "scripts": {
+    "demo:totp": "tsx scripts/totp-demo.ts",
+    "test": "tsx lib/totp.test.ts"
+  },
+  "devDependencies": {
+    "@types/qrcode-terminal": "^0.12.2",
+    "qrcode-terminal": "^0.12.0",
+    "tsx": "^4.20.0"
+  }
+}
