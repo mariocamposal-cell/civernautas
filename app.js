@@ -123,7 +123,7 @@ const DEFAULT = {
   wallet: 50,
   profile: { sold: 3, bought: 0 },
   vault: { revealAt: 0, revealed: false, demo: false, photos: [] },
-  stats: { reports: 12, escrow: 63, squads: 3 }
+  stats: { reports: 0, escrow: 0, squads: 0 }
 };
 
 function next8am() {
@@ -1101,6 +1101,8 @@ function renderTickets() {
       <div style="height:10px"></div>
       ${state.listings.map(l => {
         const mine = state.purchases.find(p => p.listingId === l.id && p.status !== "refunded");
+        const own = l.sellerId === "me";
+        const sp = sellerProfile(l.sellerId || "marta");
         return `
         <article class="listing">
           <div class="listing-top">
@@ -1117,7 +1119,7 @@ function renderTickets() {
               </div>
               <div class="meta" style="margin-top:5px">
                 <button class="seller-link" data-seller="${esc(l.sellerId || "marta")}">
-                  ${esc(l.seller)} · ${sellerProfile(l.sellerId || "marta").sold} vendidas · ${sellerProfile(l.sellerId || "marta").bought} compradas
+                  ${esc(l.seller)} · ${sp.sold} vendida${sp.sold === 1 ? "" : "s"} · ${sp.bought} comprada${sp.bought === 1 ? "" : "s"}
                 </button>
               </div>
             </div>
@@ -1128,7 +1130,7 @@ function renderTickets() {
               ${l.price < l.original ? `<s>${eur(l.original)}</s>` : ""}
               <small>protegido por escrow</small>
             </div>
-            <button class="buy-btn" data-buy="${esc(l.id)}" ${mine ? 'disabled style="opacity:.4"' : ""}>${mine ? (mine.status === "redeemed" ? "Validada" : "En tu cartera") : "Comprar"}</button>
+            <button class="buy-btn" data-buy="${esc(l.id)}" ${own || mine ? 'disabled style="opacity:.4"' : ""}>${own ? "Tu entrada" : mine ? (mine.status === "redeemed" ? "Validada" : "En tu cartera") : "Comprar"}</button>
           </div>
         </article>`;
       }).join("")}
@@ -1218,6 +1220,7 @@ function renderTickets() {
 function openBuySheet(id) {
   const l = state.listings.find(x => x.id === id);
   if (!l) return;
+  if (l.sellerId === "me") return toast("No puedes comprar tu propia entrada", "bad");
   const fee = Math.round(l.price * 0.1 * 100) / 100;
   const total = Math.round((l.price + fee) * 100) / 100;
   const enough = state.wallet >= total;
