@@ -50,11 +50,13 @@ const verifyCode = (code, expected) => {
 /* ---------------- estado ---------------- */
 const STORE = "nightpulse.state.v3";
 const LEGACY_STORE = "nightpulse.state.v1";
-function todayIso() {
-  const d = new Date();
+function isoOf(ts) {
+  const d = new Date(ts);
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
+function todayIso() { return isoOf(Date.now()); }
 const DEMO_TODAY = todayIso();
+const NIGHT_KEY = DEMO_TODAY;
 const nowBase = Date.now();
 const nightStart = 3 * 60 + 12;
 
@@ -242,6 +244,7 @@ function loadState() {
 
   s.crowdReports = (Array.isArray(src.crowdReports) ? src.crowdReports : [])
     .filter(r => isObj(r) && typeof r.club === "string" && isNum(r.level) && isNum(r.at))
+    .map(r => ({ ...r, night: typeof r.night === "string" && r.night ? r.night : isoOf(r.at) }))
     .slice(-80);
   s.karma = isNum(s.karma) ? s.karma : 120;
   s.wallet = isNum(s.wallet) ? Math.round(clamp(s.wallet, 0, 100000) * 100) / 100 : 50;
@@ -711,27 +714,32 @@ function openVenuePanel(clubId) {
 
 const CROWD_LEVELS = { 1: 40, 2: 70, 3: 95 };
 const CROWD_LABEL = { 1: "Fluido", 2: "Pista llena", 3: "Aforo máximo" };
+const reportedTonight = (clubId) => (state.crowdReports || [])
+  .some(r => r.club === clubId && r.night === NIGHT_KEY);
 
 function openCrowdCheck(clubId) {
   const c = clubById(clubId || state.selectedClub);
+  const done = reportedTonight(c.id);
   openSheet(`
     <div class="sheet-head">
-      <div><h3>¿Cómo está la sala?</h3><p>${esc(c.name)} · 1 tap, 10 de karma</p></div>
+      <div><h3>¿Cómo está la sala?</h3><p>${esc(c.name)} · 1 toque · +10 karma</p></div>
       <button class="x-btn" data-close aria-label="Cerrar">✕</button>
     </div>
-    <p class="check-intro">Tu respuesta se pondera con la puerta y el sensor. Ganas +10 de karma, canjeable por saldo en Tu cuenta.</p>
-    <div class="check-opts">
-      <button data-crowd="1" data-crowd-club="${esc(c.id)}">
-        <span>🟢</span><div><b>Fluido</b><small>30–50% · se está bien</small></div>
-      </button>
-      <button data-crowd="2" data-crowd-club="${esc(c.id)}">
-        <span>🟡</span><div><b>Pista llena</b><small>60–80% · hay ambiente</small></div>
-      </button>
-      <button data-crowd="3" data-crowd-club="${esc(c.id)}">
-        <span>🔴</span><div><b>Aforo máximo</b><small>90–100% · agobiante</small></div>
-      </button>
-    </div>
-    <p class="check-note">Cada reporte pierde la mitad de su peso cada 30 minutos.</p>
+    <p class="check-intro">Tu reporte se pondera con la puerta y el sensor. Ganas 10 de karma, canjeable por saldo en Tu cuenta. Un reporte por local y noche.</p>
+    ${done
+      ? `<div class="note-box"><span>✅</span><span>Ya reportaste ${esc(c.name)} esta noche. Vuelve mañana para actualizarlo.</span></div>`
+      : `<div class="check-opts">
+          <button data-crowd="1" data-crowd-club="${esc(c.id)}">
+            <span>🟢</span><div><b>Fluido</b><small>30–50% · se está bien</small></div>
+          </button>
+          <button data-crowd="2" data-crowd-club="${esc(c.id)}">
+            <span>🟡</span><div><b>Pista llena</b><small>60–80% · hay ambiente</small></div>
+          </button>
+          <button data-crowd="3" data-crowd-club="${esc(c.id)}">
+            <span>🔴</span><div><b>Aforo máximo</b><small>90–100% · agobiante</small></div>
+          </button>
+        </div>`}
+    <p class="check-note">Cada reporte pierde la mitad de su peso cada 30 minutos. Solo uno por local y noche.</p>
   `);
 }
 
@@ -739,8 +747,12 @@ function submitCrowd(clubId, level) {
   const c = clubById(clubId);
   const value = CROWD_LEVELS[level];
   if (!value) return;
+  if (reportedTonight(c.id)) {
+    closeSheet();
+    return toast(`Ya reportaste ${c.name} esta noche`, "bad");
+  }
 
-  state.crowdReports.push({ club: c.id, level: value, at: Date.now() });
+  state.crowdReports.push({ club: c.id, level: value, at: Date.now(), night: NIGHT_KEY });
   state.crowdReports = state.crowdReports.slice(-80);
   state.karma = (state.karma || 0) + 10;
 
@@ -754,8 +766,8 @@ function submitCrowd(clubId, level) {
   renderDoor();
   renderHome();
 
-  toast(`+10 Karma · ${c.name} ${c.occ}% estimado`, "good");
-  log(`Check-in en <b>${c.name}</b> · ${CROWD_LABEL[level]} · +10 Karma`);
+  toast(`+10 karma · ${c.name} ${c.occ}% estimado`, "good");
+  log(`Reporte de aforo en ${c.name} · ${CROWD_LABEL[level]} · +10 karma`);
 }
 
 function renderDoor() {
@@ -959,7 +971,7 @@ function openClub(id) {
       <div><span>Salidas</span><b>${c.exits}</b></div>
     </div>
     <p class="sheet-door-note">El aforo lo mueve el contador de puerta; cada QR validado suma 1. No hay botón de +1.</p>
-    <button class="btn ghost small" style="width:100%;margin-bottom:6px" data-checkin="${esc(c.id)}">Check-in rápido · +10 Karma</button>
+    <button class="btn ghost small" style="width:100%;margin-bottom:6px" data-checkin="${esc(c.id)}">Reportar aforo · +10 karma</button>
     <button class="btn primary" data-venue-panel="${esc(c.id)}">Abrir panel del local</button>
   `);
 }
@@ -1291,6 +1303,7 @@ function showValidationResult(p, resultado, v, club) {
     </div>
     <pre style="margin:0;padding:10px;border-radius:9px;background:#070511;border:1px solid rgba(255,255,255,.08);font-family:var(--mono);font-size:9px;line-height:1.55;color:#9fdfc8;white-space:pre-wrap">${esc(JSON.stringify(resultado, null, 2))}</pre>
     <div style="height:12px"></div>
+    ${v.ok ? `<p class="check-note" style="text-align:center;margin-bottom:8px">+10 karma por validar · el reporte de aforo suma otros +10 (1/local/noche)</p>` : ""}
     ${v.ok ? `<button class="btn ghost small" style="width:100%;margin-bottom:8px" id="btnResultAforo">Ver aforo en vivo</button>` : ""}
     <button class="btn ${v.ok ? "primary" : "ghost"}" ${v.ok ? 'id="btnResultEnter"' : "data-close"}>${v.ok ? "Entrar al local" : "Cerrar"}</button>
   `);
@@ -1348,11 +1361,14 @@ function validateTicket(purchaseId) {
     doorMove(club.id, 1, false);        // el aforo sube solo al validar el QR
     state.scans.unshift({ event: p.event, type: p.type, time: nowStr(), club: club.id });
     state.scans = state.scans.slice(0, 8);
+    state.karma = (state.karma || 0) + 10;   // check-in real: entré con una entrada válida
     resultado.aforo_actualizado = `${club.inside}/${club.cap}`;
     resultado.aforo_pct = club.occ;
+    resultado.karma_otorgado = 10;
+    resultado.karma_total = state.karma;
     burst();
-    log(`Entrada validada · ${p.event} · aforo ${club.name} ${club.inside}/${club.cap}`);
-    toast(`Entrada válida · aforo ${club.name} ${club.occ}%`, "good");
+    log(`Entrada validada · ${p.event} · +10 karma · aforo ${club.name} ${club.inside}/${club.cap}`);
+    toast(`Entrada válida · +10 karma · aforo ${club.name} ${club.occ}%`, "good");
   } else {
     p.status = "refunded";
     const back = isNum(p.total) ? p.total : p.price;
@@ -1366,6 +1382,7 @@ function validateTicket(purchaseId) {
   renderClubs();
   renderDoor();
   renderTickets();
+  renderHome();
   showValidationResult(p, resultado, v, club);
 }
 
@@ -1575,11 +1592,14 @@ function openSheet(html) {
   lastFocus = document.activeElement;
   s.innerHTML = `<div class="sheet-card" role="dialog" aria-modal="true" aria-label="Panel"><div class="grabber"></div>${html}</div>`;
   s.setAttribute("aria-hidden", "false");
-  requestAnimationFrame(() => {
+  const show = () => {
+    if (s.getAttribute("aria-hidden") !== "false") return;
     s.classList.add("open");
     const first = s.querySelector("button, [href], input, select, textarea");
-    if (first) first.focus({ preventScroll: true });
-  });
+    if (first && !s.contains(document.activeElement)) first.focus({ preventScroll: true });
+  };
+  requestAnimationFrame(show);
+  setTimeout(show, 80);   // respaldo se o navegador non pinta frames (pestana oculta)
 }
 function closeSheet() {
   const s = $("#sheet");

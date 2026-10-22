@@ -54,7 +54,8 @@ aforo = 55% · (puerta + entradas usadas)
 - **Reportes 1-tap:** 🟢 Fluido (40%) · 🟡 Pista llena (70%) · 🔴 Aforo máximo (95%).
   Cada reporte pesa la mitad cada 30 minutos y caduca a los 90.
 - **Sensor de cola:** corrige la base según la espera estimada.
-- Cada check-in da **+10 Karma** para descuentos en reventa.
+- Cada **reporte de aforo** da **+10 karma** (máximo uno por local y noche) y
+  validar una entrada da otros **+10**. El karma se usará para ventajas en reventa.
 
 El contador exacto sigue visible en Aforo; el % es la estimación híbrida.
 
@@ -84,7 +85,8 @@ Aforos y colas de la demo son simulados; direcciones y coordenadas, reales.
 
 1. **Noche** — home con aforo, espera, tu grupo, sensor y accesos rápidos.
 2. **Aforo** — contador de puerta, plazas libres, mapa térmico de Santiago y detalle.
-3. **Entrada** — reventa P2P con escrow y QR firmado; el aforo sube al validar.
+3. **Entrada** — reventa P2P con escrow y QR firmado; el aforo sube al validar y
+   ganas +10 karma al entrar.
 4. **Taxi** — código `NOCHE-247`, plazas, reparto, WhatsApp y Sober Squad.
 5. **Álbum** — Party Vault bloqueado hasta las 08:00.
 
@@ -93,10 +95,11 @@ Aforos y colas de la demo son simulados; direcciones y coordenadas, reales.
 1. **Noche** — Circus 94% estimado · 469/500 · espera 11 min · 47 móviles. "Ver aforo y cola".
 2. **Aforo** — contador de puerta, plazas libres y mapa con los 6 locales.
 3. **Entrada** — compra "Noche Universitaria" con el monedero: si no hay saldo,
-   recarga. "Validar en la puerta" → el contador sube 1 y se libera el escrow.
-   "Entrar al local" lanza el **check-in 1-tap** (+10 Karma). Repite con "Urban
-   Session": QR manipulado → rechazo y **devolución al monedero**.
-   En **Tu cuenta** puedes canjear 100 Karma → 1 € de saldo.
+   recarga. "Validar en la puerta" → el contador sube 1, se libera el escrow y
+   ganas +10 karma. "Entrar al local" abre el **reporte de aforo 1-tap** (+10
+   karma, uno por local y noche). Repite con "Urban Session": QR manipulado →
+   rechazo y **devolución al monedero**. En **Tu cuenta** puedes canjear 100
+   Karma → 1 € de saldo.
 4. **Taxi** — únete a un squad o crea uno, comparte por WhatsApp.
 5. **Álbum** — 12 fotos bloqueadas. Panel izquierdo: **Timer 60 s** o **Revelar álbum**.
 
