@@ -73,7 +73,7 @@ const RIDES = [
 ];
 
 const DEFAULT = {
-  view: "radar",
+  view: "noche",
   ticketTab: "buy",
   destination: "Moncloa",
   selectedClub: "aurora",
@@ -82,6 +82,7 @@ const DEFAULT = {
   purchases: [],
   rides: RIDES.map(r => ({ ...r })),
   joinedRide: null,
+  scans: [],
   vault: { revealAt: 0, revealed: false, demo: false, photos: [] },
   stats: { reports: 12, escrow: 63, squads: 3 }
 };
@@ -125,6 +126,8 @@ function loadState() {
   }
   if (!s.vault.revealAt) s.vault.revealAt = next8amNight();
   s.listings.forEach(l => { if (!l.code) l.code = makeCode(l.event, l.serial, l.fraud ? "2026-01-01" : l.iso); });
+  s.scans = Array.isArray(s.scans) ? s.scans : [];
+  if (!["noche", "aforo", "tickets", "taxi", "vault"].includes(s.view)) s.view = "noche";
   return s;
 }
 
@@ -173,23 +176,23 @@ function renderKpis() {
   const escrow = state.purchases.filter(p => p.status === "funded")
     .reduce((a, p) => a + p.price, 0) + Number(state.stats.escrow || 0);
   $("#kpis").innerHTML = `
-    <div class="kpi"><b>${state.stats.reports}</b><span>Reportes IA</span></div>
+    <div class="kpi"><b>${sensorDevices(clubById(state.selectedClub))}</b><span>Móviles</span></div>
     <div class="kpi"><b>${Math.round(escrow)} €</b><span>En escrow</span></div>
     <div class="kpi"><b>${state.rides.filter(r => r.taken < r.seats).length}</b><span>Squads</span></div>`;
 }
 
 /* ---------------- navegación ---------------- */
 const MODULES = [
-  { id: "radar",   n: "01", name: "Radar de cola",      sub: "Sensor pasivo + IA" },
+  { id: "noche",   n: "01", name: "Noche",              sub: "Aforo y cola en vivo" },
   { id: "aforo",   n: "02", name: "Aforo y tensión",    sub: "Contador de puerta" },
-  { id: "tickets", n: "03", name: "Ticket marketplace", sub: "Escrow + QR firmado" },
+  { id: "tickets", n: "03", name: "Entrada",            sub: "Escrow + QR firmado" },
   { id: "taxi",    n: "04", name: "Taxi share",         sub: "Vuelta segura" },
-  { id: "vault",   n: "05", name: "Party vault",        sub: "Carrete hasta las 08:00" }
+  { id: "vault",   n: "05", name: "Álbum",              sub: "Party Vault hasta las 08:00" }
 ];
-const TITLES = { radar: "Radar", aforo: "Aforo", tickets: "Tickets", taxi: "Taxi share", vault: "Party vault" };
+const TITLES = { noche: "Noche", aforo: "Aforo", tickets: "Entrada", taxi: "Taxi share", vault: "Álbum" };
 
 const ICONS = {
-  radar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.2"/><path d="M12 12l5.5-4"/></svg>',
+  noche: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg>',
   aforo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3c3.5 4.2 6 7.1 6 10a6 6 0 11-12 0c0-2.9 2.5-5.8 6-10z"/><path d="M12 17c-1.7 0-3-1.3-3-3"/></svg>',
   tickets: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 8a2 2 0 002-2h12a2 2 0 002 2v2a2 2 0 000 4v2a2 2 0 00-2 2H6a2 2 0 00-2-2v-2a2 2 0 000-4z"/><path d="M14 7v10"/></svg>',
   taxi: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 16v-3.2L6 8h12l2 4.8V16"/><path d="M3 16h18"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/><path d="M8 8l1-3h6l1 3"/></svg>',
@@ -203,7 +206,7 @@ function setView(id) {
   $$("#moduleNav button").forEach(b => b.classList.toggle("active", b.dataset.view === id));
   $("#appTitle").textContent = TITLES[id];
   $("#view-" + id).scrollTop = 0;
-  if (id === "radar") renderSensor();
+  if (id === "noche") renderHome();
   if (id === "aforo") { renderClubs(); renderDoor(); }
   if (id === "tickets") renderTickets();
   if (id === "taxi") renderTaxi();
@@ -214,110 +217,6 @@ function setView(id) {
 function rng(seed) {
   let s = seed >>> 0;
   return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
-}
-
-function drawFacade(density) {
-  const W = 720, H = 470;
-  const c = document.createElement("canvas");
-  c.width = W; c.height = H;
-  const g = c.getContext("2d");
-  const R = rng(density * 977 + 13);
-
-  // cielo
-  const sky = g.createLinearGradient(0, 0, 0, H);
-  sky.addColorStop(0, "#05040b");
-  sky.addColorStop(.5, "#0e0919");
-  sky.addColorStop(1, "#1b1028");
-  g.fillStyle = sky; g.fillRect(0, 0, W, H);
-
-  // bokeh de fondo
-  const bok = ["rgba(168,85,247,.55)", "rgba(34,211,238,.45)", "rgba(255,176,32,.5)", "rgba(255,61,129,.4)"];
-  for (let i = 0; i < 26; i++) {
-    const x = R() * W, y = 30 + R() * 250, rad = 6 + R() * 26;
-    const rg = g.createRadialGradient(x, y, 0, x, y, rad);
-    rg.addColorStop(0, bok[i % bok.length]);
-    rg.addColorStop(1, "transparent");
-    g.fillStyle = rg;
-    g.beginPath(); g.arc(x, y, rad, 0, 7); g.fill();
-  }
-
-  // fachada derecha
-  const wall = g.createLinearGradient(360, 0, 720, 0);
-  wall.addColorStop(0, "#0d0a17");
-  wall.addColorStop(1, "#191228");
-  g.fillStyle = wall; g.fillRect(350, 40, W - 350, H - 40);
-  g.strokeStyle = "rgba(255,255,255,.05)"; g.lineWidth = 2;
-  for (let x = 380; x < W; x += 46) { g.beginPath(); g.moveTo(x, 40); g.lineTo(x, H); g.stroke(); }
-
-  // puerta + luz
-  const dx = 512, dy = 236, dw = 148;
-  const glow = g.createRadialGradient(dx + dw / 2, dy + 110, 10, dx + dw / 2, dy + 110, 250);
-  glow.addColorStop(0, "rgba(255,186,104,.55)");
-  glow.addColorStop(.45, "rgba(255,140,60,.16)");
-  glow.addColorStop(1, "rgba(0,0,0,0)");
-  g.fillStyle = glow; g.fillRect(300, 40, W - 300, H - 40);
-
-  const inner = g.createLinearGradient(0, dy, 0, H);
-  inner.addColorStop(0, "#ffe2b0");
-  inner.addColorStop(.55, "#ffb24f");
-  inner.addColorStop(1, "#b4551c");
-  g.fillStyle = inner; g.fillRect(dx + 14, dy + 18, dw - 28, H - dy);
-  g.fillStyle = "rgba(8,6,14,.9)"; g.fillRect(dx, dy, 14, H - dy); g.fillRect(dx + dw - 14, dy, 14, H - dy);
-
-  // rótulo
-  g.save();
-  g.shadowColor = "#a855f7"; g.shadowBlur = 26;
-  g.fillStyle = "#f3e8ff";
-  g.font = "700 33px ui-sans-serif, system-ui, sans-serif";
-  g.textAlign = "center";
-  g.letterSpacing = "7px";
-  g.fillText("AURORA", dx + dw / 2, dy - 26);
-  g.restore();
-
-  // seguridad junto a la puerta
-  g.fillStyle = "#0a0812";
-  g.beginPath(); g.arc(dx - 26, dy + 60, 10, 0, 7); g.fill();
-  g.beginPath(); g.roundRect(dx - 40, dy + 70, 28, 86, 8); g.fill();
-
-  // cola: de la puerta hacia cámara (izquierda-abajo)
-  const n = Math.max(4, Math.round(density));
-  for (let i = 0; i < n; i++) {
-    const t = n === 1 ? 0 : i / (n - 1);
-    const lane = i % 2;
-    const scale = .42 + t * .95;
-    const x = 500 - t * 455 + (lane ? 16 : -10) + (R() - .5) * 22 * scale;
-    const y = 352 + Math.pow(t, 1.35) * 96 + lane * 13 * scale + (R() - .5) * 8;
-    const h = 92 * scale;
-    const r = 12.5 * scale;
-    const bw = 32 * scale;
-    const tone = 12 + Math.floor(R() * 14);
-
-    g.fillStyle = `rgb(${tone},${tone + 3},${tone + 10})`;
-    // cuerpo
-    g.beginPath(); g.roundRect(x - bw / 2, y - h * .70, bw, h * .70, 7 * scale); g.fill();
-    // cabeza
-    g.beginPath(); g.arc(x, y - h * .70 - r * .62, r, 0, 7); g.fill();
-    // brazo
-    g.beginPath(); g.roundRect(x + bw * .28, y - h * .62, 5 * scale, h * .38, 3 * scale); g.fill();
-
-    // rim light del local
-    g.strokeStyle = `rgba(255,180,120,${.10 + R() * .18})`;
-    g.lineWidth = 1.4 * scale;
-    g.beginPath(); g.arc(x, y - h * .70 - r * .62, r, -1.15, 1.15); g.stroke();
-    g.beginPath(); g.moveTo(x + bw / 2, y - h * .68); g.lineTo(x + bw / 2, y - h * .06); g.stroke();
-  }
-
-  // valla
-  g.strokeStyle = "rgba(180,150,255,.16)"; g.lineWidth = 2;
-  g.beginPath(); g.moveTo(40, 430); g.quadraticCurveTo(300, 392, 505, 356); g.stroke();
-
-  // viñeta
-  const vig = g.createRadialGradient(W / 2, H / 2, 150, W / 2, H / 2, 520);
-  vig.addColorStop(0, "rgba(0,0,0,0)");
-  vig.addColorStop(1, "rgba(0,0,0,.62)");
-  g.fillStyle = vig; g.fillRect(0, 0, W, H);
-
-  return c.toDataURL("image/jpeg", .82);
 }
 
 const photoCache = new Map();
@@ -370,27 +269,9 @@ function makePhoto(seed) {
   return url;
 }
 
-/* escenas de demo del radar */
-let SCENES = null;
-function scenes() {
-  if (SCENES) return SCENES;
-  SCENES = [
-    { key: "low",  img: drawFacade(7),  people: 12, wait: 3,  doors: 2, conf: .91, label: "Fila corta" },
-    { key: "mid",  img: drawFacade(26), people: 46, wait: 8,  doors: 2, conf: .84, label: "Fila media" },
-    { key: "high", img: drawFacade(74), people: 96, wait: 16, doors: 2, conf: .79, label: "Fila crítica" }
-  ];
-  return SCENES;
-}
-
 /* ---------------- saturación ---------------- */
 function satFromOcc(occ) {
   return occ >= 90 ? "critica" : occ >= 72 ? "alta" : occ >= 45 ? "media" : "baja";
-}
-function satFromQueue(people, wait) {
-  if (people > 90 || wait > 50) return "critica";
-  if (people > 40 || wait > 25) return "alta";
-  if (people >= 15 || wait >= 10) return "media";
-  return "baja";
 }
 const satColor = { baja: "#22d3ee", media: "#c8ff2e", alta: "#ffb020", critica: "#ff3d81" };
 const satLabel = { baja: "Baja", media: "Media", alta: "Alta", critica: "Crítica" };
@@ -411,10 +292,78 @@ function renderSensor() {
   const c = clubById(state.selectedClub);
   if (!$("#sensorDevices")) return;
   $("#sensorDevices").textContent = sensorDevices(c);
-  $("#sensorQueue").textContent = c.queue;
-  $("#sensorWait").innerHTML = `${c.wait}<small>min</small>`;
   $("#sensorRssi").textContent = c.rssi;
   $("#sensorAge").textContent = Math.max(0, Math.floor((Date.now() - sensorPingAt) / 1000));
+  if ($("#homeWait")) {
+    $("#homeWait").innerHTML = `${c.wait} <small>min</small>`;
+    $("#homeQueue").textContent = c.queue;
+  }
+}
+
+function renderHome() {
+  const c = clubById(state.selectedClub);
+  const sel = $("#homeClub");
+  if (!sel) return;
+  if (!sel.options.length) {
+    sel.innerHTML = state.clubs.map(x => `<option value="${x.id}">${x.name}</option>`).join("");
+  }
+  sel.value = c.id;
+
+  const sat = satFromOcc(c.occ);
+  const col = satColor[sat];
+  const circ = 2 * Math.PI * 35;
+
+  $("#homeName").textContent = c.name;
+  $("#homeMeta").textContent = "Sábado · 23:30 — 06:00 · a 42 m";
+  $("#homeInside").textContent = c.inside;
+  $("#homeCap").textContent = c.cap;
+  $("#homePct").innerHTML = `${c.occ}<span>%</span>`;
+  $("#homeSat").className = "badge " + sat;
+  $("#homeSat").textContent = satLabel[sat];
+  $("#homeState").textContent = {
+    baja: "Tranquilo", media: "Ambiente", alta: "Casi lleno", critica: "Saturación máxima"
+  }[sat];
+  $("#homeFill").style.width = Math.min(100, c.occ) + "%";
+  $("#homeFill").style.background = col;
+  $("#homeFree").textContent = Math.max(0, c.cap - c.inside);
+  const ring = $("#homeRing");
+  ring.setAttribute("stroke", col);
+  ring.setAttribute("stroke-dasharray", `${(c.occ / 100) * circ} ${circ}`);
+
+  $("#homeGroup").innerHTML = ["MR", "DP", "LG", "+"].map(x => `<div class="avatar">${x}</div>`).join("");
+  renderSensor();
+  renderKpis();
+}
+
+function openVenuePanel(clubId) {
+  const c = clubById(clubId || state.selectedClub);
+  const col = satColor[satFromOcc(c.occ)];
+  const scans = (state.scans || []).slice(0, 5);
+
+  openSheet(`
+    <div class="sheet-head">
+      <div><h3>Panel del local</h3><p>${c.name} · puerta principal</p></div>
+      <button class="x-btn" data-close>✕</button>
+    </div>
+    <div class="panel-big"><b>${c.inside}</b><span>/ ${c.cap} · ${c.occ}%</span></div>
+    <div class="door-bar" style="margin-bottom:12px"><i style="width:${Math.min(100, c.occ)}%;background:${col}"></i></div>
+    <div class="stat-row" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat"><span>En cola</span><b>${c.queue}</b></div>
+      <div class="stat"><span>Espera</span><b>${c.wait}m</b></div>
+      <div class="stat"><span>Entradas</span><b>${c.entries}</b></div>
+      <div class="stat"><span>Salidas</span><b>${c.exits}</b></div>
+    </div>
+    <div class="section-title" style="margin:14px 0 6px"><h3>Últimos accesos</h3><span>${scans.length ? scans.length + " hoy" : "sin datos"}</span></div>
+    <div class="scan-list">
+      ${scans.length
+        ? scans.map(s => `<div class="scan-item"><span>${s.time}</span><b>${s.event}</b><small>${s.type}</small></div>`).join("")
+        : `<p class="scan-empty">Todavía no hay entradas validadas.</p>`}
+    </div>
+    <div class="note-box" style="margin-top:12px">
+      <span style="color:#22d3ee">◉</span>
+      <span>El aforo lo mueve el contador de puerta. El sensor Wi-Fi solo mide la cola de la calle.</span>
+    </div>
+  `);
 }
 
 function renderDoor() {
@@ -432,6 +381,8 @@ function renderDoor() {
   $("#doorOut").textContent = c.exits;
   $("#doorFill").style.width = Math.min(100, pct) + "%";
   $("#doorFill").style.background = col;
+  const free = $("#doorFree");
+  if (free) free.textContent = Math.max(0, c.cap - c.inside);
 }
 
 function doorMove(clubId, delta, announce) {
@@ -527,182 +478,6 @@ function updateMapPins() {
   });
 }
 
-/* ---------------- radar ---------------- */
-let lastShot = null;
-let lastResult = null;
-
-function setShot(src) {
-  lastShot = src;
-  const img = $("#shotImg");
-  img.src = src;
-  $("#shooter").classList.add("has-img");
-}
-
-function analyzeImage(imgEl) {
-  const w = 96, h = 64;
-  const c = document.createElement("canvas");
-  c.width = w; c.height = h;
-  const g = c.getContext("2d", { willReadFrequently: true });
-  g.drawImage(imgEl, 0, 0, w, h);
-  const d = g.getImageData(0, 0, w, h).data;
-
-  let lum = 0, edges = 0;
-  const L = (i) => d[i] * .299 + d[i + 1] * .587 + d[i + 2] * .114;
-  for (let y = 1; y < h; y++) {
-    for (let x = 1; x < w; x++) {
-      const i = (y * w + x) * 4;
-      lum += L(i);
-      if (Math.abs(L(i) - L(i - 4)) + Math.abs(L(i) - L(i - w * 4)) > 32) edges++;
-    }
-  }
-  const n = (w - 1) * (h - 1);
-  lum /= n;
-  const ed = edges / n;
-  const people = Math.round(clamp(8 + ed * 300 + (100 - lum) * .32, 6, 150));
-  const wait = Math.round(clamp(Math.ceil(people / 6), 1, 45));
-  return {
-    people,
-    wait,
-    doors: 2,
-    conf: Math.round(clamp(.58 + ed * 1.4, .55, .92) * 100) / 100,
-    sat: satFromQueue(people, wait)
-  };
-}
-
-async function runScan(src, preset) {
-  if ($("#shooter").classList.contains("scanning")) return;
-  setShot(src);
-  $("#shooter").classList.add("scanning");
-  $("#btnShoot").disabled = true;
-  $("#scanBadge").textContent = "ANALIZANDO";
-  $("#queueResult").innerHTML = "";
-
-  await sleep(1500);
-
-  let res = preset;
-  if (!res) {
-    const img = new Image();
-    img.src = src;
-    await img.decode().catch(() => {});
-    res = analyzeImage(img);
-  }
-  const club = clubById(state.selectedClub);
-  const conf = res.conf ?? .8;
-  const people = res.people;
-  const wait = res.wait;
-  const sat = res.sat || satFromQueue(people, wait);
-  const spread = Math.round(people * .16);
-
-  res = {
-    people, wait, sat, conf,
-    range: [Math.max(0, people - spread), people + spread],
-    doors: res.doors ?? 2,
-    club: club.name
-  };
-  lastResult = res;
-
-  club.queue = people;
-  club.wait = wait;
-  state.stats.reports++;
-  sensorPingAt = Date.now();
-  save();
-
-  renderSensor();
-  renderClubs();
-  renderKpis();
-  renderResult(res);
-  log(`<b>${club.name}</b> · foto IA · ${people} en cola · sensor recalibrado`);
-  if (state.view !== "radar") setView("radar");
-
-  $("#shooter").classList.remove("scanning");
-  $("#btnShoot").disabled = false;
-  $("#scanBadge").textContent = "IA";
-}
-
-function renderResult(r) {
-  const club = clubById(state.selectedClub);
-  const json = {
-    club: club.name,
-    personas_estimadas: r.people,
-    rango: r.range,
-    tiempo_espera_minutos: r.wait,
-    nivel_saturacion: r.sat,
-    puertas_activas: r.doors,
-    confianza: r.conf,
-    firma_reporte: fnv(club.id + r.people + Date.now())
-  };
-  $("#queueResult").innerHTML = `
-    <div class="result">
-      <div class="result-top">
-        <div>
-          <div class="who">${club.name} · ${nowStr()}</div>
-          <div style="font-size:13px;font-weight:700;margin-top:2px">Reporte verificado</div>
-        </div>
-        <span class="badge ${r.sat}">${satLabel[r.sat]}</span>
-      </div>
-      <div class="result-grid">
-        <div class="metric"><span>En la fila</span><b>${r.people}<small>pers.</small></b></div>
-        <div class="metric"><span>Espera</span><b>${r.wait}<small>min</small></b></div>
-        <div class="metric wide"><span>Rango estimado</span><b style="font-size:14px">${r.range[0]}–${r.range[1]}</b></div>
-      </div>
-      <div class="conf">
-        <span>Confianza ${Math.round(r.conf * 100)}%</span>
-        <div class="bar"><i style="width:${Math.round(r.conf * 100)}%"></i></div>
-      </div>
-      <details class="json">
-        <summary>ver respuesta del modelo</summary>
-        <pre>${JSON.stringify(json, null, 2)}</pre>
-      </details>
-    </div>`;
-  const rv = $("#view-radar");
-  rv.scrollTo({ top: rv.scrollHeight, behavior: "smooth" });
-}
-
-function initRadar() {
-  const sel = $("#clubSelect");
-  sel.innerHTML = state.clubs.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
-  sel.value = state.selectedClub;
-  sel.addEventListener("change", () => {
-    state.selectedClub = sel.value;
-    save();
-    lastResult = null;
-    $("#queueResult").innerHTML = "";
-    $("#doorClub").value = sel.value;
-    renderSensor();
-    renderDoor();
-    toast("Local cambiado a " + clubById(sel.value).name);
-  });
-
-  $("#btnShoot").addEventListener("click", () => $("#fileInput").click());
-  $("#fileInput").addEventListener("change", async (e) => {
-    const f = e.target.files && e.target.files[0];
-    if (!f) return;
-    const url = URL.createObjectURL(f);
-    const img = new Image();
-    img.src = url;
-    await img.decode().catch(() => {});
-    const c = document.createElement("canvas");
-    const scale = Math.min(1, 900 / Math.max(img.width, img.height));
-    c.width = Math.round(img.width * scale);
-    c.height = Math.round(img.height * scale);
-    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-    runScan(c.toDataURL("image/jpeg", .78));
-    e.target.value = "";
-  });
-
-  $("#demoScenes").innerHTML = scenes().map(s =>
-    `<button class="scene" data-scene="${s.key}" title="${s.label}">
-      <img src="${s.img}" alt="${s.label}"><span>${s.label}</span>
-    </button>`
-  ).join("");
-  $("#demoScenes").addEventListener("click", (e) => {
-    const b = e.target.closest(".scene");
-    if (!b) return;
-    const s = scenes().find(x => x.key === b.dataset.scene);
-    runScan(s.img, { people: s.people, wait: s.wait, doors: s.doors, conf: s.conf, sat: satFromQueue(s.people, s.wait) });
-  });
-}
-
 /* ---------------- aforo ---------------- */
 function renderClubs() {
   const list = $("#clubList");
@@ -788,19 +563,26 @@ function openClub(id) {
       <div><span>Salidas</span><b>${c.exits}</b></div>
     </div>
     <p class="sheet-door-note">El aforo sube solo al validar un QR en la puerta. No hay botón de +1.</p>
-    <button class="btn primary" data-goclub="${c.id}">Medir esta cola con IA</button>
+    <button class="btn primary" data-venue-panel="${c.id}">Abrir panel del local</button>
   `);
 }
 
-function goMeasureClub(id) {
-  state.selectedClub = id;
-  save();
-  $("#clubSelect").value = id;
-  $("#doorClub").value = id;
-  closeSheet();
-  setView("radar");
-  $("#queueResult").innerHTML = "";
-  toast("Mide la cola de " + clubById(id).name);
+function initHome() {
+  const sel = $("#homeClub");
+  sel.innerHTML = state.clubs.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+  sel.value = state.selectedClub;
+  sel.addEventListener("change", () => {
+    state.selectedClub = sel.value;
+    save();
+    $("#doorClub").value = sel.value;
+    renderHome();
+    renderDoor();
+    renderSensor();
+    toast("Local: " + clubById(sel.value).name);
+  });
+
+  $("#homeGoAforo").addEventListener("click", () => setView("aforo"));
+  $("#btnVenuePanel").addEventListener("click", () => openVenuePanel(state.selectedClub));
 }
 
 /* ---------------- tickets ---------------- */
@@ -912,9 +694,9 @@ function renderTickets() {
       <div style="text-align:center;padding:34px 10px;color:var(--tx-3)">
         <div style="font-size:30px;margin-bottom:8px">🎟️</div>
         <p style="font-size:12px;color:var(--tx-2)">Todavía no tienes entradas.</p>
-        <p style="font-size:10px;margin-top:4px">Compra una en el marketplace o escanea un QR.</p>
+        <p style="font-size:10px;margin-top:4px">Compra una en el marketplace o valida un QR.</p>
       </div>
-      <button class="btn ghost" id="btnScanAny">Escanear una entrada</button>`;
+      <button class="btn ghost" id="btnScanAny">Validar una entrada</button>`;
     $("#btnScanAny").addEventListener("click", () => {
       if (!state.purchases.length) {
         toast("Compra una entrada primero", "bad");
@@ -950,10 +732,10 @@ function renderTickets() {
         ${steps.map(s => `<div class="step-dot ${s ? "on" : ""}"></div>`).join("")}
       </div>
       ${p.status === "funded"
-        ? `<button class="btn primary small" style="width:100%;margin-top:11px" data-scan="${p.id}">Escanear en la puerta</button>`
+        ? `<button class="btn primary small" style="width:100%;margin-top:11px" data-scan="${p.id}">Validar en la puerta</button>`
         : ""}
     </div>`;
-  }).join("") + `<button class="btn ghost small" id="btnScanAny2" style="width:100%;margin-top:2px">Escanear otra entrada</button>`;
+  }).join("") + `<button class="btn ghost small" id="btnScanAny2" style="width:100%;margin-top:2px">Validar otra entrada</button>`;
 
   const any = $("#btnScanAny2");
   if (any) any.addEventListener("click", () => {
@@ -983,7 +765,7 @@ function openBuySheet(id) {
     <div class="escrow-track">
       <div class="esc-step active" id="esc0"><div class="bullet">1</div><div class="txt"><b>Autorizas el pago</b><small>No se cobra todavía</small></div></div>
       <div class="esc-step" id="esc1"><div class="bullet">2</div><div class="txt"><b>Fondos retenidos</b><small>Escrow de NIGHTPULSE</small></div></div>
-      <div class="esc-step" id="esc2"><div class="bullet">3</div><div class="txt"><b>Validación en puerta</b><small>QR firmado + escáner</small></div></div>
+      <div class="esc-step" id="esc2"><div class="bullet">3</div><div class="txt"><b>Validación en puerta</b><small>QR firmado + puerta</small></div></div>
       <div class="esc-step" id="esc3"><div class="bullet">4</div><div class="txt"><b>Pago liberado</b><small>Solo si entras</small></div></div>
     </div>
     <div id="buyAction">
@@ -1086,6 +868,8 @@ function openScanner(purchaseId) {
       p.status = "redeemed";
       p.clubId = club.id;
       doorMove(club.id, 1, false);        // el aforo sube solo al validar el QR
+      state.scans.unshift({ event: p.event, type: p.type, time: nowStr(), club: club.id });
+      state.scans = state.scans.slice(0, 8);
       resultado.aforo_actualizado = `${club.inside}/${club.cap}`;
       resultado.aforo_pct = club.occ;
       burst();
@@ -1130,7 +914,7 @@ function openScanner(purchaseId) {
     if (a) {
       state.selectedClub = a.dataset.scanAforo;
       save();
-      $("#clubSelect").value = state.selectedClub;
+      $("#homeClub").value = state.selectedClub;
       $("#doorClub").value = state.selectedClub;
       el.className = "scanner";
       el.innerHTML = "";
@@ -1428,6 +1212,14 @@ function initTaxi() {
     toast("Aviso enviado a tu contacto de confianza", "good");
     log("Sober Squad activado · contacto avisado");
   });
+  $("#btnCopyCode").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText("NOCHE-247");
+      toast("Código NOCHE-247 copiado", "good");
+    } catch {
+      toast("Código del grupo: NOCHE-247");
+    }
+  });
 }
 
 function initVault() {
@@ -1456,7 +1248,7 @@ function initMisc() {
     if (!row) return;
     state.selectedClub = row.dataset.club;
     save();
-    $("#clubSelect").value = state.selectedClub;
+    $("#homeClub").value = state.selectedClub;
     $("#doorClub").value = state.selectedClub;
     renderDoor();
     renderSensor();
@@ -1469,7 +1261,8 @@ function initMisc() {
   dsel.addEventListener("change", () => {
     state.selectedClub = dsel.value;
     save();
-    $("#clubSelect").value = dsel.value;
+    $("#homeClub").value = dsel.value;
+    renderHome();
     renderDoor();
     renderSensor();
     toast("Aforo de " + clubById(dsel.value).name);
@@ -1481,22 +1274,19 @@ function initMisc() {
     if (!p) {
       setView("tickets");
       setTicketTab("buy");
-      toast("Compra una entrada y escanéala en la puerta", "bad");
+      toast("Compra una entrada y valídala en la puerta", "bad");
       return;
     }
     openScanner(p.id);
   });
 
   document.addEventListener("click", (e) => {
-    const d = e.target.closest("[data-door]");
-    if (d) {
-      const id = d.dataset.doorClub || state.selectedClub;
-      doorMove(id, Number(d.dataset.door), true);
-      if (d.closest("#sheet")) openClub(id);
+    const vp = e.target.closest("[data-venue-panel]");
+    if (vp) {
+      closeSheet();
+      openVenuePanel(vp.dataset.venuePanel);
       return;
     }
-    const g = e.target.closest("[data-goclub]");
-    if (g) return goMeasureClub(g.dataset.goclub);
     if (e.target.closest("[data-close]")) closeSheet();
     if (e.target.id === "sheet") closeSheet();
   });
@@ -1512,7 +1302,7 @@ function initMisc() {
     $("#clock").textContent = clockStr();
     $("#mapAge").textContent = Math.max(0, Number($("#mapAge").textContent) + 1) % 30;
     tickCountdown();
-    if (state.view === "radar") {
+    if (state.view === "noche") {
       const el = $("#sensorAge");
       if (el) el.textContent = Math.max(0, Math.floor((Date.now() - sensorPingAt) / 1000));
     }
@@ -1527,7 +1317,7 @@ function initMisc() {
     });
     sensorPingAt = Date.now();
     save();
-    if (state.view === "radar") renderSensor();
+    if (state.view === "noche") renderSensor();
   }, 8000);
 
   // contador de puerta: entradas y salidas reales cada 20 s
@@ -1555,7 +1345,7 @@ function initMisc() {
 
 function init() {
   initNav();
-  initRadar();
+  initHome();
   buildMap();
   renderClubs();
   initTickets();
@@ -1569,12 +1359,12 @@ function init() {
   renderKpis();
   renderSensor();
   renderDoor();
+  renderHome();
   $("#clock").textContent = clockStr();
-  setView(state.view || "radar");
-  $("#queueResult").innerHTML = "";
+  setView(state.view || "noche");
 
   // bienvenida
-  setTimeout(() => toast("Demo lista · empieza por el radar 📸"), 700);
+  setTimeout(() => toast("Demo lista · todo en vivo"), 700);
 }
 
 document.addEventListener("DOMContentLoaded", init);

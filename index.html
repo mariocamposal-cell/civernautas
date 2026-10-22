@@ -65,64 +65,88 @@
 
         <div class="views">
 
-          <!-- ---------- 1. RADAR ---------- -->
-          <section class="view active" id="view-radar">
-            <div class="view-head">
-              <span class="eyebrow">Sensor pasivo · 1 tap</span>
-              <h2>Radar de cola</h2>
-              <p>El sensor de la puerta cuenta los móviles de la fila. Tú solo miras.</p>
-            </div>
-
-            <div class="club-picker">
-              <label for="clubSelect">Local</label>
-              <select id="clubSelect"></select>
-            </div>
-
-            <div class="sensor-card">
-              <div class="sensor-head">
-                <span class="sensor-live"><i></i>SENSOR DE PUERTA</span>
-                <span class="sensor-net">Wi-Fi · 2,4 GHz</span>
+          <!-- ---------- 1. NOCHE ---------- -->
+          <section class="view active" id="view-noche">
+            <div class="home-hero">
+              <div class="hero-glow"></div>
+              <div class="hero-top">
+                <span class="live-pill"><i></i>EN VIVO</span>
+                <select id="homeClub" class="home-club" aria-label="Local"></select>
               </div>
-              <div class="sensor-body">
-                <div class="sensor-radar">
-                  <span class="blip b1"></span>
-                  <span class="blip b2"></span>
-                  <span class="blip b3"></span>
+              <div class="hero-info">
+                <h2 id="homeName">Sala Aurora</h2>
+                <p id="homeMeta">Sábado · 23:30 — 06:00 · a 42 m</p>
+              </div>
+            </div>
+
+            <div class="live-card">
+              <div class="live-main">
+                <span class="mini-label">Aforo en tiempo real</span>
+                <div class="live-num"><b id="homeInside">403</b><span>/ <i id="homeCap">420</i></span></div>
+                <div class="live-tags">
+                  <span class="badge critica" id="homeSat">Crítica</span>
+                  <small id="homeState">Saturación máxima</small>
                 </div>
-                <div class="sensor-stats">
-                  <div><span>Móviles</span><b id="sensorDevices">62</b></div>
-                  <div><span>En cola</span><b id="sensorQueue">84</b></div>
-                  <div><span>Espera</span><b id="sensorWait">14<small>min</small></b></div>
-                </div>
+                <div class="home-bar"><i id="homeFill"></i></div>
+                <small class="live-foot">contador de puerta · <b id="homeFree">17</b> libres</small>
               </div>
-              <div class="sensor-foot">Radio 25 m · sin app instalada · RSSI <b id="sensorRssi">-54</b> dBm · ping <b id="sensorAge">2</b> s</div>
-            </div>
-
-            <div class="section-title"><h3>Verificar con foto</h3><span>IA · 1 tap</span></div>
-
-            <div class="shooter" id="shooter">
-              <img id="shotImg" alt="Foto de la entrada">
-              <div class="shooter-empty" id="shooterEmpty">
-                <div class="reticle"><span></span></div>
-                <b>Apunta a la entrada</b>
-                <small>La foto no sale de tu móvil</small>
+              <div class="home-ring">
+                <svg viewBox="0 0 84 84">
+                  <circle cx="42" cy="42" r="35" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="7"/>
+                  <circle id="homeRing" cx="42" cy="42" r="35" fill="none" stroke="#ff3d81" stroke-width="7"
+                    stroke-linecap="round" stroke-dasharray="219.9 219.9"/>
+                </svg>
+                <span class="ring-val" id="homePct">96<span>%</span></span>
               </div>
-              <div class="scanline" id="scanline"></div>
-              <div class="scan-badge" id="scanBadge">IA</div>
             </div>
 
-            <button class="btn primary" id="btnShoot">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.4"/></svg>
-              Medir cola
-            </button>
-            <input type="file" id="fileInput" accept="image/*" capture="environment" hidden>
-
-            <div class="demo-scenes">
-              <span>o prueba una escena</span>
-              <div id="demoScenes"></div>
+            <div class="home-grid2">
+              <div class="mini-card">
+                <span>Espera estimada</span>
+                <b id="homeWait">14 <small>min</small></b>
+                <small><b id="homeQueue">84</b> personas en cola</small>
+              </div>
+              <div class="mini-card">
+                <span>Tu grupo</span>
+                <b>4 amigos</b>
+                <div class="avatars" id="homeGroup"></div>
+              </div>
             </div>
 
-            <div id="queueResult"></div>
+            <div class="sensor-row">
+              <div class="sensor-radar mini">
+                <span class="blip b1"></span>
+                <span class="blip b2"></span>
+                <span class="blip b3"></span>
+              </div>
+              <div class="sensor-copy">
+                <b><span id="sensorDevices">61</span> móviles detectados</b>
+                <small>Sensor de puerta · 25 m · RSSI <i id="sensorRssi">-54</i> dBm · ping <i id="sensorAge">0</i> s</small>
+              </div>
+              <span class="hw-on"><i></i>ON</span>
+            </div>
+
+            <button class="btn primary" id="homeGoAforo">Ver aforo y cola</button>
+
+            <div class="section-title"><h3>Esta noche</h3><span>sin instalar nada</span></div>
+            <div class="quick-grid">
+              <button class="quick" data-view="tickets">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 8a2 2 0 002-2h12a2 2 0 002 2v2a2 2 0 000 4v2a2 2 0 00-2 2H6a2 2 0 00-2-2v-2a2 2 0 000-4z"/><path d="M14 7v10"/></svg>
+                <b>Entrada</b><small>reventa con escrow</small>
+              </button>
+              <button class="quick" data-view="taxi">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 16v-3.2L6 8h12l2 4.8V16"/><path d="M3 16h18"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/><path d="M8 8l1-3h6l1 3"/></svg>
+                <b>Taxi</b><small>vuelve en grupo</small>
+              </button>
+              <button class="quick" data-view="vault">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="6" width="18" height="14" rx="3"/><circle cx="12" cy="13" r="3.2"/><path d="M8 6l1-2h6l1 2"/></svg>
+                <b>Álbum</b><small>se revela a las 08:00</small>
+              </button>
+              <button class="quick" id="btnVenuePanel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>
+                <b>Panel del local</b><small>aforo y accesos</small>
+              </button>
+            </div>
           </section>
 
           <!-- ---------- 2. AFORO ---------- -->
@@ -130,7 +154,7 @@
             <div class="view-head">
               <span class="eyebrow">Contador de puerta</span>
               <h2>Aforo y tensión</h2>
-              <p>El aforo sale del molinete, no del radar. El sensor solo mide la cola de fuera.</p>
+              <p>El aforo sale del molinete. El sensor solo mide la cola de fuera.</p>
             </div>
 
             <div class="door-strip">
@@ -147,11 +171,11 @@
                 <div class="door-counts"><span>▲ <b id="doorIn">512</b></span><span>▼ <b id="doorOut">109</b></span></div>
                 <button class="door-scan" id="doorScan">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8V5a1 1 0 011-1h3M20 8V5a1 1 0 00-1-1h-3M4 16v3a1 1 0 001 1h3M20 16v3a1 1 0 01-1 1h-3"/><path d="M4 12h16"/></svg>
-                  Escanear QR
+                  Validar QR
                 </button>
               </div>
             </div>
-            <p class="door-note">El aforo sube solo al validar una entrada en la puerta. Sin botones, sin contar a mano.</p>
+            <p class="door-note"><b id="doorFree">17</b> plazas libres · el aforo sube solo al validar una entrada en la puerta.</p>
 
             <div class="map-card">
               <svg id="map" viewBox="0 0 390 410" aria-label="Mapa de locales"></svg>
@@ -173,8 +197,8 @@
           <section class="view" id="view-tickets">
             <div class="view-head">
               <span class="eyebrow">Escrow protegido</span>
-              <h2>Ticket marketplace</h2>
-              <p>La IA valida el QR. El dinero no se libera hasta que entras.</p>
+              <h2>Entrada</h2>
+              <p>Reventa entre particulares. El dinero no se libera hasta que validas en la puerta.</p>
             </div>
 
             <div class="segmented" id="ticketSeg">
@@ -201,6 +225,7 @@
               </div>
               <div class="taxi-hour" id="taxiHour">03:12</div>
             </div>
+            <div class="taxi-code">Código de grupo <b>NOCHE-247</b><button id="btnCopyCode" title="Copiar">⧉</button></div>
 
             <label class="field-label">Tu destino</label>
             <div class="chips" id="destChips"></div>
@@ -221,8 +246,8 @@
           <!-- ---------- 5. VAULT ---------- -->
           <section class="view" id="view-vault">
             <div class="view-head">
-              <span class="eyebrow">Carrete desechable</span>
-              <h2>Party Vault</h2>
+              <span class="eyebrow">Party vault</span>
+              <h2>Álbum</h2>
               <p>Todo lo que subes esta noche queda bloqueado hasta las 08:00.</p>
             </div>
 
