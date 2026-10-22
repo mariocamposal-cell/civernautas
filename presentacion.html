@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NIGHTPULSE · Presentación</title>
+<meta name="description" content="NIGHTPULSE: el sistema operativo de la noche. Aforo en vivo, reventa protegida, monedero, taxi y álbumes de grupo.">
+<style>
+  :root {
+    --bg: #07060d;
+    --bg-2: #0d0a18;
+    --card: #141026;
+    --line: rgba(255,255,255,.1);
+    --line-2: rgba(255,255,255,.18);
+    --tx: #f5f2ff;
+    --tx-2: #a99fc4;
+    --tx-3: #6f6588;
+    --violet: #a855f7;
+    --violet-2: #7c3aed;
+    --cyan: #22d3ee;
+    --lime: #c8ff2e;
+    --pink: #ff3d81;
+    --amber: #ffb020;
+    --green: #34d399;
+    --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--tx); font-family: var(--font);
+    overflow: hidden; -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4, p { margin: 0; }
+  button { font-family: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+  img { display: block; max-width: 100%; }
+
+  .deck { position: relative; width: 100vw; height: 100dvh; isolation: isolate; }
+
+  .slide {
+    position: absolute; inset: 0; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    padding: clamp(26px, 4.6vw, 74px);
+    overflow-y: auto; overflow-x: hidden;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transform: translateY(18px) scale(.994);
+    transition: opacity .42s ease, transform .42s cubic-bezier(.2,.8,.3,1), visibility .42s;
+    background:
+      radial-gradient(800px 560px at 10% 0%, rgba(124,58,237,.22), transparent 65%),
+      radial-gradient(700px 520px at 92% 94%, rgba(34,211,238,.1), transparent 65%),
+      radial-gradient(900px 640px at 58% 108%, rgba(255,61,129,.07), transparent 60%),
+      var(--bg);
+  }
+  .slide::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: -1;
+    background: radial-gradient(1200px 800px at 50% 50%, transparent 55%, rgba(0,0,0,.35));
+  }
+  .slide.active { opacity: 1; visibility: visible; pointer-events: auto; transform: none; z-index: 3; }
+  .slide-inner { width: 100%; max-width: 1180px; margin: auto; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: clamp(10px, .86vw, 13px); font-weight: 800; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--violet);
+    margin-bottom: clamp(10px, 1.4vw, 18px);
+  }
+  .eyebrow::before { content: ""; width: 18px; height: 1px; background: currentColor; opacity: .75; }
+  .slide h2 {
+    font-size: clamp(34px, 4.5vw, 68px); line-height: .97; letter-spacing: -.045em; font-weight: 800;
+    max-width: 16ch;
+  }
+  .slide h2 em { font-style: normal; color: var(--violet); }
+  .slide h2 .grad {
+    background: linear-gradient(100deg, #c4a2ff, #22d3ee 58%, #c8ff2e);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .lead {
+    margin-top: clamp(12px, 1.6vw, 22px);
+    font-size: clamp(14px, 1.32vw, 20px); line-height: 1.55; color: var(--tx-2);
+    max-width: 62ch;
+  }
+  .small { font-size: clamp(10px, .92vw, 13px); color: var(--tx-3); line-height: 1.55; }
+
+  .brand {
+    display: inline-flex; align-items: baseline; gap: 1px;
+    font-size: clamp(17px, 1.65vw, 25px); font-weight: 800; letter-spacing: .17em;
+  }
+  .brand span { color: var(--violet); }
+  .brand em {
+    font-style: normal; font-size: .42em; letter-spacing: .12em;
+    margin-left: 10px; padding: 3px 7px; border-radius: 5px;
+    background: rgba(168,85,247,.16); color: #cbb2ff; border: 1px solid rgba(168,85,247,.3);
+  }
+
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(10px, 1.3vw, 18px); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(16px, 2.4vw, 34px); align-items: center; }
+  .split { display: grid; grid-template-columns: 1.02fr .98fr; gap: clamp(20px, 3.4vw, 54px); align-items: center; }
+
+  .card {
+    position: relative; overflow: hidden;
+    border: 1px solid var(--line); border-radius: clamp(14px, 1.5vw, 22px);
+    background: linear-gradient(155deg, rgba(26,20,48,.86), rgba(13,10,24,.82));
+    padding: clamp(14px, 1.7vw, 24px);
+  }
+  .card::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .8;
+    background: radial-gradient(180px 110px at 100% 0%, var(--acc, rgba(168,85,247,.18)), transparent 70%);
+  }
+  .card > * { position: relative; z-index: 1; }
+  .card h3 { font-size: clamp(15px, 1.26vw, 20px); letter-spacing: -.02em; margin-bottom: 7px; }
+  .card p { font-size: clamp(11px, 1.02vw, 14px); line-height: 1.55; color: var(--tx-2); }
+  .card .num {
+    display: inline-grid; place-items: center;
+    width: 32px; height: 32px; border-radius: 9px; margin-bottom: 12px;
+    font-family: var(--mono); font-size: 11px; font-weight: 800; color: #e9dcff;
+    background: rgba(168,85,247,.16); border: 1px solid rgba(168,85,247,.45);
+  }
+  .kicker { font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--tx-3); }
+  .big-num { font-size: clamp(28px, 3.1vw, 48px); font-weight: 800; letter-spacing: -.05em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .accent { color: var(--lime); }
+
+  /* cover */
+  .cover { padding: 0; justify-content: flex-start; }
+  .cover-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background:
+      linear-gradient(90deg, rgba(7,6,13,.97) 0%, rgba(7,6,13,.78) 44%, rgba(7,6,13,.35) 100%),
+      linear-gradient(0deg, rgba(7,6,13,.95), transparent 55%),
+      url("presentacion-demo.png") center right / cover no-repeat;
+    opacity: .9;
+  }
+  .cover-bg::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(700px 500px at 18% 22%, rgba(124,58,237,.32), transparent 70%);
+  }
+  .cover-inner {
+    position: relative; z-index: 1; width: 100%; max-width: 1180px; margin: auto;
+    padding: clamp(30px, 5vw, 82px);
+  }
+  .cover h1 {
+    margin-top: clamp(20px, 3vw, 40px);
+    font-size: clamp(52px, 8.6vw, 132px); line-height: .86; letter-spacing: -.065em; font-weight: 800;
+  }
+  .cover h1 span {
+    background: linear-gradient(100deg, #c4a2ff, #22d3ee 52%, #c8ff2e);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .cover .lead { max-width: 47ch; font-size: clamp(14px, 1.5vw, 22px); }
+  .cover-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: clamp(18px, 2.6vw, 34px); }
+  .cover-tags span {
+    font-size: clamp(9px, .86vw, 12px); font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    padding: 7px 11px; border-radius: 20px; color: #dcd2f4;
+    border: 1px solid var(--line-2); background: rgba(255,255,255,.04);
+  }
+  .cover-hint {
+    position: absolute; left: clamp(30px, 5vw, 82px); bottom: clamp(22px, 3vw, 42px);
+    z-index: 2; font-size: clamp(9px, .85vw, 12px); color: var(--tx-3); letter-spacing: .08em;
+  }
+  .cover-hint b { color: var(--tx-2); font-family: var(--mono); }
+
+  /* module grid */
+  .mods { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(9px, 1.1vw, 15px); margin-top: clamp(22px, 3vw, 42px); }
+  .mod {
+    border: 1px solid var(--line); border-radius: clamp(13px, 1.4vw, 19px);
+    background: linear-gradient(150deg, rgba(26,20,48,.8), rgba(13,10,24,.75));
+    padding: clamp(13px, 1.5vw, 21px); position: relative; overflow: hidden;
+  }
+  .mod::after {
+    content: ""; position: absolute; width: 130px; height: 130px; right: -45px; top: -55px;
+    border-radius: 50%; background: var(--acc); filter: blur(38px); opacity: .25;
+  }
+  .mod svg { width: clamp(20px, 1.8vw, 27px); height: clamp(20px, 1.8vw, 27px); color: var(--c, var(--violet)); margin-bottom: 10px; }
+  .mod b { display: block; font-size: clamp(13px, 1.14vw, 17px); letter-spacing: -.01em; }
+  .mod small { display: block; margin-top: 3px; font-size: clamp(9.5px, .9vw, 12px); color: var(--tx-3); }
+  .flowline {
+    margin-top: clamp(20px, 2.8vw, 38px); display: flex; align-items: center; gap: 12px;
+    font-size: clamp(11px, 1vw, 14px); color: var(--tx-2);
+  }
+  .flowline::before { content: ""; width: 42px; height: 1px; background: var(--violet); }
+  .flowline b { color: var(--tx); }
+
+  /* demo shot */
+  .shot-frame {
+    border: 1px solid var(--line-2); border-radius: 16px; overflow: hidden;
+    background: #0b0816; box-shadow: 0 30px 80px -30px rgba(0,0,0,.95), 0 0 90px -40px rgba(124,58,237,.8);
+  }
+  .shot-bar { display: flex; align-items: center; gap: 6px; padding: 9px 12px; border-bottom: 1px solid var(--line); background: #100c1e; }
+  .shot-bar i { width: 7px; height: 7px; border-radius: 50%; background: #ff5f57; }
+  .shot-bar i:nth-child(2) { background: #febc2e; }
+  .shot-bar i:nth-child(3) { background: #28c840; }
+  .shot-bar span { margin-left: 8px; font-family: var(--mono); font-size: 9px; color: var(--tx-3); }
+  .shot-frame img { width: 100%; height: auto; }
+  .demo-list { display: flex; flex-direction: column; gap: 9px; margin-top: clamp(16px, 2vw, 26px); }
+  .demo-list div { display: flex; gap: 9px; font-size: clamp(11px, 1vw, 14px); color: var(--tx-2); line-height: 1.45; }
+  .demo-list b { color: var(--tx); }
+  .demo-list span { color: var(--lime); font-weight: 800; }
+
+  /* ring + formula */
+  .ring-wrap { display: flex; align-items: center; justify-content: center; }
+  .big-ring {
+    width: clamp(190px, 20vw, 300px); aspect-ratio: 1; border-radius: 50%;
+    display: grid; place-items: center; position: relative;
+    background: conic-gradient(var(--pink) 0 94%, rgba(255,255,255,.08) 94% 100%);
+    box-shadow: 0 0 90px -20px rgba(255,61,129,.55);
+  }
+  .big-ring::before {
+    content: ""; position: absolute; inset: 13%; border-radius: 50%; background: var(--bg-2);
+    border: 1px solid var(--line);
+  }
+  .big-ring b { position: relative; z-index: 1; font-size: clamp(42px, 4.6vw, 72px); letter-spacing: -.06em; line-height: 1; }
+  .big-ring b small { font-size: .3em; color: var(--tx-2); letter-spacing: 0; }
+  .big-ring span { position: relative; z-index: 1; display: block; text-align: center; font-size: 10px; color: var(--tx-3); letter-spacing: .12em; text-transform: uppercase; margin-top: 5px; }
+  .formula { display: flex; flex-direction: column; gap: 8px; }
+  .formula .fr {
+    display: flex; align-items: center; gap: 12px; padding: clamp(9px, 1vw, 14px);
+    border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.025);
+  }
+  .formula b { font-size: clamp(19px, 2vw, 29px); letter-spacing: -.04em; min-width: 58px; }
+  .formula div span { display: block; font-size: clamp(10px, .95vw, 13px); color: var(--tx-2); }
+  .formula div small { display: block; font-size: 9px; color: var(--tx-3); }
+  .sensor-card { margin-top: clamp(12px, 1.5vw, 20px); display: flex; align-items: center; gap: 13px; }
+  .radar {
+    width: 54px; height: 54px; flex: 0 0 54px; border-radius: 50%; position: relative; overflow: hidden;
+    border: 1px solid rgba(34,211,238,.3);
+    background:
+      radial-gradient(circle, transparent 0 16px, rgba(34,211,238,.14) 17px 18px, transparent 19px),
+      radial-gradient(circle, transparent 0 25px, rgba(34,211,238,.1) 26px 27px, transparent 28px),
+      radial-gradient(circle, rgba(34,211,238,.13), transparent 72%);
+  }
+  .radar::before {
+    content: ""; position: absolute; inset: 0; border-radius: 50%;
+    background: conic-gradient(from 0deg, rgba(34,211,238,.5), transparent 28%);
+    animation: sweep 2.8s linear infinite;
+  }
+  @keyframes sweep { to { transform: rotate(360deg); } }
+  .radar i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #d9fbff; box-shadow: 0 0 7px var(--cyan); animation: blip 2.4s infinite; }
+  .radar i:nth-child(1) { top: 15px; left: 33px; }
+  .radar i:nth-child(2) { top: 34px; left: 17px; animation-delay: .9s; }
+  .radar i:nth-child(3) { top: 38px; left: 36px; animation-delay: 1.5s; }
+  @keyframes blip { 0%, 100% { opacity: .25; } 45% { opacity: 1; } }
+  .sensor-card b { display: block; font-size: clamp(12px, 1.1vw, 16px); }
+  .sensor-card small { font-size: clamp(9.5px, .88vw, 12px); color: var(--tx-3); line-height: 1.45; }
+
+  /* money */
+  .money-card {
+    border-radius: 18px; padding: clamp(15px, 1.8vw, 24px);
+    border: 1px solid rgba(200,255,46,.28);
+    background:
+      radial-gradient(160px 100px at 15% 5%, rgba(200,255,46,.28), transparent 70%),
+      linear-gradient(145deg, rgba(46,62,18,.9), rgba(17,22,11,.94) 55%, #0b0a12);
+  }
+  .money-card .balance { font-size: clamp(34px, 3.8vw, 58px); font-weight: 800; letter-spacing: -.055em; line-height: 1; margin: 7px 0 11px; }
+  .money-card .meta { display: flex; justify-content: space-between; font-size: 10px; color: var(--tx-2); font-family: var(--mono); }
+  .movs { margin-top: 13px; display: flex; flex-direction: column; gap: 5px; }
+  .mov { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 9px; background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.07); }
+  .mov .ic { width: 22px; height: 22px; flex: 0 0 22px; display: grid; place-items: center; border-radius: 6px; background: rgba(255,255,255,.06); font-size: 10px; }
+  .mov .tx { flex: 1; min-width: 0; font-size: 9.5px; color: var(--tx-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mov b { font-size: 10px; font-variant-numeric: tabular-nums; }
+  .mov b.in { color: var(--green); }
+  .mov b.out { color: #ffa8c6; }
+  .steps4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: clamp(18px, 2.2vw, 28px); }
+  .step4 { position: relative; padding: clamp(11px, 1.3vw, 17px); border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.025); }
+  .step4 b { display: block; font-size: clamp(11px, 1vw, 14px); margin-bottom: 4px; }
+  .step4 small { font-size: clamp(9px, .82vw, 11px); color: var(--tx-3); line-height: 1.4; }
+  .step4 i {
+    position: absolute; top: -9px; left: 11px; width: 19px; height: 19px; border-radius: 50%;
+    display: grid; place-items: center; font-style: normal; font-size: 9px; font-weight: 800;
+    background: rgba(168,85,247,.22); border: 1px solid rgba(168,85,247,.55); color: #e9dcff;
+  }
+  .step4:not(:last-child)::after {
+    content: "→"; position: absolute; right: -8px; top: 50%; transform: translateY(-50%);
+    color: var(--violet); font-size: 13px; z-index: 2;
+  }
+  .steps4.two { grid-template-columns: 1fr 1fr; }
+  .steps4.two .step4::after { display: none; }
+  .note-line { margin-top: 14px; font-size: clamp(10px, .9vw, 12px); color: #a7f3d0; display: flex; gap: 7px; align-items: center; }
+  .note-line::before { content: "◉"; color: var(--green); }
+
+  /* album */
+  .invite-big {
+    display: inline-flex; flex-direction: column; gap: 3px;
+    padding: clamp(13px, 1.5vw, 20px) clamp(18px, 2vw, 28px);
+    border-radius: 14px; border: 1px dashed rgba(168,85,247,.5);
+    background: rgba(168,85,247,.09);
+  }
+  .invite-big small { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--tx-3); }
+  .invite-big b { font-family: var(--mono); font-size: clamp(22px, 2.5vw, 38px); letter-spacing: .1em; color: #e9dcff; }
+  .album-mock { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .ph {
+    position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  .ph::before {
+    content: ""; position: absolute; inset: 0; filter: blur(7px) saturate(.8); transform: scale(1.2);
+    background: var(--g);
+  }
+  .ph span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 13px; filter: drop-shadow(0 2px 6px #000); }
+  .members-row { display: flex; align-items: center; margin-top: 10px; }
+  .av {
+    width: 24px; height: 24px; border-radius: 50%; margin-left: -7px; display: grid; place-items: center;
+    font-size: 8px; font-weight: 800; border: 2px solid #100c20;
+    background: linear-gradient(140deg, #7c3aed, #22d3ee);
+  }
+  .av:first-child { margin-left: 0; }
+  .av.more { background: rgba(255,255,255,.07); border-color: #100c20; color: var(--tx-2); }
+  .members-row small { margin-left: 8px; font-size: 9.5px; color: var(--tx-3); }
+
+  /* taxi */
+  .taxi-card {
+    border-radius: 18px; padding: clamp(16px, 1.8vw, 24px);
+    border: 1px solid rgba(34,211,238,.28);
+    background:
+      radial-gradient(170px 110px at 100% 0%, rgba(34,211,238,.18), transparent 70%),
+      linear-gradient(150deg, rgba(12,37,48,.9), rgba(13,10,24,.94));
+  }
+  .route { display: flex; align-items: center; gap: 10px; font-size: clamp(16px, 1.6vw, 23px); font-weight: 700; letter-spacing: -.02em; }
+  .route i { color: var(--cyan); font-style: normal; }
+  .taxi-meta { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+  .taxi-meta span { font-size: clamp(10px, .95vw, 13px); color: var(--tx-3); }
+  .taxi-meta b { color: var(--tx); }
+  .seatbar { display: flex; gap: 4px; margin-top: 12px; }
+  .seatbar i { flex: 1; height: 5px; border-radius: 3px; background: rgba(255,255,255,.12); }
+  .seatbar i.on { background: var(--cyan); box-shadow: 0 0 8px rgba(34,211,238,.7); }
+  .safety {
+    margin-top: 13px; padding: 12px 13px; border-radius: 12px;
+    border: 1px solid rgba(255,61,129,.22); background: rgba(255,61,129,.06);
+  }
+  .safety b { display: block; font-size: 11px; color: #ffc2d6; margin-bottom: 3px; }
+  .safety small { font-size: 9.5px; color: var(--tx-2); line-height: 1.45; }
+
+  /* revenue */
+  .rev { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(9px, 1.2vw, 15px); margin-top: clamp(20px, 2.6vw, 34px); }
+  .rev .card { padding: clamp(13px, 1.4vw, 20px); }
+  .rev .price { font-size: clamp(24px, 2.6vw, 38px); font-weight: 800; letter-spacing: -.05em; line-height: 1; margin: 7px 0 4px; }
+  .rev .price small { font-size: .38em; color: var(--tx-3); letter-spacing: 0; font-weight: 600; }
+  .rev .calc { font-size: 10px; color: var(--tx-3); font-family: var(--mono); }
+  .total-strip {
+    margin-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 13px 16px; border-radius: 13px; border: 1px solid rgba(200,255,46,.28);
+    background: rgba(200,255,46,.06);
+  }
+  .total-strip span { font-size: 11px; color: var(--tx-2); }
+  .total-strip b { font-size: clamp(20px, 2.2vw, 32px); letter-spacing: -.04em; color: var(--lime); }
+
+  /* local panel */
+  .venue-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: clamp(18px, 2.3vw, 30px); }
+  .vstat { padding: 12px; border: 1px solid var(--line); border-radius: 11px; background: rgba(255,255,255,.025); }
+  .vstat span { display: block; font-size: 8px; letter-spacing: .1em; text-transform: uppercase; color: var(--tx-3); }
+  .vstat b { font-size: clamp(18px, 1.9vw, 26px); letter-spacing: -.03em; }
+  .bar { height: 7px; border-radius: 4px; background: rgba(255,255,255,.08); overflow: hidden; margin-top: 9px; }
+  .bar i { display: block; height: 100%; width: 94%; border-radius: 4px; background: linear-gradient(90deg, var(--violet), var(--pink)); }
+  .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-top: clamp(16px, 2vw, 24px); }
+  .checks div { display: flex; gap: 8px; align-items: flex-start; font-size: clamp(10.5px, .98vw, 14px); color: var(--tx-2); line-height: 1.45; }
+  .checks div::before { content: "✓"; color: var(--lime); font-weight: 800; }
+
+  /* market */
+  .why { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(10px, 1.2vw, 16px); margin-top: clamp(20px, 2.6vw, 34px); }
+  .clubs { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 16px; }
+  .clubs span {
+    font-size: clamp(9px, .86vw, 12px); padding: 6px 10px; border-radius: 20px;
+    border: 1px solid var(--line); background: rgba(255,255,255,.03); color: var(--tx-2);
+  }
+  .city-route { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-top: 18px; font-size: clamp(11px, 1vw, 14px); color: var(--tx-2); }
+  .city-route b { color: var(--tx); }
+  .city-route i { color: var(--violet); font-style: normal; }
+
+  /* matrix */
+  .matrix { width: 100%; border-collapse: collapse; margin-top: clamp(18px, 2.2vw, 28px); font-size: clamp(10px, .98vw, 14px); }
+  .matrix th, .matrix td { padding: clamp(8px, 1vw, 13px) clamp(8px, 1vw, 14px); border-bottom: 1px solid var(--line); text-align: center; }
+  .matrix th:first-child, .matrix td:first-child { text-align: left; color: var(--tx-2); font-weight: 500; }
+  .matrix thead th { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--tx-3); font-weight: 800; vertical-align: bottom; }
+  .matrix thead th.us { color: #e9dcff; background: rgba(168,85,247,.12); border-radius: 9px 9px 0 0; }
+  .matrix td.us { background: rgba(168,85,247,.07); font-weight: 800; }
+  .matrix .yes { color: var(--lime); font-weight: 800; }
+  .matrix .no { color: #554b68; }
+  .matrix .part { color: var(--amber); font-weight: 700; }
+
+  /* roadmap */
+  .timeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(9px, 1.2vw, 15px); margin-top: clamp(20px, 2.8vw, 38px); }
+  .tl { position: relative; padding-top: 22px; }
+  .tl::before { content: ""; position: absolute; top: 6px; left: 0; right: 0; height: 1px; background: var(--line-2); }
+  .tl::after {
+    content: ""; position: absolute; top: 1px; left: 0; width: 11px; height: 11px; border-radius: 50%;
+    background: var(--c, var(--violet)); box-shadow: 0 0 12px var(--c, var(--violet));
+  }
+  .tl b { display: block; font-size: clamp(12px, 1.1vw, 16px); margin-bottom: 5px; }
+  .tl small { font-size: clamp(9.5px, .88vw, 12px); color: var(--tx-3); line-height: 1.5; }
+
+  /* ask */
+  .ask-grid { display: grid; grid-template-columns: 1.08fr .92fr; gap: clamp(14px, 2vw, 28px); margin-top: clamp(20px, 2.6vw, 36px); }
+  .ask-card { border-radius: 18px; padding: clamp(16px, 2vw, 28px); border: 1px solid var(--line); background: linear-gradient(155deg, rgba(26,20,48,.9), rgba(13,10,24,.85)); }
+  .ask-card.primary { border-color: rgba(168,85,247,.45); background: linear-gradient(150deg, rgba(74,35,135,.55), rgba(20,14,38,.92)); }
+  .ask-card h3 { font-size: clamp(17px, 1.7vw, 24px); letter-spacing: -.02em; margin-bottom: 7px; }
+  .ask-card p { font-size: clamp(11px, 1vw, 14px); color: var(--tx-2); line-height: 1.5; }
+  .ask-card .big { font-size: clamp(30px, 3.4vw, 52px); font-weight: 800; letter-spacing: -.05em; margin: 9px 0 4px; color: var(--lime); }
+  .alloc { display: flex; height: 9px; border-radius: 6px; overflow: hidden; margin-top: 14px; background: rgba(255,255,255,.07); }
+  .alloc i { display: block; height: 100%; }
+  .alloc-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 9px; font-size: 9px; color: var(--tx-3); }
+  .alloc-legend span { display: inline-flex; align-items: center; gap: 4px; }
+  .alloc-legend i { width: 6px; height: 6px; border-radius: 2px; display: inline-block; }
+  .contact { margin-top: 18px; font-size: clamp(10px, .95vw, 13px); color: var(--tx-3); }
+  .contact b { color: var(--tx); font-family: var(--mono); }
+  .closing { margin-top: clamp(20px, 3vw, 40px); font-size: clamp(24px, 3.2vw, 46px); font-weight: 800; letter-spacing: -.045em; line-height: 1.02; }
+  .closing span { background: linear-gradient(100deg, #c4a2ff, #22d3ee 55%, #c8ff2e); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* chrome */
+  .progress { position: fixed; left: 0; right: 0; top: 0; height: 3px; background: rgba(255,255,255,.05); z-index: 50; }
+  .progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--violet), var(--cyan), var(--lime)); transition: width .35s ease; }
+  .counter {
+    position: fixed; right: clamp(14px, 2.4vw, 30px); bottom: clamp(14px, 2.4vw, 26px); z-index: 50;
+    font-family: var(--mono); font-size: 10px; letter-spacing: .1em; color: var(--tx-3);
+  }
+  .counter b { color: var(--tx-2); }
+  .nav { position: fixed; left: 50%; bottom: clamp(12px, 2.2vw, 22px); transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: 7px; }
+  .nav button {
+    width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+    border: 1px solid var(--line-2); background: rgba(13,10,24,.72); color: var(--tx-2);
+    backdrop-filter: blur(10px); transition: .16s; font-size: 13px;
+  }
+  .nav button:hover { color: #fff; border-color: rgba(168,85,247,.6); background: rgba(168,85,247,.18); }
+  .nav .keys { font-size: 9px; color: var(--tx-3); letter-spacing: .08em; padding: 0 5px; }
+  .nav .keys b { font-family: var(--mono); color: var(--tx-2); }
+
+  .footer-brand {
+    position: fixed; left: clamp(14px, 2.4vw, 30px); bottom: clamp(14px, 2.4vw, 26px); z-index: 50;
+    font-size: 9px; font-weight: 800; letter-spacing: .16em; color: var(--tx-3);
+  }
+  .footer-brand span { color: var(--violet); }
+
+  /* overview */
+  .overview {
+    position: fixed; inset: 0; z-index: 80; display: none;
+    padding: clamp(24px, 4vw, 60px); overflow-y: auto;
+    background: rgba(5,4,10,.94); backdrop-filter: blur(16px);
+  }
+  .overview.open { display: block; }
+  .overview-head { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; margin-bottom: 22px; }
+  .overview-head h3 { font-size: clamp(20px, 2.2vw, 32px); letter-spacing: -.03em; }
+  .overview-head small { font-size: 10px; color: var(--tx-3); }
+  .ov-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 9px; }
+  .ov-item {
+    text-align: left; padding: 13px; border-radius: 11px; border: 1px solid var(--line);
+    background: rgba(255,255,255,.03); transition: .16s;
+  }
+  .ov-item:hover { border-color: rgba(168,85,247,.55); background: rgba(168,85,247,.1); }
+  .ov-item span { display: block; font-family: var(--mono); font-size: 9px; color: var(--tx-3); margin-bottom: 5px; }
+  .ov-item b { font-size: 12px; font-weight: 600; color: var(--tx-2); }
+  .ov-item:first-child, .ov-item.current { color: #fff; }
+
+  @media (max-width: 860px) {
+    .slide { padding: 20px 16px 64px; align-items: flex-start; }
+    .split, .grid-2, .ask-grid { grid-template-columns: 1fr; }
+    .grid-3, .mods, .why, .timeline { grid-template-columns: 1fr 1fr; }
+    .steps4 { grid-template-columns: 1fr 1fr; }
+    .step4:nth-child(2)::after { display: none; }
+    .rev { grid-template-columns: 1fr 1fr; }
+    .venue-stats { grid-template-columns: 1fr 1fr; }
+    .cover { align-items: center; }
+    .cover-bg { background-position: center; opacity: .35; }
+    .cover h1 { font-size: clamp(46px, 13vw, 82px); }
+    .matrix { font-size: 9px; }
+    .matrix th, .matrix td { padding: 7px 5px; }
+    .nav .keys { display: none; }
+    .footer-brand { display: none; }
+  }
+  @media (max-width: 560px) {
+    .grid-3, .mods, .why, .timeline, .steps4, .rev { grid-template-columns: 1fr; }
+    .step4::after { display: none; }
+    .checks { grid-template-columns: 1fr; }
+    .slide h2 { font-size: clamp(30px, 9vw, 44px); }
+    .counter { display: none; }
+  }
+
+  /* PDF export mode (captura limpia, sin controles) */
+  html.pdf-mode .progress,
+  html.pdf-mode .nav,
+  html.pdf-mode .counter,
+  html.pdf-mode .footer-brand,
+  html.pdf-mode .overview,
+  html.pdf-mode .cover-hint { display: none !important; }
+  html.pdf-mode .slide { transition: none !important; }
+
+  @media print {
+    @page { size: 1920px 1080px; margin: 0; }
+    html, body { overflow: visible; background: var(--bg); }
+    .deck { height: auto; width: 1920px; }
+    .slide {
+      position: relative; inset: auto; display: flex !important; visibility: visible !important;
+      opacity: 1 !important; transform: none !important; pointer-events: auto !important;
+      width: 1920px; height: 1080px; page-break-after: always; overflow: hidden;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .slide:last-child { page-break-after: auto; }
+    .progress, .nav, .counter, .footer-brand, .overview, .cover-hint { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" aria-hidden="true"><i id="progressBar"></i></div>
+
+<main class="deck" id="deck">
+
+  <!-- 1 · PORTADA -->
+  <section class="slide cover active" data-title="Portada">
+    <div class="cover-bg" aria-hidden="true"></div>
+    <div class="cover-inner">
+      <div class="brand">NIGHT<span>PULSE</span><em>MVP</em></div>
+      <h1>La noche,<br><span>conectada.</span></h1>
+      <p class="lead">El sistema operativo de la noche: aforo en vivo, reventa protegida, monedero, taxi compartido y álbumes de grupo. Todo en una PWA, sin instalar nada.</p>
+      <div class="cover-tags">
+        <span>6 módulos</span>
+        <span>Prototipo funcional</span>
+        <span>100% local</span>
+        <span>Piloto Santiago</span>
+      </div>
+    </div>
+    <div class="cover-hint">Navega con <b>← →</b> o <b>espacio</b> · <b>F</b> pantalla completa · <b>O</b> índice</div>
+  </section>
+
+  <!-- 2 · PROBLEMA -->
+  <section class="slide" data-title="El problema">
+    <div class="slide-inner">
+      <div class="eyebrow">01 · El problema</div>
+      <h2>La noche funciona <em>a ciegas.</em></h2>
+      <p class="lead">El usuario decide sin datos, compra sin garantías y vuelve sin coordinación. El local tampoco sabe qué está pasando en su puerta.</p>
+      <div class="grid-3" style="margin-top:clamp(22px,3vw,42px)">
+        <article class="card" style="--acc:rgba(255,61,129,.22)">
+          <div class="num">01</div>
+          <h3>Colas a ciegas</h3>
+          <p>No sabes si hay 10 minutos o una hora. Cambiar de local es una apuesta, no una decisión.</p>
+        </article>
+        <article class="card" style="--acc:rgba(255,176,32,.22)">
+          <div class="num">02</div>
+          <h3>Reventa sin confianza</h3>
+          <p>QR falsos, pagos por adelantado y capturas manipuladas. Nadie protege al comprador ni al vendedor.</p>
+        </article>
+        <article class="card" style="--acc:rgba(34,211,238,.2)">
+          <div class="num">03</div>
+          <h3>Vuelta caótica</h3>
+          <p>Taxi, grupo, fotos y seguridad viven en cuatro apps y tres chats de WhatsApp distintos.</p>
+        </article>
+      </div>
+      <div class="flowline" style="margin-top:clamp(18px,2.4vw,30px)">4 apps <b>+</b> 3 chats <b>+</b> 0 garantías <b>=</b> una noche rota</div>
+    </div>
+  </section>
+
+  <!-- 3 · SOLUCIÓN -->
+  <section class="slide" data-title="La solución">
+    <div class="slide-inner">
+      <div class="eyebrow">02 · La solución</div>
+      <h2>Un solo flujo para <span class="grad">toda la noche.</span></h2>
+      <p class="lead">NIGHTPULSE conecta al usuario con el local antes, durante y después. Sin descargas y con el dinero protegido.</p>
+      <div class="mods">
+        <article class="mod" style="--acc:#a855f7;--c:#c4a2ff">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg>
+          <b>Noche</b><small>Aforo, espera y tu grupo en una home.</small>
+        </article>
+        <article class="mod" style="--acc:#ff3d81;--c:#ff9bbd">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3c3.5 4.2 6 7.1 6 10a6 6 0 11-12 0c0-2.9 2.5-5.8 6-10z"/><path d="M12 17c-1.7 0-3-1.3-3-3"/></svg>
+          <b>Aforo en vivo</b><small>55% puerta · 30% reportes · 15% sensor.</small>
+        </article>
+        <article class="mod" style="--acc:#22d3ee;--c:#9df3ff">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 8a2 2 0 002-2h12a2 2 0 002 2v2a2 2 0 000 4v2a2 2 0 00-2 2H6a2 2 0 00-2-2v-2a2 2 0 000-4z"/><path d="M14 7v10"/></svg>
+          <b>Entrada</b><small>Reventa P2P con escrow y QR firmado.</small>
+        </article>
+        <article class="mod" style="--acc:#ffb020;--c:#ffd18a">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 16v-3.2L6 8h12l2 4.8V16"/><path d="M3 16h18"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/><path d="M8 8l1-3h6l1 3"/></svg>
+          <b>Taxi share</b><small>Squads, reparto y vuelta segura.</small>
+        </article>
+        <article class="mod" style="--acc:#c8ff2e;--c:#dcff8c">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/><circle cx="17" cy="14.5" r="1.4"/></svg>
+          <b>Monedero</b><small>Saldo, pagos y devoluciones al instante.</small>
+        </article>
+        <article class="mod" style="--acc:#7c3aed;--c:#d8b4fe">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="18" height="14" rx="3"/><circle cx="12" cy="13" r="3.2"/><path d="M8 6l1-2h6l1 2"/></svg>
+          <b>Álbum de grupo</b><small>Invitación privada y revelado a las 08:00.</small>
+        </article>
+      </div>
+      <div class="flowline">Del <b>“¿dónde vamos?”</b> al <b>“¿cómo volvemos?”</b>, sin salir de la app</div>
+    </div>
+  </section>
+
+  <!-- 4 · DEMO -->
+  <section class="slide" data-title="Demo funcional">
+    <div class="slide-inner">
+      <div class="split">
+        <div>
+          <div class="eyebrow">03 · Producto</div>
+          <h2>No es un mockup. <span class="grad">Ya funciona.</span></h2>
+          <p class="lead">Un prototipo completo, sin backend y sin API keys, que enseña el flujo entero de la noche en el móvil.</p>
+          <div class="demo-list">
+            <div><span>01</span><p><b>Aforo híbrido</b> con sensor, puerta y reportes en vivo.</p></div>
+            <div><span>02</span><p><b>Compra protegida</b>: monedero, escrow y QR firmado.</p></div>
+            <div><span>03</span><p><b>Grupos reales</b>: taxi compartido y álbumes por invitación.</p></div>
+            <div><span>04</span><p><b>Panel del local</b> con accesos, aforo y desglose de la estimación.</p></div>
+          </div>
+        </div>
+        <div>
+          <div class="shot-frame">
+            <div class="shot-bar"><i></i><i></i><i></i><span>nightpulse.app · demo local</span></div>
+            <img src="presentacion-demo.png" alt="Captura del prototipo NIGHTPULSE con panel de pitch y móvil">
+          </div>
+          <p class="small" style="margin-top:10px;text-align:center">Captura real del prototipo · `index.html`</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · AFORO + DINERO -->
+  <section class="slide" data-title="Aforo y dinero">
+    <div class="slide-inner">
+      <div class="eyebrow">04 · El motor</div>
+      <h2 style="max-width:none">Aforo que se mide solo.<br><span class="grad">Dinero que solo se mueve si entras.</span></h2>
+      <div class="grid-2" style="margin-top:clamp(14px,2vw,26px);align-items:start">
+        <div>
+          <div class="ring-wrap" style="justify-content:flex-start">
+            <div class="big-ring" style="width:clamp(140px,14vw,200px)">
+              <div>
+                <b>94<small>%</small></b>
+                <span>Circus · en vivo</span>
+              </div>
+            </div>
+          </div>
+          <div class="formula" style="margin-top:8px;gap:6px">
+            <div class="fr"><b>55%</b><div><span>Puerta + entradas usadas</span><small>Contador exacto, cada QR suma 1</small></div></div>
+            <div class="fr"><b>30%</b><div><span>Reportes 1-tap</span><small>Se ponderan y caducan cada 30 min</small></div></div>
+            <div class="fr"><b>15%</b><div><span>Sensor de cola</span><small>Hardware Wi-Fi de 5 $, sin cámaras</small></div></div>
+          </div>
+          <div class="sensor-card" style="margin-top:8px">
+            <div class="radar" aria-hidden="true"><i></i><i></i><i></i></div>
+            <div>
+              <b>Precisión de puerta, coste casi cero</b>
+              <small>Wi-Fi 2,4 GHz pasivo · 25 m · sin app para quien espera · sin datos personales.</small>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="money-card">
+            <div class="kicker" style="color:rgba(255,255,255,.55)">Saldo disponible</div>
+            <div class="balance" style="font-size:clamp(30px,3vw,46px)">48,50 €</div>
+            <div class="meta"><span>0,00 € en escrow</span><span>Tarjeta ·· 4242</span></div>
+            <div class="movs">
+              <div class="mov"><div class="ic">↩</div><div class="tx">Reembolso · Urban Session</div><b class="in">+23,50 €</b></div>
+              <div class="mov"><div class="ic">🎟</div><div class="tx">Entrada · Noche Universitaria</div><b class="out">-25,00 €</b></div>
+              <div class="mov"><div class="ic">＋</div><div class="tx">Recarga con tarjeta</div><b class="in">+50,00 €</b></div>
+            </div>
+          </div>
+          <div class="steps4 two" style="margin-top:14px">
+            <div class="step4"><i>1</i><b>Pagas con monedero</b><small>Saldo local o tarjeta.</small></div>
+            <div class="step4"><i>2</i><b>Escrow retiene</b><small>El vendedor aún no cobra.</small></div>
+            <div class="step4"><i>3</i><b>QR valida</b><small>Firma, fecha y recinto.</small></div>
+            <div class="step4"><i>4</i><b>Pago liberado</b><small>Solo si entras.</small></div>
+          </div>
+          <div class="note-line">Si el QR falla: devolución automática al monedero.</div>
+          <div class="note-line" style="color:var(--tx-2)">Comisión de plataforma: 10% al comprador.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · ÁLBUMES DE GRUPO -->
+  <section class="slide" data-title="Álbumes de grupo">
+    <div class="slide-inner">
+      <div class="eyebrow">05 · En grupo</div>
+      <h2>El carrete es del grupo.<br><span class="grad">Y de nadie más.</span></h2>
+      <div class="split" style="margin-top:clamp(16px,2.4vw,32px)">
+        <div>
+          <p class="lead" style="margin-top:0">Cada noche crea su álbum privado. Se entra solo con un código de invitación y las fotos no se revelan hasta las 08:00.</p>
+          <div class="invite-big" style="margin-top:18px">
+            <small>Invitación al grupo</small>
+            <b>NP-REM26</b>
+          </div>
+          <div class="checks" style="grid-template-columns:1fr;margin-top:16px">
+            <div>Solo miembros con código pueden ver las fotos.</div>
+            <div>Revelado sincronizado a las 08:00 para todo el grupo.</div>
+            <div>Cambia entre álbumes, invita y comparte por WhatsApp.</div>
+          </div>
+          <div class="members-row" style="margin-top:14px">
+            <div class="av">MR</div><div class="av">DP</div><div class="av">LG</div><div class="av">AM</div><div class="av more">+4</div>
+            <small>grupo de Circus · 8 miembros</small>
+          </div>
+        </div>
+        <div class="album-mock" aria-label="Álbum privado de ejemplo">
+          <div class="ph" style="--g:linear-gradient(140deg,#2b0b3f,#7c3aed,#ff3d81)"><span>🔒</span></div>
+          <div class="ph" style="--g:linear-gradient(140deg,#04121f,#0ea5e9,#22d3ee)"><span>🔒</span></div>
+          <div class="ph" style="--g:linear-gradient(140deg,#1a0a10,#f43f5e,#ffb020)"><span>🔒</span></div>
+          <div class="ph" style="--g:linear-gradient(140deg,#0a1208,#65a30d,#c8ff2e)"><span>🔒</span></div>
+          <div class="ph" style="--g:linear-gradient(140deg,#12081f,#a855f7,#22d3ee)"><span>🔒</span></div>
+          <div class="ph" style="--g:linear-gradient(140deg,#1c0b2e,#7c3aed,#ff3d81)"><span>🔒</span></div>
+        </div>
+      </div>
+      <div class="flowline">La viralidad no es un feed público: son grupos privados que se invitan entre sí</div>
+    </div>
+  </section>
+
+  <!-- 7 · TAXI -->
+  <section class="slide" data-title="Taxi y vuelta segura">
+    <div class="slide-inner">
+      <div class="eyebrow">06 · La vuelta</div>
+      <h2>La noche no acaba<br><span class="grad">en la puerta.</span></h2>
+      <div class="split" style="margin-top:clamp(16px,2.4vw,32px)">
+        <div>
+          <p class="lead" style="margin-top:0">Los squads de taxi convierten la salida caótica en un plan compartido: mismas plazas, mismo destino, mismo precio y aviso a un contacto de confianza.</p>
+          <div class="checks" style="grid-template-columns:1fr;margin-top:16px">
+            <div>Crea un squad o únete a uno con plazas libres.</div>
+            <div>Reparto transparente del coste por persona.</div>
+            <div>Comparte por WhatsApp sin capturas ni malentendidos.</div>
+            <div>Sober Squad: check-in automático a tu contacto al llegar.</div>
+          </div>
+          <div class="venue-stats" style="grid-template-columns:repeat(3,1fr);margin-top:18px">
+            <div class="vstat"><span>Plazas</span><b>4</b></div>
+            <div class="vstat"><span>Por persona</span><b>2,25 €</b></div>
+            <div class="vstat"><span>Aviso</span><b>Auto</b></div>
+          </div>
+          <div class="flowline" style="margin-top:16px">Menos espera, menos riesgo y una vuelta que se organiza sola</div>
+        </div>
+        <div>
+          <div class="taxi-card">
+            <div class="kicker">Squad confirmado</div>
+            <div class="route">Circus <i>→</i> Centro</div>
+            <div class="taxi-meta">
+              <span>Salida <b>03:25</b></span>
+              <span>VTC <b>9 €</b></span>
+              <span><b>2,25 €</b>/persona</span>
+            </div>
+            <div class="seatbar"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+            <div class="members-row">
+              <div class="av">TÚ</div><div class="av">MR</div><div class="av">DP</div><div class="av more">+</div>
+              <small>3/4 plazas · salida en 13 min</small>
+            </div>
+            <div class="safety">
+              <b>Sober Squad activo</b>
+              <small>Tu contacto de confianza recibe un aviso cuando llegues a destino.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<nav class="nav" aria-label="Navegación de la presentación">
+  <button id="btnPrev" aria-label="Diapositiva anterior">←</button>
+  <span class="keys"><b>←</b> <b>→</b> mover · <b>F</b> pantalla · <b>O</b> índice</span>
+  <button id="btnNext" aria-label="Diapositiva siguiente">→</button>
+</nav>
+
+<div class="counter"><b id="curSlide">01</b> / <span id="allSlides">07</span></div>
+<div class="footer-brand">NIGHT<span>PULSE</span></div>
+
+<div class="overview" id="overview" aria-hidden="true">
+  <div class="overview-head">
+    <h3>Índice</h3>
+    <small>Elige una diapositiva · Esc para cerrar</small>
+  </div>
+  <div class="ov-grid" id="ovGrid"></div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const params = new URLSearchParams(location.search);
+  if (params.has("pdf")) {
+    document.documentElement.classList.add("pdf-mode");
+  }
+  const slides = Array.from(document.querySelectorAll(".slide"));
+  const total = slides.length;
+  const progress = document.getElementById("progressBar");
+  const cur = document.getElementById("curSlide");
+  const all = document.getElementById("allSlides");
+  const overview = document.getElementById("overview");
+  const ovGrid = document.getElementById("ovGrid");
+  let index = 0;
+
+  all.textContent = String(total).padStart(2, "0");
+
+  function fromHash() {
+    const m = location.hash.match(/slide-(\d+)/);
+    return m ? Math.max(0, Math.min(total - 1, Number(m[1]) - 1)) : 0;
+  }
+
+  function render() {
+    slides.forEach((s, i) => {
+      const on = i === index;
+      s.classList.toggle("active", on);
+      s.setAttribute("aria-hidden", on ? "false" : "true");
+    });
+    progress.style.width = ((index + 1) / total * 100) + "%";
+    cur.textContent = String(index + 1).padStart(2, "0");
+    document.querySelectorAll(".ov-item").forEach((b, i) => b.classList.toggle("current", i === index));
+    const title = slides[index].dataset.title || "NIGHTPULSE";
+    document.title = `${String(index + 1).padStart(2, "0")} · ${title} — NIGHTPULSE`;
+    history.replaceState(null, "", "#slide-" + (index + 1));
+  }
+
+  function go(n) {
+    index = Math.max(0, Math.min(total - 1, n));
+    render();
+  }
+  const next = () => go(index + 1);
+  const prev = () => go(index - 1);
+
+  slides.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.className = "ov-item";
+    b.type = "button";
+    b.innerHTML = `<span>${String(i + 1).padStart(2, "0")}</span><b>${s.dataset.title || "Diapositiva"}</b>`;
+    b.addEventListener("click", () => { go(i); toggleOverview(false); });
+    ovGrid.appendChild(b);
+  });
+
+  function toggleOverview(force) {
+    const open = typeof force === "boolean" ? force : !overview.classList.contains("open");
+    overview.classList.toggle("open", open);
+    overview.setAttribute("aria-hidden", open ? "false" : "true");
+  }
+
+  document.getElementById("btnPrev").addEventListener("click", prev);
+  document.getElementById("btnNext").addEventListener("click", next);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === " " || e.key === "PageDown") {
+      e.preventDefault(); next();
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "PageUp") {
+      e.preventDefault(); prev();
+    } else if (e.key === "Home") {
+      e.preventDefault(); go(0);
+    } else if (e.key === "End") {
+      e.preventDefault(); go(total - 1);
+    } else if (e.key.toLowerCase() === "f") {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+      else document.exitFullscreen?.().catch(() => {});
+    } else if (e.key.toLowerCase() === "o") {
+      e.preventDefault(); toggleOverview();
+    } else if (e.key.toLowerCase() === "p") {
+      e.preventDefault(); window.print();
+    } else if (e.key === "Escape") {
+      toggleOverview(false);
+    }
+  });
+
+  let startX = null, startY = null;
+  document.addEventListener("touchstart", (e) => {
+    const t = e.touches[0];
+    startX = t.clientX; startY = t.clientY;
+  }, { passive: true });
+  document.addEventListener("touchend", (e) => {
+    if (startX === null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX, dy = t.clientY - startY;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) dx < 0 ? next() : prev();
+    startX = startY = null;
+  }, { passive: true });
+
+  window.addEventListener("hashchange", () => { go(fromHash()); });
+  index = fromHash();
+  render();
+
+  if (params.has("audit")) {
+    setTimeout(() => {
+      document.title = "AUDIT " + JSON.stringify(slides.map(s => ({
+        t: s.dataset.title,
+        over: s.scrollHeight - s.clientHeight,
+        wide: s.scrollWidth - s.clientWidth
+      })));
+    }, 120);
+  }
+})();
+</script>
+</body>
+</html>
