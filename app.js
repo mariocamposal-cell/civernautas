@@ -46,37 +46,43 @@ const verifyCode = (code, expected) => {
 };
 
 /* ---------------- estado ---------------- */
-const STORE = "nightpulse.state.v1";
+const STORE = "nightpulse.state.v2";
 const nowBase = Date.now();
 const nightStart = 3 * 60 + 12;
 
 const CLUBS = [
-  { id: "aurora",  name: "Sala Aurora", short: "AU", x: 238, y: 112, cap: 420, inside: 403, entries: 512, exits: 109, rssi: -54, baseOcc: 96, occ: 96, queue: 84, wait: 14, trend: [58, 64, 71, 78, 83, 88, 92, 96] },
-  { id: "neon",    name: "Club Neón",   short: "NE", x: 92,  y: 96,  cap: 300, inside: 213, entries: 340, exits: 127, rssi: -61, baseOcc: 71, occ: 71, queue: 32, wait: 8,  trend: [40, 44, 52, 58, 62, 66, 70, 71] },
-  { id: "kubo",    name: "Sala Kubo",   short: "KU", x: 312, y: 218, cap: 260, inside: 229, entries: 365, exits: 136, rssi: -67, baseOcc: 88, occ: 88, queue: 58, wait: 11, trend: [50, 55, 61, 68, 74, 80, 85, 88] },
-  { id: "prism",   name: "Prism Rooftop", short: "PR", x: 110, y: 268, cap: 180, inside: 77, entries: 148, exits: 71, rssi: -58, baseOcc: 43, occ: 43, queue: 12, wait: 4, trend: [22, 26, 30, 34, 38, 40, 42, 43] },
-  { id: "galeria", name: "La Galería",  short: "GA", x: 224, y: 328, cap: 350, inside: 329, entries: 470, exits: 141, rssi: -63, baseOcc: 94, occ: 94, queue: 96, wait: 18, trend: [62, 70, 75, 81, 86, 89, 92, 94] },
-  { id: "bunker",  name: "Búnker 9",    short: "B9", x: 296, y: 350, cap: 140, inside: 34, entries: 96, exits: 62, rssi: -72, baseOcc: 24, occ: 24, queue: 6,  wait: 2, trend: [10, 12, 15, 17, 19, 21, 23, 24] }
+  { id: "circus",  name: "Circus",  short: "CI", x: 149, y: 322, cap: 500, inside: 468, entries: 610, exits: 142, rssi: -55, baseOcc: 94,
+    address: "Rúa de Alfredo Brañas, 6", zone: "Ensanche", music: "House · comercial", queue: 72, wait: 12, trend: [62, 68, 74, 80, 85, 89, 92, 94] },
+  { id: "blaster", name: "Blaster", short: "BL", x: 214, y: 353, cap: 700, inside: 609, entries: 789, exits: 180, rssi: -62, baseOcc: 87,
+    address: "R. da República Arxentina, 6", zone: "Ensanche", music: "Hits · comercial", queue: 96, wait: 16, trend: [70, 74, 78, 82, 85, 87, 88, 87] },
+  { id: "way",     name: "Way Club", short: "WA", x: 270, y: 169, cap: 350, inside: 301, entries: 420, exits: 119, rssi: -58, baseOcc: 86,
+    address: "Rúa Nova, 13", zone: "Centro", music: "Tech house", queue: 48, wait: 8, trend: [58, 64, 70, 75, 79, 83, 85, 86] },
+  { id: "rem",     name: "REM",     short: "RE", x: 49,  y: 330, cap: 450, inside: 396, entries: 512, exits: 116, rssi: -66, baseOcc: 88,
+    address: "Rúa Nova de Abaixo, 26", zone: "Ensanche", music: "Electrónica", queue: 60, wait: 10, trend: [60, 66, 72, 78, 82, 85, 87, 88] },
+  { id: "tarasca", name: "Tarasca", short: "TA", x: 336, y: 53,  cap: 200, inside: 136, entries: 200, exits: 64, rssi: -70, baseOcc: 68,
+    address: "Rúa de Entremuros, 13", zone: "Zona Vella", music: "Pop · rock", queue: 18, wait: 3, trend: [40, 46, 52, 58, 62, 65, 67, 68] },
+  { id: "momo",    name: "Momo",    short: "MO", x: 339, y: 145, cap: 160, inside: 82, entries: 140, exits: 58, rssi: -64, baseOcc: 51,
+    address: "Rúa da Virxe da Cerca, 23", zone: "Zona Vella", music: "Indie · clásicos", queue: 10, wait: 2, trend: [30, 34, 38, 42, 45, 48, 50, 51] }
 ];
 
 const LISTINGS = [
-  { id: "l1", event: "Nochevieja Universitaria", venue: "Sala Aurora", date: "31 DIC · 23:00", iso: "2026-12-31", type: "General", price: 25, original: 28, seller: "Marta R.", rating: 4.9, serial: "AUR-4471", hue: "#7c3aed", fraud: false },
-  { id: "l2", event: "Tech House Night", venue: "Club Neón", date: "HOY · 23:30", iso: "2026-10-22", type: "VIP", price: 38, original: 35, seller: "Diego P.", rating: 4.7, serial: "NEO-1180", hue: "#0ea5e9", fraud: false },
-  { id: "l3", event: "Urban Session", venue: "Sala Kubo", date: "HOY · 01:00", iso: "2026-10-22", type: "General", price: 18, original: 22, seller: "Lucía G.", rating: 5.0, serial: "KUB-9932", hue: "#f43f5e", fraud: true },
-  { id: "l4", event: "Afterhours · Rooftop", venue: "Prism Rooftop", date: "HOY · 03:00", iso: "2026-10-22", type: "Mesa", price: 60, original: 75, seller: "Andrés M.", rating: 4.6, serial: "PRI-2201", hue: "#22d3ee", fraud: false }
+  { id: "l1", event: "Nochevieja Universitaria", venue: "Circus", date: "31 DIC · 23:00", iso: "2026-12-31", type: "General", price: 25, original: 28, seller: "Marta R.", rating: 4.9, serial: "CIR-4471", hue: "#7c3aed", fraud: false },
+  { id: "l2", event: "Tech House Night", venue: "Way Club", date: "HOY · 23:30", iso: "2026-10-22", type: "VIP", price: 38, original: 35, seller: "Diego P.", rating: 4.7, serial: "WAY-1180", hue: "#0ea5e9", fraud: false },
+  { id: "l3", event: "Urban Session", venue: "Blaster", date: "HOY · 01:00", iso: "2026-10-22", type: "General", price: 18, original: 22, seller: "Lucía G.", rating: 5.0, serial: "BLA-9932", hue: "#f43f5e", fraud: true },
+  { id: "l4", event: "Afterhours · REM", venue: "REM", date: "HOY · 03:00", iso: "2026-10-22", type: "Mesa", price: 60, original: 75, seller: "Andrés M.", rating: 4.6, serial: "REM-2201", hue: "#22d3ee", fraud: false }
 ];
 
 const RIDES = [
-  { id: "r1", dest: "Moncloa", club: "Sala Aurora", depart: "03:25", seats: 4, taken: 2, price: 14, members: ["MR", "DP"] },
-  { id: "r2", dest: "Getafe",  club: "Sala Aurora", depart: "03:40", seats: 3, taken: 1, price: 24, members: ["LG"] },
-  { id: "r3", dest: "Norte",   club: "Sala Aurora", depart: "03:15", seats: 4, taken: 3, price: 16, members: ["AM", "JC", "SR"] }
+  { id: "r1", dest: "Centro", club: "Circus", depart: "03:25", seats: 4, taken: 2, price: 9,  members: ["MR", "DP"] },
+  { id: "r2", dest: "Fontiñas", club: "Circus", depart: "03:40", seats: 3, taken: 1, price: 16, members: ["LG"] },
+  { id: "r3", dest: "San Lázaro", club: "Circus", depart: "03:15", seats: 4, taken: 3, price: 18, members: ["AM", "JC", "SR"] }
 ];
 
 const DEFAULT = {
   view: "noche",
   ticketTab: "buy",
-  destination: "Moncloa",
-  selectedClub: "aurora",
+  destination: "Centro",
+  selectedClub: "circus",
   clubs: CLUBS,
   listings: LISTINGS.map(l => ({ ...l })),
   purchases: [],
@@ -139,6 +145,44 @@ function save() {
   catch { /* quota */ }
 }
 
+/* ---------------- sesión + edad ---------------- */
+const SESSION_KEY = "np.session";
+
+function ageFrom(str) {
+  if (!str) return -1;
+  const d = new Date(str + "T00:00:00");
+  if (isNaN(d.getTime())) return -1;
+  const n = new Date();
+  let a = n.getFullYear() - d.getFullYear();
+  const m = n.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && n.getDate() < d.getDate())) a--;
+  return a;
+}
+
+function readSession() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");
+    if (!s || !s.email) return null;
+    if (ageFrom(s.dob) < 18) { sessionStorage.removeItem(SESSION_KEY); return null; }
+    return s;
+  } catch { return null; }
+}
+
+function writeSession(email, dob) {
+  try { sessionStorage.setItem(SESSION_KEY, JSON.stringify({ email, dob, at: Date.now() })); } catch {}
+}
+
+function clearSession() {
+  try { sessionStorage.removeItem(SESSION_KEY); } catch {}
+}
+
+function showAuth(show) {
+  const a = $("#auth");
+  if (!a) return;
+  a.classList.toggle("hidden", !show);
+  if (show) setTimeout(() => $("#authEmail").focus(), 120);
+}
+
 /* ---------------- reloj nocturno ---------------- */
 function nightNow() {
   const mins = nightStart + Math.floor((Date.now() - nowBase) / 60000);
@@ -165,9 +209,9 @@ function log(msg) {
 }
 function renderLog() {
   const items = state._log && state._log.length ? state._log : [
-    { t: "03:04", msg: "<b>Sala Aurora</b> · el sensor detecta 62 móviles en la puerta" },
+    { t: "03:04", msg: "<b>Circus</b> · el sensor detecta 53 móviles en la puerta" },
     { t: "03:07", msg: "Escrow <b>#A21</b> liberado · 25,00 € al vendedor" },
-    { t: "03:09", msg: "Puerta <b>La Galería</b> · 329/350 dentro" }
+    { t: "03:09", msg: "Puerta <b>Blaster</b> · 609/700 dentro" }
   ];
   $("#logList").innerHTML = items.map(i => `<li><span class="t">${i.t}</span><span>${i.msg}</span></li>`).join("");
 }
@@ -262,7 +306,7 @@ function makePhoto(seed) {
 
   g.font = "600 15px ui-monospace, monospace";
   g.fillStyle = "rgba(255,255,255,.55)";
-  g.fillText(`${pad(3 + (seed % 3))}:${pad((seed * 7) % 60)}  ·  AURORA`, 18, S - 20);
+  g.fillText(`${pad(3 + (seed % 3))}:${pad((seed * 7) % 60)}  ·  SANTIAGO`, 18, S - 20);
 
   const url = c.toDataURL("image/jpeg", .74);
   photoCache.set(seed, url);
@@ -314,7 +358,7 @@ function renderHome() {
   const circ = 2 * Math.PI * 35;
 
   $("#homeName").textContent = c.name;
-  $("#homeMeta").textContent = "Sábado · 23:30 — 06:00 · a 42 m";
+  $("#homeMeta").textContent = `${c.address || "Santiago de Compostela"} · ${c.zone || "Centro"}`;
   $("#homeInside").textContent = c.inside;
   $("#homeCap").textContent = c.cap;
   $("#homePct").innerHTML = `${c.occ}<span>%</span>`;
@@ -460,6 +504,8 @@ function buildMap() {
       <circle cx="186" cy="196" r="3.4" fill="#22d3ee" stroke="#05040a" stroke-width="1.2"/>
       <text x="192" y="194" fill="rgba(34,211,238,.85)" font-size="7" font-weight="600">TÚ</text>
     </g>
+    <text x="384" y="402" text-anchor="end" font-size="7" letter-spacing="1.2"
+      fill="rgba(255,255,255,.32)">SANTIAGO · CENTRO</text>
     ${pins}`;
 
   svg.addEventListener("click", (e) => {
@@ -661,7 +707,7 @@ function renderTickets() {
         <div class="form-row">
           <label class="field"><span>Local</span>
             <select id="sellVenue">
-              <option>Prism Rooftop</option><option>Sala Aurora</option><option>Club Neón</option><option>Sala Kubo</option>
+              <option>Circus</option><option>Blaster</option><option>Way Club</option><option>REM</option><option>Tarasca</option><option>Momo</option>
             </select>
           </label>
           <label class="field"><span>Tipo</span>
@@ -931,10 +977,11 @@ function openScanner(purchaseId) {
 
 /* ---------------- taxi ---------------- */
 const DESTS = [
-  { name: "Moncloa", eta: 12, price: 14 },
-  { name: "Getafe", eta: 22, price: 24 },
-  { name: "Norte", eta: 15, price: 16 },
-  { name: "Centro", eta: 9, price: 11 }
+  { name: "Centro", eta: 8, price: 9 },
+  { name: "Ensanche", eta: 10, price: 11 },
+  { name: "Vista Alegre", eta: 14, price: 14 },
+  { name: "Fontiñas", eta: 16, price: 16 },
+  { name: "San Lázaro", eta: 18, price: 18 }
 ];
 
 function renderTaxi() {
@@ -1040,6 +1087,7 @@ function renderVault() {
 
   $("#vaultChip").textContent = v.revealed ? "🔓 Revelado" : "🔒 Bloqueado";
   $("#vaultChip").classList.toggle("open", v.revealed);
+  $("#vaultTitle").textContent = clubById(state.selectedClub).name + " · Carrete desechable";
   $("#vaultSub").textContent = v.revealed
     ? "Álbum revelado · " + (v.demo ? "modo demo" : "08:00")
     : (v.demo ? "Modo demo · se revela en segundos" : "Se revela a las 08:00");
@@ -1343,8 +1391,64 @@ function initMisc() {
   }, 20000);
 }
 
+function initAuth() {
+  const dob = $("#authDob");
+  const max = new Date();
+  max.setFullYear(max.getFullYear() - 18);
+  dob.max = max.toISOString().slice(0, 10);
+  dob.min = "1900-01-01";
+
+  $("#authForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const err = $("#authError");
+    const email = $("#authEmail").value.trim();
+    const pass = $("#authPass").value;
+    const dobv = dob.value;
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { err.textContent = "Introduce un email válido."; return; }
+    if (pass.length < 6) { err.textContent = "La contraseña debe tener al menos 6 caracteres."; return; }
+    if (!dobv) { err.textContent = "Introduce tu fecha de nacimiento."; return; }
+    const age = ageFrom(dobv);
+    if (age < 0) { err.textContent = "Esa fecha no es válida."; return; }
+    if (age < 18) { err.textContent = "Debes ser mayor de 18 años para entrar."; return; }
+    if (age > 110) { err.textContent = "Revisa la fecha de nacimiento."; return; }
+
+    err.textContent = "";
+    writeSession(email, dobv);
+    $("#authPass").value = "";
+    showAuth(false);
+    toast("Bienvenido a NIGHTPULSE", "good");
+    log("Sesión iniciada · " + email);
+  });
+
+  $("#authDemo").addEventListener("click", () => {
+    $("#authEmail").value = "demo@civernautas.app";
+    $("#authPass").value = "noche247";
+    $("#authDob").value = "2000-01-01";
+    $("#authError").textContent = "";
+    $("#authForm").requestSubmit();
+  });
+
+  $("#btnLogout").addEventListener("click", logout);
+
+  showAuth(!readSession());
+}
+
+function logout() {
+  clearSession();
+  showAuth(true);
+  setView("noche");
+  $("#authEmail").value = "";
+  $("#authPass").value = "";
+  $("#authDob").value = "";
+  $("#authError").textContent = "";
+  toast("Sesión cerrada");
+  log("Sesión cerrada");
+}
+
 function init() {
   initNav();
+  initAuth();
   initHome();
   buildMap();
   renderClubs();

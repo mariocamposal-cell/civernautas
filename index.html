@@ -20,7 +20,7 @@
     <header class="pitch-head">
       <div class="logo">NIGHT<span>PULSE</span><em>MVP</em></div>
       <h1>La noche,<br><span>sin fricción.</span></h1>
-      <p class="lede">La cola se mide sola con un sensor Wi-Fi de 5&nbsp;$ en la puerta. Sin app para quien espera. Cinco módulos, una noche.</p>
+      <p class="lede">La noche de Santiago se mide sola con un sensor Wi-Fi de 5&nbsp;$ en la puerta. Sin app para quien espera. Cinco módulos, una noche.</p>
       <div class="hw">
         <span class="hw-icon"></span>
         <div class="hw-txt"><b>Sensor de puerta</b><small>Wi-Fi 2,4 GHz · radio 25 m · pasivo</small></div>
@@ -56,9 +56,12 @@
       <div class="screen" id="screen">
 
         <header class="appbar">
-          <div class="appbar-brand"><span class="brand-dot"></span><span id="appTitle">Radar</span></div>
+          <div class="appbar-brand"><span class="brand-dot"></span><span id="appTitle">Noche</span></div>
           <div class="appbar-right">
             <span class="live-pill"><i></i>EN VIVO</span>
+            <button id="btnLogout" class="icon-btn" aria-label="Cerrar sesión" title="Cerrar sesión">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 4h3a1 1 0 011 1v14a1 1 0 01-1 1h-3"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h10"/></svg>
+            </button>
             <span id="clock">03:12</span>
           </div>
         </header>
@@ -74,8 +77,8 @@
                 <select id="homeClub" class="home-club" aria-label="Local"></select>
               </div>
               <div class="hero-info">
-                <h2 id="homeName">Sala Aurora</h2>
-                <p id="homeMeta">Sábado · 23:30 — 06:00 · a 42 m</p>
+                <h2 id="homeName">Circus</h2>
+                <p id="homeMeta">Rúa de Alfredo Brañas, 6 · Ensanche</p>
               </div>
             </div>
 
@@ -221,7 +224,7 @@
             <div class="taxi-now">
               <div>
                 <small>Estás en</small>
-                <b id="taxiClub">Sala Aurora</b>
+                <b id="taxiClub">Circus</b>
               </div>
               <div class="taxi-hour" id="taxiHour">03:12</div>
             </div>
@@ -258,7 +261,7 @@
                 <span class="vault-members" id="vaultMembers"></span>
               </div>
               <div class="vault-info">
-                <h3 id="vaultTitle">Aurora · Carrete desechable</h3>
+                <h3 id="vaultTitle">Circus · Carrete desechable</h3>
                 <p id="vaultSub">Se revela a las 08:00</p>
               </div>
               <div class="countdown" id="vaultCountdown">
@@ -288,6 +291,29 @@
         <div class="sheet" id="sheet"></div>
         <div class="scanner" id="scanner"></div>
         <div class="burst" id="burst"></div>
+
+        <div class="auth" id="auth">
+          <div class="auth-box">
+            <div class="auth-brand">NIGHT<span>PULSE</span></div>
+            <h2>Entra en la noche</h2>
+            <p class="auth-sub">Verificamos tu edad antes de mostrarte locales y entradas.</p>
+            <form id="authForm" class="auth-form" novalidate>
+              <label class="field"><span>Email</span>
+                <input id="authEmail" type="email" autocomplete="email" placeholder="tu@email.com" required>
+              </label>
+              <label class="field"><span>Contraseña</span>
+                <input id="authPass" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres" minlength="6" required>
+              </label>
+              <label class="field"><span>Fecha de nacimiento</span>
+                <input id="authDob" type="date" required>
+              </label>
+              <p class="auth-error" id="authError"></p>
+              <button class="btn primary" type="submit">Entrar</button>
+            </form>
+            <button class="auth-demo" id="authDemo">Probar con cuenta demo</button>
+            <p class="auth-legal">Solo +18. La sesión vive en esta pestaña: al cerrar la app, se cierra sesión.</p>
+          </div>
+        </div>
 
       </div>
     </div>
